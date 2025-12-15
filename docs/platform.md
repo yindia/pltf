@@ -23,8 +23,9 @@ pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod
 pltf generate -f service.yaml -e dev --var cluster_name=my-dev
 ```
 - `--modules/-m` custom root; modules with `source: custom` resolve here first.
-- `--out/-o` defaults to `.pltf/env/<env>` or `.pltf/service/<service>/<env>`.
+- `--out/-o` defaults to `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`.
 - `--var/-v` merges over env vars → service envRef vars → CLI vars.
+- File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.
 
 ## Terraform commands
 ```bash

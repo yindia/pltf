@@ -37,7 +37,8 @@ Environment and service specs are linked via `metadata.ref` and `envRef`.
 ## Quick Links
 - [Installation](installation.md)
 - [Getting Started](getting-started/aws.md)
-- [CLI Usage](usage.md)
+- [Platform Usage](platform.md)
+- [CLI Reference](usage.md)
 - [Spec Guide](specs.md)
 - [Modules & Wiring](modules.md)
 - [Features](features.md)
