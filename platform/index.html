@@ -233,8 +233,9 @@ pltf generate -f service.yaml -e dev --var cluster_name=my-dev
 </code></pre>
 <ul>
 <li><code>--modules/-m</code> custom root; modules with <code>source: custom</code> resolve here first.</li>
-<li><code>--out/-o</code> defaults to <code>.pltf/env/&lt;env&gt;</code> or <code>.pltf/service/&lt;service&gt;/&lt;env&gt;</code>.</li>
+<li><code>--out/-o</code> defaults to <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>.</li>
 <li><code>--var/-v</code> merges over env vars → service envRef vars → CLI vars.</li>
+<li>File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.</li>
 </ul>
 <h2 id="terraform-commands">Terraform commands</h2>
 <pre><code class="language-bash">pltf terraform plan    -f service.yaml -e dev    # supports --target, --parallelism, --detailed-exitcode, --plan-file
