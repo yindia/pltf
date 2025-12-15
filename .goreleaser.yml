@@ -41,9 +41,6 @@ brews:
       system "#{bin}/pltf", "--help"
     install: |
       bin.install "pltf"
-    repository:
-      owner: yindia
-      name: pltf
 changelog:
   sort: asc
   filters:
