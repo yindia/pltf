@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>Modules & Wiring - PLTF CLI Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "Modules \u0026 Wiring";
+        var mkdocs_page_input_path = "modules.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PLTF CLI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../getting-started/aws/">AWS</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Platform</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" >Concepts</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/overview/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/environment/">Environment</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/module/">Module</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/layer/">Layer</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../platform/">Platform Usage</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../usage/">CLI Reference</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >Features</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../features/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/profiles/">Profiles & Defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/validation/">Validation & Lint</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/backends/">Backends</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/custom-modules/">Custom Modules</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/placeholders/">Placeholders & Wiring</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/secrets/">Secrets</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/variables/">Variables</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/telemetry/">Telemetry</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../specs/">Spec Guide</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">Modules & Wiring</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#wiring-rules">Wiring rules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-metadata-moduleyaml">Module metadata (module.yaml)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#embedded-modules-aws">Embedded modules (AWS)</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#custom-modules">Custom modules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-init-helper">Module init helper</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">References</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >AWS</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" >Modules</a>
+    <ul>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_base/">aws_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_dns/">aws_dns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_documentdb/">aws_documentdb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_dynamodb/">aws_dynamodb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_eks/">aws_eks</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_policy/">aws_iam_policy</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_role/">aws_iam_role</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_user/">aws_iam_user</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_k8s_base/">aws_k8s_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_k8s_service/">aws_k8s_service</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_mysql/">aws_mysql</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_nodegroup/">aws_nodegroup</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_postgres/">aws_postgres</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_redis/">aws_redis</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_s3/">aws_s3</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_ses/">aws_ses</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_sns/">aws_sns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_sqs/">aws_sqs</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/cloudfront_distribution/">cloudfront_distribution</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws_eks_access/">EKS Access</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws_eks_upgrade/">EKS Upgrade</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Security</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/aws/">AWS Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/kubernetes/">Kubernetes Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/compliance/">Compliance</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PLTF CLI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Platform</li>
+      <li class="breadcrumb-item active">Modules & Wiring</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/your-org/pltf/edit/master/docs/modules.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="modules-wiring">Modules &amp; Wiring</h1>
+<p>Modules are discovered from a modules root where each module type directory contains a <code>module.yaml</code>. The CLI scans custom roots (when provided) and the embedded catalog. Modules marked <code>source: custom</code> must be found in your custom root; others fall back to embedded.</p>
+<h2 id="wiring-rules">Wiring rules</h2>
+<ul>
+<li>Inputs auto-wire to outputs with the same name (current scope, or parent env for services).</li>
+<li>Required inputs without a value or matching output fail validation.</li>
+<li>Optional/default inputs can stay unwired if nothing matches.</li>
+<li>Templates <code>${module.*}</code>, <code>${var.*}</code>, <code>${parent.*}</code> are supported and converted to Terraform traversals.</li>
+</ul>
+<h2 id="module-metadata-moduleyaml">Module metadata (module.yaml)</h2>
+<p>Example fields:</p>
+<pre><code class="language-yaml">name: aws_eks
+type: aws_eks
+provider: aws
+version: 1.0.0
+description: EKS cluster
+inputs:
+  - name: cluster_name
+    type: string
+    required: true
+  - name: enable_metrics
+    type: bool
+    required: true
+  - name: env_name
+    type: string
+    required: true
+outputs:
+  - name: k8s_cluster_name
+    type: string
+</code></pre>
+<p>Notes:
+- Inputs may include <code>description</code>, <code>default</code>, <code>capability</code> (optional).
+- Outputs may include <code>description</code>, <code>capability</code>.
+- Capabilities can declare <code>provides</code>/<code>accepts</code> to describe contracts.</p>
+<h2 id="embedded-modules-aws">Embedded modules (AWS)</h2>
+<ul>
+<li><code>aws_base</code>, <code>aws_dns</code>, <code>aws_eks</code>, <code>aws_k8s_base</code>, <code>aws_k8s_service</code>, <code>aws_nodegroup</code></li>
+<li><code>aws_postgres</code>, <code>aws_mysql</code>, <code>aws_redis</code>, <code>aws_dynamodb</code>, <code>aws_s3</code>, <code>aws_ses</code>, <code>aws_sns</code>, <code>aws_sqs</code>, <code>aws_documentdb</code></li>
+<li><code>aws_iam_role</code>, <code>aws_iam_policy</code>, <code>aws_iam_user</code></li>
+<li><code>cloudfront_distribution</code></li>
+</ul>
+<p>GCP/Azure: no bundled modules yet; use custom modules or your own registry. You can target GCP/Azure providers with custom modules and backends.</p>
+<h2 id="custom-modules">Custom modules</h2>
+<ul>
+<li>Mark spec entries with <code>source: custom</code> to force lookup in your custom modules root (<code>--modules</code> or profile <code>modules_root</code>).</li>
+<li>Generate <code>module.yaml</code> for your module with <code>pltf module init --path &lt;module_dir&gt; [--force]</code>.</li>
+<li>Inventory commands: <code>pltf module list|get [-m ./modules] -o table|json|yaml</code>.</li>
+</ul>
+<p>Treat modules as black boxes: configure via <code>inputs</code>, consume declared <code>outputs</code>, and let wiring handle references.</p>
+<h2 id="module-init-helper">Module init helper</h2>
+<p>Use <code>pltf module init --path &lt;module_dir&gt; [--force]</code> to generate or refresh <code>module.yaml</code> from an existing Terraform module. This inspects variables/outputs and writes a fresh descriptor (backing up or overwriting if <code>--force</code>).</p>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../specs/" class="btn btn-neutral float-left" title="Spec Guide"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../references/aws/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../specs/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../references/aws/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

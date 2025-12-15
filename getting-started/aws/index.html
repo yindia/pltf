@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../img/favicon.ico" />
+    <title>AWS - PLTF CLI Documentation</title>
+    <link rel="stylesheet" href="../../css/theme.css" />
+    <link rel="stylesheet" href="../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "AWS";
+        var mkdocs_page_input_path = "getting-started/aws.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../.." class="icon icon-home"> PLTF CLI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">AWS</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-prerequisites">1) Prerequisites</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-create-an-environment-spec">2) Create an Environment spec</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#3-create-a-service-spec">3) Create a Service spec</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#4-access-the-service">4) Access the service</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#5-cleanup">5) Cleanup</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#6-next-steps">6) Next Steps</a>
+    </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Platform</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >Concepts</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../concepts/overview/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../concepts/environment/">Environment</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../concepts/module/">Module</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../concepts/layer/">Layer</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../platform/">Platform Usage</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../usage/">CLI Reference</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >Features</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/profiles/">Profiles & Defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/validation/">Validation & Lint</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/backends/">Backends</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/custom-modules/">Custom Modules</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/placeholders/">Placeholders & Wiring</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/secrets/">Secrets</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/variables/">Variables</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../features/telemetry/">Telemetry</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../specs/">Spec Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../modules/">Modules & Wiring</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">References</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >AWS</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../references/aws/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" >Modules</a>
+    <ul>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_base/">aws_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_dns/">aws_dns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_documentdb/">aws_documentdb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_dynamodb/">aws_dynamodb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_eks/">aws_eks</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_iam_policy/">aws_iam_policy</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_iam_role/">aws_iam_role</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_iam_user/">aws_iam_user</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_k8s_base/">aws_k8s_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_k8s_service/">aws_k8s_service</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_mysql/">aws_mysql</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_nodegroup/">aws_nodegroup</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_postgres/">aws_postgres</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_redis/">aws_redis</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_s3/">aws_s3</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_ses/">aws_ses</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_sns/">aws_sns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/aws_sqs/">aws_sqs</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../../references/modules/cloudfront_distribution/">cloudfront_distribution</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../references/aws_eks_access/">EKS Access</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../references/aws_eks_upgrade/">EKS Upgrade</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Security</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../security/aws/">AWS Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../security/kubernetes/">Kubernetes Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../security/compliance/">Compliance</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../..">PLTF CLI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Getting Started</li>
+      <li class="breadcrumb-item active">AWS</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/your-org/pltf/edit/master/docs/getting-started/aws.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="getting-started-aws">Getting Started: AWS</h1>
+<p>This guide walks through provisioning a simple environment and service on AWS using pltf. You will create two YAML specs (environment and service), generate Terraform, and deploy.</p>
+<p><img alt="AWS" src="../../images/hero.png" /> <!-- Replace with your AWS image --></p>
+<h2 id="1-prerequisites">1) Prerequisites</h2>
+<ul>
+<li>Terraform v1.5+ (installed locally or via your CI)</li>
+<li>Docker (to build/push your images if needed)</li>
+<li>AWS credentials configured in your shell (e.g., <code>aws configure</code> or environment variables)</li>
+<li>(Optional) Custom modules directory if you want to bring your own modules</li>
+</ul>
+<p>Install pltf (Homebrew):</p>
+<pre><code class="language-bash">brew tap evalsocket1/pltf
+brew install pltf
+</code></pre>
+<p>Or use the install script:</p>
+<pre><code class="language-bash">/bin/bash -c \&quot;$(curl -fsSL https://raw.githubusercontent.com/your-org/pltf/main/install.sh)\&quot;
+</code></pre>
+<h2 id="2-create-an-environment-spec">2) Create an Environment spec</h2>
+<p>Create <code>env.yaml</code>:</p>
+<pre><code class="language-yaml">apiVersion: platform.io/v1
+kind: Environment
+metadata:
+  name: example-aws
+  org: demo
+  provider: aws
+  labels:
+    team: platform
+    cost_center: shared
+environments:
+  prod:
+    account: \&quot;123456789012\&quot;
+    region: us-east-1
+    backend:
+      type: s3            # state backend (s3|gcs|azurerm)
+      profile: default    # optional cross-account profile
+    variables:
+      base_domain: prod.demo.internal
+      cluster_name: demo-eks
+    modules:
+      - type: aws_base
+      - type: aws_eks
+      - type: aws_k8s_base
+</code></pre>
+<p>What this does:
+- Configures AWS provider/region and S3 backend.
+- Creates networking, an EKS cluster, and base Kubernetes add-ons.
+- Exposes outputs (e.g., cluster endpoint/CA) for services.</p>
+<p>Generate and apply:</p>
+<pre><code class="language-bash">pltf terraform plan -f env.yaml -e prod
+pltf terraform apply -f env.yaml -e prod
+</code></pre>
+<p>First apply can take ~15 minutes. You can inspect outputs:</p>
+<pre><code class="language-bash">pltf terraform output -f env.yaml -e prod --json
+</code></pre>
+<h2 id="3-create-a-service-spec">3) Create a Service spec</h2>
+<p>Create <code>service.yaml</code>:</p>
+<pre><code class="language-yaml">apiVersion: platform.io/v1
+kind: Service
+metadata:
+  name: payments-api
+  org: demo
+  provider: aws
+  envRef:
+    name: prod
+    path: ./env.yaml
+spec:
+  variables:
+    image: ghcr.io/demo/payments:latest
+  modules:
+    - name: app
+      type: aws_k8s_service
+      port:
+        http: 8080
+      public_uri: \&quot;/payments\&quot;
+      links:
+        - app-bucket: [write]
+    - name: app-bucket
+      type: aws_s3
+      bucket_name: \&quot;payments-${env_name}\&quot;
+</code></pre>
+<p>What this does:
+- Deploys a Kubernetes service on the EKS cluster created above.
+- Provisions an S3 bucket and links it to the app with write permissions (IRSA policy is generated).</p>
+<p>Generate and apply:</p>
+<pre><code class="language-bash">pltf terraform plan -f service.yaml -e prod
+pltf terraform apply -f service.yaml -e prod
+</code></pre>
+<h2 id="4-access-the-service">4) Access the service</h2>
+<ul>
+<li>Find the load balancer host from outputs: <code>pltf terraform output -f service.yaml -e prod | grep load_balancer_raw_dns</code></li>
+<li>Curl the path: <code>curl http://&lt;lb&gt;/payments</code></li>
+</ul>
+<h2 id="5-cleanup">5) Cleanup</h2>
+<pre><code class="language-bash">pltf terraform destroy -f service.yaml -e prod
+pltf terraform destroy -f env.yaml -e prod
+</code></pre>
+<h2 id="6-next-steps">6) Next Steps</h2>
+<ul>
+<li>Review AWS architecture and module docs in the References section.</li>
+<li>Add more modules (RDS, Redis, SES, SNS, SQS) and link them for IAM/IRSA wiring.</li>
+<li>Use profiles (<code>~/.pltf/profile.yaml</code>) to set default env/modules root and cross-account backends.</li>
+</ul>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../../installation/" class="btn btn-neutral float-left" title="Installation"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../../concepts/overview/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../../installation/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../../concepts/overview/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../..";</script>
+    <script src="../../js/theme_extra.js"></script>
+    <script src="../../js/theme.js"></script>
+      <script src="../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

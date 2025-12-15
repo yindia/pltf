@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../img/favicon.ico" />
+    <title>CLI Reference - PLTF CLI Documentation</title>
+    <link rel="stylesheet" href="../css/theme.css" />
+    <link rel="stylesheet" href="../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "CLI Reference";
+        var mkdocs_page_input_path = "usage.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href=".." class="icon icon-home"> PLTF CLI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../getting-started/aws/">AWS</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Platform</span></p>
+              <ul class="current">
+                  <li class="toctree-l1"><a class="reference internal" >Concepts</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/overview/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/environment/">Environment</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/module/">Module</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../concepts/layer/">Layer</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../platform/">Platform Usage</a>
+                  </li>
+                  <li class="toctree-l1 current"><a class="reference internal current" href="#">CLI Reference</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#command-catalog">Command catalog</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#validate">validate</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#generate">generate</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#preview">preview</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-plan">terraform plan</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-apply">terraform apply</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-destroy">terraform destroy</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-output">terraform output</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-force-unlock">terraform force-unlock</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#module-list">module list</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#module-get">module get</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#module-init">module init</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#validate-lint">Validate + Lint</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#generate_1">Generate</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#terraform-helpers">Terraform helpers</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#preview_1">Preview</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#module-inventory">Module inventory</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#custom-backends">Custom backends</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#custom-modules">Custom modules</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#environment-defaults">Environment defaults</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#completions">Completions</a>
+    </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >Features</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../features/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/profiles/">Profiles & Defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/validation/">Validation & Lint</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/backends/">Backends</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/custom-modules/">Custom Modules</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/placeholders/">Placeholders & Wiring</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/secrets/">Secrets</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/variables/">Variables</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../features/telemetry/">Telemetry</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../specs/">Spec Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../modules/">Modules & Wiring</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">References</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >AWS</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" >Modules</a>
+    <ul>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_base/">aws_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_dns/">aws_dns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_documentdb/">aws_documentdb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_dynamodb/">aws_dynamodb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_eks/">aws_eks</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_policy/">aws_iam_policy</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_role/">aws_iam_role</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_iam_user/">aws_iam_user</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_k8s_base/">aws_k8s_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_k8s_service/">aws_k8s_service</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_mysql/">aws_mysql</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_nodegroup/">aws_nodegroup</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_postgres/">aws_postgres</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_redis/">aws_redis</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_s3/">aws_s3</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_ses/">aws_ses</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_sns/">aws_sns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/aws_sqs/">aws_sqs</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../references/modules/cloudfront_distribution/">cloudfront_distribution</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws_eks_access/">EKS Access</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../references/aws_eks_upgrade/">EKS Upgrade</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Security</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/aws/">AWS Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/kubernetes/">Kubernetes Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../security/compliance/">Compliance</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="..">PLTF CLI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href=".." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">Platform</li>
+      <li class="breadcrumb-item active">CLI Reference</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/your-org/pltf/edit/master/docs/usage.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="cli-usage">CLI Usage</h1>
+<p>pltf auto-detects whether a spec is an <strong>Environment</strong> or <strong>Service</strong> based on <code>kind</code>. Most commands accept <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, and <code>--var/-v key=value</code>. Profiles (<code>~/.pltf/profile.yaml</code> or <code>PLTF_PROFILE</code>) can set defaults for <code>modules_root</code> and <code>default_env</code>.</p>
+<h2 id="command-catalog">Command catalog</h2>
+<ul>
+<li><code>pltf validate</code> — validate + lint specs.</li>
+<li><code>pltf generate</code> — render Terraform only.</li>
+<li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
+<li><code>pltf terraform plan|apply|destroy|output|force-unlock</code> — generate + run Terraform with standard TF flags.</li>
+<li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
+<li><code>pltf lint</code> — lint only (also run implicitly by validate).</li>
+</ul>
+<h3 id="validate">validate</h3>
+<ul>
+<li><strong>What:</strong> Validate Environment or Service specs; auto-detects kind; runs lint suggestions (labels, unused vars).</li>
+<li><strong>Flags:</strong></li>
+<li><code>--file/-f</code> — Path to the spec (default <code>env.yaml</code>).</li>
+<li><code>--env/-e</code> — Environment key (dev/prod/etc.).</li>
+<li><strong>Example:</strong> <code>pltf validate -f service.yaml -e dev</code></li>
+</ul>
+<h3 id="generate">generate</h3>
+<ul>
+<li><strong>What:</strong> Render Terraform only; no init/apply.</li>
+<li><strong>Flags:</strong></li>
+<li><code>--file/-f</code> — Path to the spec.</li>
+<li><code>--env/-e</code> — Environment key.</li>
+<li><code>--modules/-m</code> — Custom modules root; <code>source: custom</code> resolves here first.</li>
+<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/env/&lt;env&gt;</code> or <code>.pltf/service/&lt;service&gt;/&lt;env&gt;</code>).</li>
+<li><code>--var/-v</code> — CLI var override <code>key=value</code>.</li>
+<li><strong>Example:</strong> <code>pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod</code></li>
+</ul>
+<h3 id="preview">preview</h3>
+<ul>
+<li><strong>What:</strong> Show provider, backend, labels, modules without running Terraform.</li>
+<li><strong>Flags:</strong> <code>--file/-f</code>, <code>--env/-e</code></li>
+<li><strong>Example:</strong> <code>pltf preview -f env.yaml -e prod</code></li>
+</ul>
+<h3 id="terraform-plan">terraform plan</h3>
+<ul>
+<li><strong>What:</strong> Generate + run <code>terraform plan</code> with standard flags.</li>
+<li><strong>Plan flags:</strong></li>
+<li><code>--target/-t</code> — Target address (repeatable).</li>
+<li><code>--parallelism/-p</code> — Max parallel operations.</li>
+<li><code>--lock/-l</code> — Lock state (default true).</li>
+<li><code>--lock-timeout/-T</code> — Lock timeout (e.g., 30s).</li>
+<li><code>--no-color/-C</code> — Disable color output.</li>
+<li><code>--input/-i</code> — Prompt for input (default false).</li>
+<li><code>--refresh/-r</code> — Refresh state before plan (default true).</li>
+<li><code>--detailed-exitcode/-d</code> — Enable TF detailed exit codes.</li>
+<li><code>--plan-file/-P</code> — Write plan to a file.</li>
+<li><strong>Shared flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code></li>
+<li><strong>Example:</strong> <code>pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan</code></li>
+</ul>
+<h3 id="terraform-apply">terraform apply</h3>
+<ul>
+<li><strong>What:</strong> Generate + run <code>terraform apply -auto-approve</code>.</li>
+<li><strong>Flags:</strong> Shared flags (<code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>).</li>
+<li><strong>Example:</strong> <code>pltf terraform apply -f env.yaml -e prod</code></li>
+</ul>
+<h3 id="terraform-destroy">terraform destroy</h3>
+<ul>
+<li><strong>What:</strong> Generate (if needed) + run <code>terraform destroy -auto-approve</code>.</li>
+<li><strong>Flags:</strong> Same as apply.</li>
+<li><strong>Example:</strong> <code>pltf terraform destroy -f env.yaml -e prod</code></li>
+</ul>
+<h3 id="terraform-output">terraform output</h3>
+<ul>
+<li><strong>What:</strong> Show outputs (optionally JSON).</li>
+<li><strong>Flags:</strong> <code>--json/-j</code> (JSON output), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>Example:</strong> <code>pltf terraform output -f service.yaml -e dev --json</code></li>
+</ul>
+<h3 id="terraform-force-unlock">terraform force-unlock</h3>
+<ul>
+<li><strong>What:</strong> Force unlock state.</li>
+<li><strong>Flags:</strong> <code>--lock-id</code> (required), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>Example:</strong> <code>pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345</code></li>
+</ul>
+<h3 id="module-list">module list</h3>
+<ul>
+<li><strong>What:</strong> List module inventory from embedded/custom roots.</li>
+<li><strong>Flags:</strong> <code>--modules/-m</code> (modules root), <code>--output/-o</code> (<code>table|json|yaml</code>)</li>
+<li><strong>Example:</strong> <code>pltf module list -m ./modules -o json</code></li>
+</ul>
+<h3 id="module-get">module get</h3>
+<ul>
+<li><strong>What:</strong> Show module details (inputs/outputs).</li>
+<li><strong>Flags:</strong> Same as module list.</li>
+<li><strong>Example:</strong> <code>pltf module get aws_eks -m ./modules</code></li>
+</ul>
+<h3 id="module-init">module init</h3>
+<ul>
+<li><strong>What:</strong> Generate <code>module.yaml</code> from an existing Terraform module dir.</li>
+<li><strong>Flags:</strong> <code>--path</code> (module dir), <code>--name</code>, <code>--type</code>, <code>--description</code>, <code>--out</code>, <code>--force</code> (overwrite)</li>
+<li><strong>Example:</strong> <code>pltf module init --path ./modules/aws_eks --force</code></li>
+</ul>
+<h2 id="validate-lint">Validate + Lint</h2>
+<p>Structural validation plus lint suggestions (labels, unused vars).</p>
+<pre><code class="language-bash">pltf validate -f env.yaml -e prod
+pltf validate -f service.yaml -e dev
+</code></pre>
+<h2 id="generate_1">Generate</h2>
+<p>Render Terraform without running it.</p>
+<pre><code class="language-bash">pltf generate -f env.yaml -e dev
+pltf generate -f service.yaml -e prod -o .pltf/service/prod
+pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
+</code></pre>
+<p>Flags:
+- <code>--modules/-m</code> custom modules root. Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
+- <code>--out/-o</code> output dir (defaults <code>.pltf/env/&lt;env&gt;</code> or <code>.pltf/service/&lt;service&gt;/&lt;env&gt;</code>).
+- <code>--var/-v</code> merges vars (env vars → service envRef vars → CLI vars).</p>
+<h2 id="terraform-helpers">Terraform helpers</h2>
+<p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF.</p>
+<pre><code class="language-bash">pltf terraform plan    -f service.yaml -e dev    # plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)
+pltf terraform apply   -f env.yaml    -e prod    # apply
+pltf terraform destroy -f env.yaml    -e prod    # destroy
+pltf terraform output  -f service.yaml -e dev    # outputs (--json supported)
+pltf terraform force-unlock -f env.yaml -e prod --lock-id=&lt;id&gt;
+</code></pre>
+<p>Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--lock/-l</code>, <code>--lock-timeout/-T</code>, <code>--no-color/-C</code>, <code>--input/-i</code>, <code>--refresh/-r</code>, <code>--plan-file/-P</code>, <code>--detailed-exitcode/-d</code>, <code>--json/-j</code>.</p>
+<h2 id="preview_1">Preview</h2>
+<p>Quick summary (provider, backend, labels, modules) without TF.</p>
+<pre><code class="language-bash">pltf preview -f env.yaml -e prod
+</code></pre>
+<h2 id="module-inventory">Module inventory</h2>
+<pre><code class="language-bash">pltf module list [-m ./modules] [-o table|json|yaml]
+pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
+pltf module init --path ./modules/aws_eks [--force]
+</code></pre>
+<h2 id="custom-backends">Custom backends</h2>
+<p>In env spec <code>backend.type</code> can be <code>s3|gcs|azurerm</code> regardless of provider. Optional <code>region</code>, <code>container</code>, <code>resource_group</code>, <code>profile</code> (S3) supported.</p>
+<h2 id="custom-modules">Custom modules</h2>
+<ul>
+<li>Mark a module with <code>source: custom</code> to force lookup in your custom modules root.</li>
+<li>Provide a custom root via <code>--modules</code> or profile <code>modules_root</code>; embedded modules remain available for everything else.</li>
+<li>Generate module.yaml for your own TF module with <code>pltf module init --path &lt;module_dir&gt; [--force]</code>.</li>
+</ul>
+<h2 id="environment-defaults">Environment defaults</h2>
+<p><code>PLTF_DEFAULT_ENV</code> or profile <code>default_env</code> let you omit <code>--env</code> when only one environment applies.</p>
+<h2 id="completions">Completions</h2>
+<pre><code class="language-bash">pltf completion bash|zsh|fish|powershell
+</code></pre>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../platform/" class="btn btn-neutral float-left" title="Platform Usage"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../features/" class="btn btn-neutral float-right" title="Overview">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../platform/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../features/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "..";</script>
+    <script src="../js/theme_extra.js"></script>
+    <script src="../js/theme.js"></script>
+      <script src="../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>

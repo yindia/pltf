@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="shortcut icon" href="../../../img/favicon.ico" />
+    <title>aws_redis - PLTF CLI Documentation</title>
+    <link rel="stylesheet" href="../../../css/theme.css" />
+    <link rel="stylesheet" href="../../../css/theme_extra.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" />
+    
+      <script>
+        // Current page data
+        var mkdocs_page_name = "aws_redis";
+        var mkdocs_page_input_path = "references/modules/aws_redis.md";
+        var mkdocs_page_url = null;
+      </script>
+    
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+      <script>hljs.highlightAll();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+          <a href="../../.." class="icon icon-home"> PLTF CLI Documentation
+        </a><div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../..">Home</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../installation/">Installation</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
+                </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Getting Started</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../getting-started/aws/">AWS</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Platform</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" >Concepts</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../../concepts/overview/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../concepts/environment/">Environment</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../concepts/module/">Module</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../concepts/layer/">Layer</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../platform/">Platform Usage</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../usage/">CLI Reference</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" >Features</a>
+    <ul>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/">Overview</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/profiles/">Profiles & Defaults</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/validation/">Validation & Lint</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/backends/">Backends</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/custom-modules/">Custom Modules</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/placeholders/">Placeholders & Wiring</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/secrets/">Secrets</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/variables/">Variables</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../../features/telemetry/">Telemetry</a>
+                </li>
+    </ul>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../specs/">Spec Guide</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../modules/">Modules & Wiring</a>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">References</span></p>
+              <ul class="current">
+                  <li class="toctree-l1 current"><a class="reference internal current" >AWS</a>
+    <ul class="current">
+                <li class="toctree-l2"><a class="reference internal" href="../../aws/">Overview</a>
+                </li>
+                <li class="toctree-l2 current"><a class="reference internal current" >Modules</a>
+    <ul class="current">
+                <li class="toctree-l3"><a class="reference internal" href="../aws_base/">aws_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_dns/">aws_dns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_documentdb/">aws_documentdb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_dynamodb/">aws_dynamodb</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_eks/">aws_eks</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_iam_policy/">aws_iam_policy</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_iam_role/">aws_iam_role</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_iam_user/">aws_iam_user</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_k8s_base/">aws_k8s_base</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_k8s_service/">aws_k8s_service</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_mysql/">aws_mysql</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_nodegroup/">aws_nodegroup</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_postgres/">aws_postgres</a>
+                </li>
+                <li class="toctree-l3 current"><a class="reference internal current" href="#">aws_redis</a>
+    <ul class="current">
+    <li class="toctree-l4"><a class="reference internal" href="#what-it-does">What it does</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#fields">Fields</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#outputs">Outputs</a>
+    </li>
+    </ul>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_s3/">aws_s3</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_ses/">aws_ses</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_sns/">aws_sns</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../aws_sqs/">aws_sqs</a>
+                </li>
+                <li class="toctree-l3"><a class="reference internal" href="../cloudfront_distribution/">cloudfront_distribution</a>
+                </li>
+    </ul>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../aws_eks_access/">EKS Access</a>
+                </li>
+                <li class="toctree-l2"><a class="reference internal" href="../../aws_eks_upgrade/">EKS Upgrade</a>
+                </li>
+    </ul>
+                  </li>
+              </ul>
+              <p class="caption"><span class="caption-text">Security</span></p>
+              <ul>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../security/aws/">AWS Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../security/kubernetes/">Kubernetes Architecture</a>
+                  </li>
+                  <li class="toctree-l1"><a class="reference internal" href="../../../security/compliance/">Compliance</a>
+                  </li>
+              </ul>
+              <ul>
+                <li class="toctree-l1"><a class="reference internal" href="../../../faq/">FAQ</a>
+                </li>
+              </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+      <nav class="wy-nav-top" role="navigation" aria-label="Mobile navigation menu">
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../..">PLTF CLI Documentation</a>
+        
+      </nav>
+      <div class="wy-nav-content">
+        <div class="rst-content"><div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../.." class="icon icon-home" aria-label="Docs"></a></li>
+          <li class="breadcrumb-item">References</li>
+          <li class="breadcrumb-item">AWS</li>
+          <li class="breadcrumb-item">Modules</li>
+      <li class="breadcrumb-item active">aws_redis</li>
+    <li class="wy-breadcrumbs-aside">
+          <a href="https://github.com/your-org/pltf/edit/master/docs/references/modules/aws_redis.md" class="icon icon-github"> Edit on GitHub</a>
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+            <div class="section" itemprop="articleBody">
+              
+                <h1 id="aws_redis">aws_redis</h1>
+<p>Provisions ElastiCache Redis with subnet group, encryption in-transit/at-rest, and parameter options.</p>
+<h2 id="what-it-does">What it does</h2>
+<ul>
+<li>Deploys ElastiCache Redis cluster/subnet group with in-transit/at-rest encryption.</li>
+<li>Configurable engine version, node class, cluster size, and parameter family.</li>
+<li>Outputs cache endpoints and security group details.</li>
+</ul>
+<h2 id="fields">Fields</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Default</th>
+<th>Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>node_type</td>
+<td></td>
+<td>cache.m4.large</td>
+<td>False</td>
+</tr>
+<tr>
+<td>redis_version</td>
+<td></td>
+<td>6.x</td>
+<td>False</td>
+</tr>
+<tr>
+<td>snapshot_retention_limit</td>
+<td>Days for which the Snapshot should be retained.</td>
+<td>0</td>
+<td>False</td>
+</tr>
+<tr>
+<td>snapshot_window</td>
+<td>When should the Snapshot for redis cache be done. UTC Time. Snapshot Retention Limit should be set to more than 0.</td>
+<td>04:00-05:00</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+<h2 id="outputs">Outputs</h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cache_auth_token</td>
+<td></td>
+</tr>
+<tr>
+<td>cache_host</td>
+<td>Redis host.</td>
+</tr>
+</tbody>
+</table>
+              
+            </div>
+          </div><footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="Footer Navigation">
+        <a href="../aws_postgres/" class="btn btn-neutral float-left" title="aws_postgres"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+        <a href="../aws_s3/" class="btn btn-neutral float-right" title="aws_s3">Next <span class="icon icon-circle-arrow-right"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+          
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="Versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+        <span>
+          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+        </span>
+    
+    
+      <span><a href="../aws_postgres/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../aws_s3/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script src="../../../js/jquery-3.6.0.min.js"></script>
+    <script>var base_url = "../../..";</script>
+    <script src="../../../js/theme_extra.js"></script>
+    <script src="../../../js/theme.js"></script>
+      <script src="../../../search/main.js"></script>
+    <script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+
+</body>
+</html>
