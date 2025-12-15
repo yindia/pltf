@@ -1,5 +1,6 @@
-pltf CLI 🚀
-===========
+pltf CLI 🚀  
+The next generation of Infrastructure-as-Code: high-level constructs, less low-level cloud yak-shaving.
+===============================================================================================
 
 What It Does
 ------------
