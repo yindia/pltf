@@ -14,6 +14,9 @@ variable "module_name" {
 }
 
 variable "iam_policy" {
+  description = "iam policy"
+  type        = any
+  default     = null
 }
 
 variable "extra_iam_policies" {
@@ -22,5 +25,7 @@ variable "extra_iam_policies" {
 }
 
 variable "links" {
-  default = []
+  description = "Links for module"
+  type        = any
+  default     = []
 }

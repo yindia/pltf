@@ -8,7 +8,7 @@ resource "helm_release" "remote_chart" {
   cleanup_on_fail   = var.cleanup_on_fail
   namespace         = var.namespace
   create_namespace  = var.create_namespace
-  values            = var.values_files == [] ? [yamlencode(var.values)] : concat(local.values_from_files, [yamlencode(var.values)])
+  values            = length(var.values_files) == 0 ? [yamlencode(var.values)] : concat(local.values_from_files, [yamlencode(var.values)])
   timeout           = var.timeout
   dependency_update = var.dependency_update
   wait              = var.wait
@@ -28,7 +28,7 @@ resource "helm_release" "local_chart" {
   cleanup_on_fail   = var.cleanup_on_fail
   namespace         = var.namespace
   create_namespace  = var.create_namespace
-  values            = var.values_files == [] ? [yamlencode(var.values)] : concat(local.values_from_files, [yamlencode(var.values)])
+  values            = length(var.values_files) == 0 ? [yamlencode(var.values)] : concat(local.values_from_files, [yamlencode(var.values)])
   timeout           = var.timeout
   dependency_update = var.dependency_update
   max_history       = var.max_history

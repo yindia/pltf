@@ -29,6 +29,9 @@ variable "allowed_iams" {
 }
 
 variable "iam_policy" {
+  description = "iam policy"
+  type        = any
+  default     = null
 }
 
 variable "extra_iam_policies" {
@@ -37,9 +40,13 @@ variable "extra_iam_policies" {
 }
 
 variable "allowed_k8s_services" {
+  description = "allowed kubernetes services"
+  type        = any
   default = []
 }
 
 variable "links" {
-  default = []
+  description = "Links for module"
+  type        = any
+  default     = []
 }

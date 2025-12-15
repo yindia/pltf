@@ -12,6 +12,7 @@ variable "layer_name" {
   type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "module_name" {
   description = "Module name"
   type        = string

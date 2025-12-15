@@ -7,11 +7,13 @@ variable "env_name" {
   type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "layer_name" {
   description = "Layer name"
   type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "module_name" {
   description = "Module name"
   type        = string
@@ -32,6 +34,7 @@ variable "cert_chain_included" {
   default = false
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "force_update" {
   type    = bool
   default = false

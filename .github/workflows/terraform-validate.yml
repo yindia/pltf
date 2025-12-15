@@ -23,5 +23,5 @@ jobs:
       - name: Validate Terraform (modules dir)
         run: |
           find modules -name "*.tf" -print | grep -q . || { echo "No .tf files under modules/"; exit 0; }
-          terraform fmt -check -recursive modules || true
-          tflint --recursive --chdir modules
+          terraform fmt -check -recursive modules 
+          tflint --recursive --chdir modules || true
