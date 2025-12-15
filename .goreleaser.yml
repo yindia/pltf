@@ -30,13 +30,13 @@ checksum:
 
 brews:
   - ids: [pltf]
-    homepage: "https://github.com/{{ .Env.GITHUB_OWNER }}/{{ .Env.GITHUB_REPO }}"
+    homepage: "https://github.com/yindia/pltf"
     description: "pltf CLI turns Environment and Service YAML into validated Terraform."
     license: "MIT"
     directory: Formula
     repository:
-      owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
-      name: "{{ .Env.HOMEBREW_TAP_REPO }}"
+      owner: "yindia"
+      name: "pltf"
     test: |
       system "#{bin}/pltf", "--help"
     install: |
