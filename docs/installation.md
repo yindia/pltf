@@ -2,15 +2,15 @@
 
 ## Homebrew (macOS/Linux)
 ```bash
-brew tap evalsocket1/pltf
+brew tap yindia/pltf
 brew install pltf
 ```
 
-If you previously tapped another repo, run `brew untap <old>` before tapping `evalsocket1/pltf`.
+If you previously tapped another repo, run `brew untap <old>` before tapping `yindia/pltf`.
 
 ## Install script (macOS/Linux/Windows via WSL or Git Bash)
 ```bash
-curl -sSL https://raw.githubusercontent.com/evalsocket1/pltf/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh | bash
 ```
 Environment overrides:
 - `REPO_OWNER` / `REPO_NAME` to point at a fork

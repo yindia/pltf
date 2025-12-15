@@ -12,7 +12,7 @@ This guide walks through provisioning a simple environment and service on AWS us
 
 Install pltf (Homebrew):
 ```bash
-brew tap evalsocket1/pltf
+brew tap yindia/pltf
 brew install pltf
 ```
 Or use the install script:

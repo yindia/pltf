@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_OWNER="${REPO_OWNER:-${GITHUB_OWNER:-evalsocket1}}"
+REPO_OWNER="${REPO_OWNER:-${GITHUB_OWNER:-yindia}}"
 REPO_NAME="${REPO_NAME:-${GITHUB_REPO:-pltf}}"
 VERSION="${VERSION:-latest}"
 DEST="${DEST:-/usr/local/bin}"
