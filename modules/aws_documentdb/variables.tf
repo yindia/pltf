@@ -47,10 +47,10 @@ variable "deletion_protection" {
 }
 
 variable "documentdb_aws_security_group" {
-   type    = string
+  type = string
 }
 
 variable "kms_key_alias" {
-   type    = string
+  type = string
 }
 
