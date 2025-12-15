@@ -18,7 +18,7 @@ builds:
       - "-s -w"
 
 archives:
-  - id: pltf-archive
+  - id: pltf
     builds: [pltf]
     format_overrides:
       - goos: windows
@@ -29,11 +29,11 @@ checksum:
   name_template: "checksums.txt"
 
 brews:
-  - name: pltf
-    builds: [pltf]
+  - ids: [pltf]
     homepage: "https://github.com/{{ .Env.GITHUB_OWNER }}/{{ .Env.GITHUB_REPO }}"
     description: "pltf CLI turns Environment and Service YAML into validated Terraform."
     license: "MIT"
+    directory: Formula
     repository:
       owner: "{{ .Env.HOMEBREW_TAP_OWNER }}"
       name: "{{ .Env.HOMEBREW_TAP_REPO }}"
