@@ -1,5 +1,7 @@
 # AWS Reference
 
+The next generation of Infrastructure-as-Code: work with high-level constructs instead of getting lost in low-level cloud configuration. Status: active development; review generated code before applying.
+
 AWS is fully supported for environments, services, and modules. This page summarizes how the AWS provider, backends, and module wiring work in pltf.
 
 ![AWS](../images/hero.png) <!-- Replace with an AWS-specific image if desired -->
