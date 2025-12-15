@@ -1,5 +1,7 @@
 # pltf
 
+The next generation of Infrastructure-as-Code: work with high-level constructs instead of getting lost in low-level cloud configuration.
+
 pltf is a higher-level Infrastructure-as-Code framework. Instead of hand-crafting low-level cloud config, you describe **environments** and **services** in concise YAML. pltf turns those high-level constructs into Terraform so you keep full portability—generate the code, extend it, or take it with you.
 
 ![Architecture](images/hero.png) <!-- Replace with your downloaded image -->
@@ -9,6 +11,8 @@ Infrastructure-as-code is essential, but working directly with low-level cloud a
 
 ## How It Works
 With pltf you write configuration files and run the CLI (locally or in CI/CD). The CLI connects to your cloud, renders Terraform (providers/backends/locals/remote state), and can execute Terraform for you.
+
+> Status: active development, not yet production-hardened. Pin versions and review generated code before applying.
 
 There are two primary spec types:
 
@@ -27,7 +31,7 @@ Environment and service specs are linked via `metadata.ref` and `envRef`.
 
 ## Next Steps
 - Follow [Getting Started](getting-started/aws.md).
-- Explore examples (coming soon).
+- Explore repo examples (`example/env.yaml`, `example/service.yaml`).
 - Review [Security](security/aws.md).
 
 ## Quick Links

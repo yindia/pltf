@@ -10,7 +10,7 @@ If you previously tapped another repo, run `brew untap <old>` before tapping `yi
 
 ## Install script (macOS/Linux/Windows via WSL or Git Bash)
 ```bash
-curl -sSL https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh | sh
 ```
 Environment overrides:
 - `REPO_OWNER` / `REPO_NAME` to point at a fork

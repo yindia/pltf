@@ -1,12 +1,11 @@
 site_name: PLTF CLI Documentation
-repo_url: https://github.com/your-org/pltf
+repo_url: https://github.com/yindia/pltf
 theme:
   name: readthedocs
 nav:
   - Home: index.md
   - Installation: installation.md
-  - GitHub: https://github.com/your-org/pltf
-  - Slack: https://slack.com/your-workspace
+  - GitHub: https://github.com/yindia/pltf
   - Getting Started:
       - AWS: getting-started/aws.md
   - Platform:

@@ -6,7 +6,7 @@ pltf auto-detects whether a spec is an **Environment** or **Service** based on `
 - `pltf validate` — validate + lint specs.
 - `pltf generate` — render Terraform only.
 - `pltf preview` — summarize provider/backend/labels/modules.
-- `pltf terraform plan|apply|destroy|output|force-unlock` — generate + run Terraform with standard TF flags.
+- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform with standard TF flags.
 - `pltf module list|get|init` — module inventory and metadata generation.
 - `pltf lint` — lint only (also run implicitly by validate).
 
@@ -23,7 +23,7 @@ pltf auto-detects whether a spec is an **Environment** or **Service** based on `
   - `--file/-f` — Path to the spec.
   - `--env/-e` — Environment key.
   - `--modules/-m` — Custom modules root; `source: custom` resolves here first.
-  - `--out/-o` — Output dir (defaults to `.pltf/env/<env>` or `.pltf/service/<service>/<env>`).
+  - `--out/-o` — Output dir (defaults to `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`).
   - `--var/-v` — CLI var override `key=value`.
 - **Example:** `pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod`
 
@@ -67,6 +67,11 @@ pltf auto-detects whether a spec is an **Environment** or **Service** based on `
 - **Flags:** `--lock-id` (required), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
 - **Example:** `pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345`
 
+### terraform graph
+- **What:** Emit DOT graph. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only.
+- **Flags:** `--mode terraform|spec` (default terraform), `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
+- **Example:** `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
+
 ### module list
 - **What:** List module inventory from embedded/custom roots.
 - **Flags:** `--modules/-m` (modules root), `--output/-o` (`table|json|yaml`)
@@ -90,7 +95,7 @@ pltf validate -f service.yaml -e dev
 ```
 
 ## Generate
-Render Terraform without running it.
+Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.
 ```bash
 pltf generate -f env.yaml -e dev
 pltf generate -f service.yaml -e prod -o .pltf/service/prod
@@ -98,7 +103,7 @@ pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
 ```
 Flags:
 - `--modules/-m` custom modules root. Modules with `source: custom` are resolved only from the custom root; others fall back to embedded modules.
-- `--out/-o` output dir (defaults `.pltf/env/<env>` or `.pltf/service/<service>/<env>`).
+- `--out/-o` output dir (defaults `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`).
 - `--var/-v` merges vars (env vars → service envRef vars → CLI vars).
 
 ## Terraform helpers
