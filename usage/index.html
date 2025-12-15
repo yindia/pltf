@@ -48,11 +48,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                <li class="toctree-l1"><a class="" href="https://github.com/yindia/pltf">GitHub</a>
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Getting Started</span></p>
@@ -95,6 +91,8 @@
     <li class="toctree-l3"><a class="reference internal" href="#terraform-output">terraform output</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#terraform-force-unlock">terraform force-unlock</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#terraform-graph">terraform graph</a>
     </li>
     <li class="toctree-l3"><a class="reference internal" href="#module-list">module list</a>
     </li>
@@ -236,7 +234,7 @@
           <li class="breadcrumb-item">Platform</li>
       <li class="breadcrumb-item active">CLI Reference</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/your-org/pltf/edit/master/docs/usage.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/yindia/pltf/edit/master/docs/usage.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -251,7 +249,7 @@
 <li><code>pltf validate</code> — validate + lint specs.</li>
 <li><code>pltf generate</code> — render Terraform only.</li>
 <li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
-<li><code>pltf terraform plan|apply|destroy|output|force-unlock</code> — generate + run Terraform with standard TF flags.</li>
+<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform with standard TF flags.</li>
 <li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
 <li><code>pltf lint</code> — lint only (also run implicitly by validate).</li>
 </ul>
@@ -270,7 +268,7 @@
 <li><code>--file/-f</code> — Path to the spec.</li>
 <li><code>--env/-e</code> — Environment key.</li>
 <li><code>--modules/-m</code> — Custom modules root; <code>source: custom</code> resolves here first.</li>
-<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/env/&lt;env&gt;</code> or <code>.pltf/service/&lt;service&gt;/&lt;env&gt;</code>).</li>
+<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>).</li>
 <li><code>--var/-v</code> — CLI var override <code>key=value</code>.</li>
 <li><strong>Example:</strong> <code>pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod</code></li>
 </ul>
@@ -320,6 +318,12 @@
 <li><strong>Flags:</strong> <code>--lock-id</code> (required), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
 <li><strong>Example:</strong> <code>pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345</code></li>
 </ul>
+<h3 id="terraform-graph">terraform graph</h3>
+<ul>
+<li><strong>What:</strong> Emit DOT graph. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only.</li>
+<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>Example:</strong> <code>pltf terraform graph -f env.yaml -e dev | dot -Tpng &gt; graph.png</code></li>
+</ul>
 <h3 id="module-list">module list</h3>
 <ul>
 <li><strong>What:</strong> List module inventory from embedded/custom roots.</li>
@@ -344,14 +348,14 @@
 pltf validate -f service.yaml -e dev
 </code></pre>
 <h2 id="generate_1">Generate</h2>
-<p>Render Terraform without running it.</p>
+<p>Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.</p>
 <pre><code class="language-bash">pltf generate -f env.yaml -e dev
 pltf generate -f service.yaml -e prod -o .pltf/service/prod
 pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
 </code></pre>
 <p>Flags:
 - <code>--modules/-m</code> custom modules root. Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
-- <code>--out/-o</code> output dir (defaults <code>.pltf/env/&lt;env&gt;</code> or <code>.pltf/service/&lt;service&gt;/&lt;env&gt;</code>).
+- <code>--out/-o</code> output dir (defaults <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>).
 - <code>--var/-v</code> merges vars (env vars → service envRef vars → CLI vars).</p>
 <h2 id="terraform-helpers">Terraform helpers</h2>
 <p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF.</p>
@@ -412,7 +416,7 @@ pltf module init --path ./modules/aws_eks [--force]
   <span class="rst-current-version" data-toggle="rst-current-version">
     
         <span>
-          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/yindia/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
         </span>
     
     

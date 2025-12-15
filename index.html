@@ -60,11 +60,7 @@
                 </li>
               </ul>
               <ul>
-                <li class="toctree-l1"><a class="" href="https://github.com/your-org/pltf">GitHub</a>
-                </li>
-              </ul>
-              <ul>
-                <li class="toctree-l1"><a class="" href="https://slack.com/your-workspace">Slack</a>
+                <li class="toctree-l1"><a class="" href="https://github.com/yindia/pltf">GitHub</a>
                 </li>
               </ul>
               <p class="caption"><span class="caption-text">Getting Started</span></p>
@@ -201,7 +197,7 @@
     <li><a href="." class="icon icon-home" aria-label="Docs"></a></li>
       <li class="breadcrumb-item active">Home</li>
     <li class="wy-breadcrumbs-aside">
-          <a href="https://github.com/your-org/pltf/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
+          <a href="https://github.com/yindia/pltf/edit/master/docs/index.md" class="icon icon-github"> Edit on GitHub</a>
     </li>
   </ul>
   <hr/>
@@ -210,12 +206,16 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="pltf">pltf</h1>
+<p>The next generation of Infrastructure-as-Code: work with high-level constructs instead of getting lost in low-level cloud configuration.</p>
 <p>pltf is a higher-level Infrastructure-as-Code framework. Instead of hand-crafting low-level cloud config, you describe <strong>environments</strong> and <strong>services</strong> in concise YAML. pltf turns those high-level constructs into Terraform so you keep full portability—generate the code, extend it, or take it with you.</p>
 <p><img alt="Architecture" src="images/hero.png" /> <!-- Replace with your downloaded image --></p>
 <h2 id="why-pltf">Why pltf</h2>
 <p>Infrastructure-as-code is essential, but working directly with low-level cloud and Terraform can be complex. pltf bakes in cloud/IaC best practices so you can set up automated, scalable, and secure infrastructure quickly—without being a full-time DevOps engineer. Because pltf emits Terraform, you avoid lock-in and can extend or own the generated code at any time.</p>
 <h2 id="how-it-works">How It Works</h2>
 <p>With pltf you write configuration files and run the CLI (locally or in CI/CD). The CLI connects to your cloud, renders Terraform (providers/backends/locals/remote state), and can execute Terraform for you.</p>
+<blockquote>
+<p>Status: active development, not yet production-hardened. Pin versions and review generated code before applying.</p>
+</blockquote>
 <p>There are two primary spec types:</p>
 <ul>
 <li><strong>Environment</strong>: defines cloud/provider, account, region, backend, and shared modules (clusters, networks, IAM, ingress, etc.). You might have one per staging/prod/QA, or per engineer/PR for isolated sandboxes.</li>
@@ -234,7 +234,7 @@
 <h2 id="next-steps">Next Steps</h2>
 <ul>
 <li>Follow <a href="getting-started/aws/">Getting Started</a>.</li>
-<li>Explore examples (coming soon).</li>
+<li>Explore repo examples (<code>example/env.yaml</code>, <code>example/service.yaml</code>).</li>
 <li>Review <a href="security/aws/">Security</a>.</li>
 </ul>
 <h2 id="quick-links">Quick Links</h2>
@@ -275,7 +275,7 @@
   <span class="rst-current-version" data-toggle="rst-current-version">
     
         <span>
-          <a href="https://github.com/your-org/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
+          <a href="https://github.com/yindia/pltf" class="fa fa-github" style="color: #fcfcfc"> GitHub</a>
         </span>
     
     
@@ -300,5 +300,5 @@
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-12-15 12:53:27.728538+00:00
+Build Date UTC : 2025-12-15 13:02:53.272041+00:00
 -->
