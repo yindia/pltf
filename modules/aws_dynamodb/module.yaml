@@ -1,0 +1,49 @@
+name: aws_dynamodb
+type: aws_dynamodb
+provider: aws
+version: 1.0.0
+inputs:
+    - name: attributes
+      required: true
+      type: list(map(string))
+    - default: PROVISIONED
+      name: billing_mode
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: ""
+      name: hash_key
+      required: false
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: null
+      name: range_key
+      required: false
+      type: string
+    - default: 20
+      name: read_capacity
+      required: false
+      type: number
+    - default: 20
+      name: write_capacity
+      required: false
+      type: number
+outputs:
+    - name: kms_arn
+      type: string
+    - name: kms_id
+      type: string
+    - name: table_arn
+      type: string
+    - name: table_id
+      type: string

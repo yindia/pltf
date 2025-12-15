@@ -1,0 +1,78 @@
+name: helm_chart
+type: helm_chart
+provider: helm
+version: 1.0.0
+inputs:
+    - default: true
+      name: atomic
+      required: false
+      type: bool
+    - name: chart
+      required: true
+      type: string
+    - default: null
+      name: chart_version
+      required: false
+      type: string
+    - default: true
+      name: cleanup_on_fail
+      required: false
+      type: bool
+    - default: false
+      name: create_namespace
+      required: false
+      type: bool
+    - default: true
+      name: dependency_update
+      required: false
+      type: bool
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 20
+      name: max_history
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: default
+      name: namespace
+      required: false
+      type: string
+    - default: null
+      name: release_name
+      required: false
+    - default: null
+      name: repository
+      required: false
+      type: string
+    - default: 300
+      name: timeout
+      required: false
+      type: number
+    - default: {}
+      name: values
+      required: false
+    - default: null
+      name: values_file
+      required: false
+      type: string
+    - default: []
+      name: values_files
+      required: false
+      type: list(string)
+    - default: true
+      name: wait
+      required: false
+      type: bool
+    - default: false
+      name: wait_for_jobs
+      required: false
+      type: bool

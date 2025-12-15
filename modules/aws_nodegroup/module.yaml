@@ -1,0 +1,59 @@
+name: aws_nodegroup
+type: aws_nodegroup
+provider: aws
+version: 1.0.0
+inputs:
+    - default: AL2023_x86_64_STANDARD
+      name: ami_type
+      required: false
+      type: string
+    - default: {}
+      name: autoscaling_tags
+      required: false
+      type: map(string)
+    - name: k8s_cluster_name
+      required: true
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: {}
+      name: labels
+      required: false
+      type: map(string)
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 15
+      name: max_nodes
+      required: false
+      type: number
+    - default: 3
+      name: min_nodes
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 20
+      name: node_disk_size
+      required: false
+      type: number
+    - default: t3.medium
+      name: node_instance_type
+      required: false
+      type: string
+    - default: false
+      name: spot_instances
+      required: false
+      type: bool
+    - default: []
+      name: taints
+      required: false
+      type: list(map(string))
+    - default: false
+      name: use_gpu
+      required: false
+      type: bool

@@ -1,0 +1,88 @@
+name: aws_eks
+type: aws_eks
+provider: aws
+version: 1.0.0
+inputs:
+    - default: AL2023_x86_64_STANDARD
+      name: ami_type
+      required: false
+      type: string
+    - name: cluster_name
+      required: true
+      type: string
+    - default: []
+      description: List of security groups to give control plane access to
+      name: control_plane_security_groups
+      required: false
+      type: list(string)
+    - default: 7
+      name: eks_log_retention
+      required: false
+      type: number
+    - name: enable_metrics
+      required: true
+      type: bool
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: "1.21"
+      name: k8s_version
+      required: false
+      type: string
+    - name: kms_account_key_arn
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 5
+      name: max_nodes
+      required: false
+      type: number
+    - default: 3
+      name: min_nodes
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 20
+      name: node_disk_size
+      required: false
+      type: number
+    - default: t3.medium
+      name: node_instance_type
+      required: false
+      type: string
+    - default: {}
+      name: node_launch_template
+      required: false
+      type: map(string)
+    - name: private_subnet_ids
+      required: true
+      type: list(string)
+    - default: false
+      name: spot_instances
+      required: false
+      type: bool
+    - name: vpc_id
+      required: true
+      type: string
+outputs:
+    - name: k8s_ca_data
+      type: string
+    - name: k8s_cluster_name
+      type: string
+    - name: k8s_endpoint
+      type: string
+    - name: k8s_node_group_security_id
+      type: string
+    - name: k8s_openid_provider_arn
+      type: string
+    - name: k8s_openid_provider_url
+      type: string
+    - name: k8s_version
+      type: string

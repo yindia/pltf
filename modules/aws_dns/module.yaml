@@ -1,0 +1,49 @@
+name: aws_dns
+type: aws_dns
+provider: aws
+version: 1.0.0
+inputs:
+    - default: false
+      name: cert_chain_included
+      required: false
+      type: bool
+    - default: false
+      name: delegated
+      required: false
+      type: bool
+    - name: domain
+      required: true
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: ""
+      name: external_cert_arn
+      required: false
+      type: string
+    - default: false
+      name: force_update
+      required: false
+      type: bool
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: false
+      name: upload_cert
+      required: false
+      type: bool
+outputs:
+    - name: cert_arn
+      type: string
+    - name: domain
+      type: string
+    - name: name_servers
+      type: string
+    - name: zone_id
+      type: string

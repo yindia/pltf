@@ -1,0 +1,46 @@
+name: aws_redis
+type: aws_redis
+provider: aws
+version: 1.0.0
+inputs:
+    - name: elasticache_aws_security_group
+      required: true
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - name: kms_key_alias
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: cache.m4.large
+      name: node_type
+      required: false
+      type: string
+    - default: 6.x
+      name: redis_version
+      required: false
+      type: string
+    - default: 0
+      description: Days for which the Snapshot should be retained.
+      name: snapshot_retention_limit
+      required: false
+      type: number
+    - default: 04:00-05:00
+      description: When should the Snapshot for redis cache be done. UTC Time. Snapshot Retention Limit should be set to more than 0.
+      name: snapshot_window
+      required: false
+      type: string
+outputs:
+    - name: cache_auth_token
+      type: string
+    - name: cache_host
+      type: string

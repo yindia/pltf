@@ -1,0 +1,34 @@
+name: aws_sns
+type: aws_sns
+provider: aws
+version: 1.0.0
+inputs:
+    - default: false
+      name: content_based_deduplication
+      required: false
+      type: bool
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: false
+      name: fifo
+      required: false
+      type: bool
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: []
+      name: sqs_subscribers
+      required: false
+      type: list(string)
+outputs:
+    - name: kms_arn
+      type: string
+    - name: topic_arn
+      type: string

@@ -1,0 +1,80 @@
+name: aws_base
+type: aws_base
+provider: aws
+version: 1.0.0
+inputs:
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default:
+        - 10.0.128.0/21
+        - 10.0.136.0/21
+        - 10.0.144.0/21
+      description: Cidr blocks for private subnets. One for each desired AZ
+      name: private_ipv4_cidr_blocks
+      required: false
+      type: list(string)
+    - default: null
+      description: List of pre-existing private subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.
+      name: private_subnet_ids
+      required: false
+      type: list(string)
+    - default:
+        - 10.0.0.0/21
+        - 10.0.8.0/21
+        - 10.0.16.0/21
+      description: Cidr blocks for public subnets. One for each desired AZ
+      name: public_ipv4_cidr_blocks
+      required: false
+      type: list(string)
+    - default: null
+      description: List of pre-existing public subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.
+      name: public_subnet_ids
+      required: false
+      type: list(string)
+    - default: 10.0.0.0/16
+      description: Cidr block to reserve for whole vpc
+      name: total_ipv4_cidr_block
+      required: false
+      type: string
+    - default: null
+      description: The ID of an pre-existing VPC to use instead of creating a new VPC for pltf
+      name: vpc_id
+      required: false
+      type: string
+    - default: 90
+      name: vpc_log_retention
+      required: false
+      type: number
+outputs:
+    - name: db_aws_security_group
+      type: string
+    - name: documentdb_aws_security_group
+      type: string
+    - name: elasticache_aws_security_group
+      type: string
+    - name: kms_account_key_arn
+      type: string
+    - name: kms_account_key_id
+      type: string
+    - name: kms_key_alias
+      type: string
+    - name: private_subnet_ids
+      type: string
+    - name: public_nat_ips
+      type: string
+    - name: public_subnets_ids
+      type: string
+    - name: s3_log_bucket_name
+      type: string
+    - name: vpc_id
+      type: string

@@ -1,0 +1,57 @@
+name: aws_documentdb
+type: aws_documentdb
+provider: aws
+version: 1.0.0
+inputs:
+    - default: false
+      description: A value that indicates whether the DB cluster has deletion protection enabled. The database can't be deleted when deletion protection is enabled.
+      name: deletion_protection
+      required: false
+      type: bool
+    - name: kms_key_alias
+      required: true
+      type: string
+    - name: documentdb_aws_security_group
+      required: true
+      type: string
+    - default: 4.0.0
+      name: engine_version
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: db.r5.large
+      name: instance_class
+      required: false
+      type: string
+    - default: 1
+      description: Number of Instances for aws_docdb_cluster_instance
+      name: instance_count
+      required: false
+      type: number
+    - name: kms_account_key_arn
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - name: private_subnet_ids
+      required: true
+      type: list(string)
+    - name: vpc_id
+      required: true
+      type: string
+outputs:
+    - name: db_host
+      type: string
+    - name: db_password
+      type: string
+    - name: db_user
+      type: string

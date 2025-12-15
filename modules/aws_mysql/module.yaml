@@ -1,0 +1,57 @@
+name: aws_mysql
+type: aws_mysql
+provider: aws
+version: 1.0.0
+inputs:
+    - default: 7
+      description: How many days to keep the backup retention
+      name: backup_retention_days
+      required: false
+      type: number
+    - name: db_aws_security_group
+      required: true
+      type: string
+    - default: app
+      name: db_name
+      required: false
+      type: string
+    - default: 5.7.mysql_aurora.2.04.2
+      name: engine_version
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: db.t3.medium
+      name: instance_class
+      required: false
+      type: string
+    - name: kms_key_alias
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: false
+      name: multi_az
+      required: false
+      type: bool
+    - default: false
+      name: safety
+      required: false
+      type: bool
+outputs:
+    - name: db_host
+      type: string
+    - name: db_name
+      type: string
+    - name: db_password
+      type: string
+    - name: db_user
+      type: string
