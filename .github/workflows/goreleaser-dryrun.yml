@@ -10,7 +10,7 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
   dryrun:
     runs-on: ubuntu-latest
@@ -37,6 +37,6 @@ jobs:
         uses: goreleaser/goreleaser-action@v6
         with:
           version: '~> v2'
-          args: release --snapshot --skip=publish --clean -v
+          args: release --snapshot --skip=publish --clean 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
