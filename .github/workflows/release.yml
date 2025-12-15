@@ -34,9 +34,10 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
       - name: Run tests
         run: go test ./...
-      - name: GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
         with:
+          distribution: goreleaser
           version: latest
           args: release --clean
         env:
