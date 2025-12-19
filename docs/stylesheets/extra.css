@@ -1,0 +1,49 @@
+:root > * {
+  --md-code-hl-string-color: #0FF1CE;
+}
+
+.highlight .sb {
+  color: #0FF1CE;
+}
+
+:root {
+  --md-tooltip-width: 600px;
+}
+
+.code-block-wrapper {
+  position: relative;
+}
+
+.code-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+}
+
+.copy-code-button {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 4px;
+  background: #111827;
+  color: #f9fafb;
+  font-size: 12px;
+  cursor: pointer;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+}
+
+.copy-code-button:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+
+.copy-code-button:active {
+  transform: translateY(0);
+}
+
+.wrap-lines code {
+  white-space: pre-wrap;
+  word-break: break-word;
+}

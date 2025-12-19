@@ -1,7 +1,41 @@
 site_name: PLTF CLI Documentation
 repo_url: https://github.com/yindia/pltf
 theme:
-  name: material
+  name: shadcn
+  features:
+    - content.code.select
+    - content.code.annotate
+plugins:
+  - search
+  - excalidraw
+  - mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - fenced_code
+  - footnotes
+  - pymdownx.blocks.tab
+  - pymdownx.tabbed
+  - pymdownx.blocks.details
+  - pymdownx.blocks.caption
+  - pymdownx.arithmatex:
+      generic: true # required to work
+  - shadcn.extensions.iconify
+
+  - shadcn.extensions.echarts.alpha
+  - codehilite
+  - shadcn.extensions.codexec
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+extra_css:
+  - stylesheets/extra.css
+extra_javascript:
+  - javascripts/copy-code.js
 watch:
   - docs/ 
 copyright: Copyright &copy; 2025 - pltf
