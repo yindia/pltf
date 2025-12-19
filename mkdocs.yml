@@ -1,7 +1,9 @@
 site_name: PLTF CLI Documentation
 repo_url: https://github.com/yindia/pltf
 theme:
-  name: readthedocs
+  name: material
+watch:
+  - docs/ 
 nav:
   - Home: index.md
   - Installation: installation.md
@@ -40,8 +42,6 @@ nav:
               - aws_iam_policy: references/modules/aws_iam_policy.md
               - aws_iam_role: references/modules/aws_iam_role.md
               - aws_iam_user: references/modules/aws_iam_user.md
-              - aws_k8s_base: references/modules/aws_k8s_base.md
-              - aws_k8s_service: references/modules/aws_k8s_service.md
               - aws_mysql: references/modules/aws_mysql.md
               - aws_nodegroup: references/modules/aws_nodegroup.md
               - aws_postgres: references/modules/aws_postgres.md
@@ -50,7 +50,6 @@ nav:
               - aws_ses: references/modules/aws_ses.md
               - aws_sns: references/modules/aws_sns.md
               - aws_sqs: references/modules/aws_sqs.md
-              - cloudfront_distribution: references/modules/cloudfront_distribution.md
           - EKS Access: references/aws_eks_access.md
           - EKS Upgrade: references/aws_eks_upgrade.md
   - Security:
