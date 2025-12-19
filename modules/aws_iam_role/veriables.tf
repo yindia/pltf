@@ -39,12 +39,14 @@ variable "extra_iam_policies" {
   default = []
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "allowed_k8s_services" {
   description = "allowed kubernetes services"
   type        = any
-  default = []
+  default     = []
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "links" {
   description = "Links for module"
   type        = any

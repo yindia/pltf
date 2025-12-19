@@ -24,6 +24,7 @@ variable "extra_iam_policies" {
   default = []
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "links" {
   description = "Links for module"
   type        = any
