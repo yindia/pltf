@@ -1,4 +1,5 @@
 site_name: PLTF CLI Documentation
+site_url: https://yindia.github.io/pltf/
 repo_url: https://github.com/yindia/pltf
 theme:
   name: shadcn
