@@ -44,6 +44,7 @@ copyright: Copyright &copy; 2025 - pltf
 nav:
   - Home: index.md
   - Installation: installation.md
+  - FAQ: faq.md
   - GitHub: https://github.com/yindia/pltf
   - Getting Started:
       - AWS: getting-started/aws.md
@@ -95,5 +96,4 @@ nav:
       - AWS Architecture: security/aws.md
       - Kubernetes Architecture: security/kubernetes.md
       - Compliance: security/compliance.md
-  - FAQ: faq.md
 docs_dir: docs
