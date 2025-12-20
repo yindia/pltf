@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -303,6 +304,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		return args
 	}
 
+	var runErr error
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -310,7 +312,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-auto-approve")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform apply failed: %w", err)
+			runErr = fmt.Errorf("terraform apply failed: %w", err)
 		}
 	case "destroy":
 		args := []string{"destroy"}
@@ -318,7 +320,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-auto-approve")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform destroy failed: %w", err)
+			runErr = fmt.Errorf("terraform destroy failed: %w", err)
 		}
 	case "plan":
 		args := []string{"plan"}
@@ -329,7 +331,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-out="+opts.planFile)
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform plan failed: %w", err)
+			runErr = fmt.Errorf("terraform plan failed: %w", err)
 		}
 	case "output":
 		args := []string{"output"}
@@ -340,16 +342,34 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-json")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform output failed: %w", err)
+			runErr = fmt.Errorf("terraform output failed: %w", err)
 		}
 	case "force-unlock":
 		args := []string{"force-unlock", "-force", lockID}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform force-unlock failed: %w", err)
+			runErr = fmt.Errorf("terraform force-unlock failed: %w", err)
 		}
 	}
 
-	return nil
+	if action == "plan" || action == "apply" {
+		status := tfRunSummary{
+			Action: action,
+			Spec:   file,
+			Env:    env,
+			OutDir: ctx.outDir,
+		}
+		if runErr != nil {
+			status.Status = "failed"
+			status.Err = runErr.Error()
+		} else {
+			status.Status = "succeeded"
+		}
+		if err := maybeUpsertPRComment(status); err != nil {
+			fmt.Fprintf(os.Stderr, "warn: failed to update PR comment: %v\n", err)
+		}
+	}
+
+	return runErr
 }
 
 func init() {

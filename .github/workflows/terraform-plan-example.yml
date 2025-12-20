@@ -1,0 +1,33 @@
+name: Terraform Plan (example/env.yaml)
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Install pltf (from source)
+        run: |
+          go install ./...
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+
+      - name: Terraform Plan (example/env.yaml)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_KEY: ${{ secrets.AWS_KEY }}
+          AWS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
+        run: |
+          pltf terraform plan -f example/env.yaml --env prod
