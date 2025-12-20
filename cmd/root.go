@@ -13,9 +13,9 @@ var (
 	flagTelemetry bool
 )
 
-var RootCmd  *cobra.Command
+var RootCmd *cobra.Command
 
-func init(){
+func init() {
 	RootCmd = rootCmd
 }
 // rootCmd is the base command for the CLI.

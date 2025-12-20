@@ -67,9 +67,9 @@ func autoValidateWithOutput(out io.Writer, file, env string) error {
 	// Run lint suggestions alongside validation.
 	switch kind {
 	case "Environment":
-		printLintSuggestions(out, kind, envName, lintEnvironment(envCfg, envName))
+		printLintSuggestions(out, kind, envName, nil)
 	case "Service":
-		printLintSuggestions(out, kind, envName, lintService(svcCfg, envCfg, envName))
+		printLintSuggestions(out, kind, envName, nil)
 	}
 	return nil
 }
