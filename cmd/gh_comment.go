@@ -23,6 +23,7 @@ type tfRunSummary struct {
 	Env    string
 	OutDir string
 	Err    string
+	Plan   *planSummary
 }
 
 type ghEvent struct {
@@ -99,6 +100,32 @@ func buildPRCommentBody(run tfRunSummary) string {
 	sb.WriteString(fmt.Sprintf("- status: %s\n", statusText))
 	if strings.TrimSpace(run.Err) != "" {
 		sb.WriteString(fmt.Sprintf("- error: `%s`\n", truncateForComment(run.Err)))
+	}
+	if run.Plan != nil {
+		sb.WriteString("\n<details><summary>Plan summary</summary>\n\n")
+		sb.WriteString(fmt.Sprintf("- add: %d\n- change: %d\n- destroy: %d\n\n", run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+		if len(run.Plan.Adds) > 0 {
+			sb.WriteString("**Add**\n")
+			for _, a := range run.Plan.Adds {
+				sb.WriteString(fmt.Sprintf("- %s\n", a))
+			}
+			sb.WriteString("\n")
+		}
+		if len(run.Plan.Changes) > 0 {
+			sb.WriteString("**Change**\n")
+			for _, a := range run.Plan.Changes {
+				sb.WriteString(fmt.Sprintf("- %s\n", a))
+			}
+			sb.WriteString("\n")
+		}
+		if len(run.Plan.Deletes) > 0 {
+			sb.WriteString("**Destroy**\n")
+			for _, a := range run.Plan.Deletes {
+				sb.WriteString(fmt.Sprintf("- %s\n", a))
+			}
+			sb.WriteString("\n")
+		}
+		sb.WriteString("</details>\n")
 	}
 	sb.WriteString("\n```\n")
 	sb.WriteString(fmt.Sprintf("pltf terraform %s -f %s", run.Action, run.Spec))

@@ -305,6 +305,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	var runErr error
+	var planSum *planSummary
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -327,11 +328,22 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		if opts.detailedExit {
 			args = append(args, "-detailed-exitcode")
 		}
-		if opts.planFile != "" {
-			args = append(args, "-out="+opts.planFile)
+		planPath := opts.planFile
+		tempPlan := false
+		if strings.TrimSpace(planPath) == "" {
+			planPath = filepath.Join(ctx.outDir, ".pltf-plan.tfplan")
+			tempPlan = true
 		}
+		args = append(args, "-out="+planPath)
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
 			runErr = fmt.Errorf("terraform plan failed: %w", err)
+		} else {
+			if sum, err := collectPlanSummary(ctx.outDir, planPath); err == nil {
+				planSum = sum
+			}
+			if tempPlan {
+				_ = os.Remove(planPath)
+			}
 		}
 	case "output":
 		args := []string{"output"}
@@ -357,6 +369,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			Spec:   file,
 			Env:    env,
 			OutDir: ctx.outDir,
+			Plan:   planSum,
 		}
 		if runErr != nil {
 			status.Status = "failed"
