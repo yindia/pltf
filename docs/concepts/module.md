@@ -7,8 +7,6 @@ pltf includes an embedded library of modules you can connect to build your stack
 
 Modules are described by `module.yaml` (type/provider/version/inputs/outputs) and referenced in your Environment or Service spec.
 
-![Module](../images/hero.png) <!-- Replace with module graphic -->
-
 ## Definition
 Modules have:
 - a **type** (e.g., `aws_eks`, `aws_s3`)

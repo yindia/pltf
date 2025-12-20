@@ -9,8 +9,6 @@ pltf turns concise YAML into ready-to-run Terraform for AWS, GCP, and Azure. You
 
 The CLI validates your specs, renders providers/backends/locals/remote state, and can run `terraform plan/apply` end-to-end. Because the output is plain Terraform, you keep portability—extend it or take it with you.
 
-![Architecture](images/hero.png)
-
 > Status: active development; review generated Terraform before applying to production.
 
 ## Why teams use pltf

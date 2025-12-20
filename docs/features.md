@@ -1,53 +1,41 @@
 # Features Overview
 
-Each major capability has its own page:
+pltf focuses on faster, safer Terraform generation with predictable wiring. Deep dives live under `docs/features/*`.
 
-- [Profiles & Defaults](features/profiles.md)
-- [Validation & Lint](features/validation.md)
-- [Backends](features/backends.md)
-- [Custom Modules](features/custom-modules.md)
-- [Placeholders & Wiring](features/placeholders.md)
-- [Secrets](features/secrets.md)
-- [Variables](features/variables.md)
-- [Telemetry](features/telemetry.md)
+## Map of features
+- [Profiles & Defaults](features/profiles.md): org/user defaults (`modules_root`, `default_env`, telemetry).
+- [Validation & Lint](features/validation.md): structural checks before render/apply.
+- [Backends](features/backends.md): `s3|gcs|azurerm` state backends, independent of target cloud.
+- [Custom Modules](features/custom-modules.md): bring-your-own `module.yaml` catalog.
+- [Placeholders & Wiring](features/placeholders.md): `${env_name}`, `${layer_name}`, `${module.<id>.<output>}`, `${parent.<output>}`, `${var.<name>}`.
+- [Secrets](features/secrets.md): keep secrets out of specs; render as TF vars, not locals.
+- [Variables](features/variables.md): env/service vars and CLI `--var` overrides.
+- [Telemetry](features/telemetry.md): opt-in/opt-out behavior.
+
+## Terraform generation and execution
+- Render-only: `pltf generate -f <spec> --env <name> -o <dir>` (no cloud creds required).
+- Generate + run Terraform: `pltf terraform plan|apply|destroy|output|graph` regenerates code every time before invoking Terraform.
+- Outputs land under `.pltf/<env>/<layer>/...` with providers, backends, modules, and outputs files.
+
+Examples:
+```bash
+pltf generate -f example/env.yaml --env prod -o .pltf/example/env/prod
+pltf terraform plan -f example/service.yaml --env prod
+```
+
+## Variables, placeholders, links
+- Reuse specs with `${env_name}`, `${layer_name}`, `${parent.<output>}`, `${module.<id>.<output>}`, `${var.<name>}`.
+- Links let modules consume other module outputs without hand-wiring Terraform.
+- CLI overrides: `--var key=value` augment or replace spec variables.
 
 ## Secrets
-- **What:** Manage app secrets without embedding them in specs/code. Secrets are stored as Kubernetes secrets and injected as env vars.
-- **Why:** Avoid leaking credentials; keep rotation simple.
-- **Usage:** Define secret keys in your spec under `secrets` and supply values via environment variables or CLI `--var`. Secrets are treated as TF variables, not locals.
-- **Notes:** Services restart to pick up changes unless `--no-restart` is used. Bulk updates can consume `.env`-style inputs; values should come from env/CI secret stores, not hardcoded files.
+- Declare secret keys under `envRef.<name>.secrets`; supply values via environment/CI secrets.
+- Rendered as Terraform variables to avoid embedding values in generated code.
 
-## Terraform Generator
-- **What:** Render Terraform from env/service specs without applying; handy for review, migration, or running TF directly.
-- **Why:** Keep portability—inspect/modify TF, hand to CI, or migrate away without lock-in.
-- **Commands:** `pltf generate` for TF only; `pltf terraform plan|apply|destroy|output|force-unlock` to generate + run.
-- **Example (env):**
-  ```bash
-  pltf generate -f env.yaml -e prod -o .pltf/env/prod
-  # outputs providers.tf, backend.tf, modules/<...>, outputs.tf, versions.tf
-  ```
-- **Example (service):**
-  ```bash
-  pltf generate -f service.yaml -e prod -o .pltf/service/payments/prod
-  ```
-- **Notes:** Does not require cloud credentials to render. Backends are written per spec (`s3|gcs|azurerm`). Generated modules directory is self-contained for review or VCS.
+## Custom modules
+- Run `pltf module init --path <module_dir>` to scaffold `module.yaml`.
+- Reference with `source: custom` and point `--modules` or profile `modules_root` to your catalog.
 
-## Variables
-- **What:** Minimal templating to reuse specs across envs/services.
-- **Types:** CLI `--var`, env-level `variables`, and placeholders.
-- **Placeholders:** `${env_name}`, `${layer_name}`, `${module.<id>.<output>}`, `${parent.<output>}`, `${var.<name>}`.
-- **Spec inputs:** Declare `variables` in env specs or use `--var key=value` at runtime; service specs inherit envRef variables and can override via CLI.
-- **Example (env):**
-  ```yaml
-  variables:
-    min_nodes: "2"
-    max_nodes: "5"
-  modules:
-    - type: aws_eks
-      min_nodes: "${var.min_nodes}"
-      max_nodes: "${var.max_nodes}"
-  ```
-  ```bash
-  pltf terraform apply -f env.yaml -e prod --var min_nodes=3 --var max_nodes=6
-  ```
-- **Parent outputs:** In services, `${parent.<output>}` references environment outputs (e.g., `${parent.domain}`).
+## Validation and lint
+- `pltf validate` runs structural checks before generation.
+- Terraform `plan/apply` via `pltf terraform ...` always regenerates to reduce drift and catches wiring issues early.

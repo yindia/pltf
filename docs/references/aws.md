@@ -4,8 +4,6 @@ The next generation of Infrastructure-as-Code: work with high-level constructs i
 
 AWS is fully supported for environments, services, and modules. This page summarizes how the AWS provider, backends, and module wiring work in pltf.
 
-![AWS](../images/hero.png) <!-- Replace with an AWS-specific image if desired -->
-
 ## Provider and Backends
 - **Provider:** Automatically injected; version comes from the central versions file. Region is taken from your env spec.
 - **Backends:** You can store state in `s3`, `gcs`, or `azurerm` even when targeting AWS. For cross-account S3, set `backend.profile`. Optional `backend.region` overrides the bucket region.
