@@ -16,9 +16,9 @@ func autoValidate(file, env string) error {
 
 func autoValidateWithOutput(out io.Writer, file, env string) error {
 	var (
-		envName string
 		envCfg  *config.EnvironmentConfig
 		svcCfg  *config.ServiceConfig
+		// envName string
 	)
 
 	kind, err := config.DetectKind(file)
@@ -32,7 +32,7 @@ func autoValidateWithOutput(out io.Writer, file, env string) error {
 		if err != nil {
 			return err
 		}
-		envName, err = selectEnvName(kind, env, cfg, nil)
+		_, err = selectEnvName(kind, env, cfg, nil)
 		if err != nil {
 			return err
 		}
@@ -48,7 +48,7 @@ func autoValidateWithOutput(out io.Writer, file, env string) error {
 		if err != nil {
 			return err
 		}
-		envName, err = selectEnvName(kind, env, envConfig, svc)
+		_, err = selectEnvName(kind, env, envConfig, svc)
 		if err != nil {
 			return err
 		}
@@ -65,12 +65,6 @@ func autoValidateWithOutput(out io.Writer, file, env string) error {
 	}
 
 	// Run lint suggestions alongside validation.
-	switch kind {
-	case "Environment":
-		printLintSuggestions(out, kind, envName, nil)
-	case "Service":
-		printLintSuggestions(out, kind, envName, nil)
-	}
 	return nil
 }
 
