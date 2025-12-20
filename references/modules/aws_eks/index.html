@@ -895,113 +895,270 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Creates an EKS control plane in private subnets, configurable Kubernetes version, logging, and OIDC provider for IRSA.</p>
-<h2 id="what-it-does">What it does</h2>
-<ul>
-<li>Provisions the EKS control plane in private subnets with security groups.</li>
-<li>Creates an OIDC provider for IRSA and enables control-plane logging.</li>
-<li>Stands up a default managed nodegroup with scaling/min/max and optional spot.</li>
-</ul>
-<h2 id="fields">Fields</h2>
+    <!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements</h2>
+<p>No requirements.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="provider_external"></a> <a href="#provider_external">external</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modules">Modules</h2>
+<p>No modules.</p>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.cluster_logs</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_cluster">aws_eks_cluster.cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eks_node_group">aws_eks_node_group.node_group</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_openid_connect_provider">aws_iam_openid_connect_provider.cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.minimal_ebs_kms_create_and_attach</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.cluster_role</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.node_group</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.cluster_minimal_ebs_kms_create_and_attache</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy_attachment">aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/launch_template">aws_launch_template.eks_node</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.eks</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group_rule">aws_security_group_rule.control_plane_access</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id">random_id.key_suffix</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.minimal_ebs_kms_create_and_attach</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.node_group</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.trust_policy</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_key">aws_kms_key.env_key</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region">aws_region.current</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/external/latest/docs/data-sources/external">external_external.thumbprint</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="inputs">Inputs</h2>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Description</th>
+<th>Type</th>
 <th>Default</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>ami_type</td>
-<td></td>
-<td>AL2023_x86_64_STANDARD</td>
-<td>False</td>
+<td><a name="input_ami_type"></a> <a href="#input_ami_type">ami_type</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"AL2023_x86_64_STANDARD"</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>cluster_name</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>control_plane_security_groups</td>
+<td><a name="input_control_plane_security_groups"></a> <a href="#input_control_plane_security_groups">control_plane_security_groups</a></td>
 <td>List of security groups to give control plane access to</td>
-<td>[]</td>
-<td>False</td>
+<td><code>list(string)</code></td>
+<td><code>[]</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>eks_log_retention</td>
-<td></td>
-<td>7</td>
-<td>False</td>
+<td><a name="input_eks_log_retention"></a> <a href="#input_eks_log_retention">eks_log_retention</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>7</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>enable_metrics</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_enable_metrics"></a> <a href="#input_enable_metrics">enable_metrics</a></td>
+<td>tflint-ignore: terraform_unused_declarations</td>
+<td><code>bool</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>k8s_version</td>
-<td></td>
-<td>1.21</td>
-<td>False</td>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>kms_account_key_arn</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_k8s_version"></a> <a href="#input_k8s_version">k8s_version</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"1.21"</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>max_nodes</td>
-<td></td>
-<td>5</td>
-<td>False</td>
+<td><a name="input_kms_account_key_arn"></a> <a href="#input_kms_account_key_arn">kms_account_key_arn</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>min_nodes</td>
-<td></td>
-<td>3</td>
-<td>False</td>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>node_disk_size</td>
-<td></td>
-<td>20</td>
-<td>False</td>
+<td><a name="input_max_nodes"></a> <a href="#input_max_nodes">max_nodes</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>5</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>node_instance_type</td>
-<td></td>
-<td>t3.medium</td>
-<td>False</td>
+<td><a name="input_min_nodes"></a> <a href="#input_min_nodes">min_nodes</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>3</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>node_launch_template</td>
-<td></td>
-<td>{}</td>
-<td>False</td>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>private_subnet_ids</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_node_disk_size"></a> <a href="#input_node_disk_size">node_disk_size</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>20</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>spot_instances</td>
-<td></td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_node_instance_type"></a> <a href="#input_node_instance_type">node_instance_type</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"t3.medium"</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>vpc_id</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_node_launch_template"></a> <a href="#input_node_launch_template">node_launch_template</a></td>
+<td>n/a</td>
+<td><code>map(string)</code></td>
+<td><code>{}</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_private_subnet_ids"></a> <a href="#input_private_subnet_ids">private_subnet_ids</a></td>
+<td>n/a</td>
+<td><code>list(string)</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_spot_instances"></a> <a href="#input_spot_instances">spot_instances</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 </tbody>
 </table></div>
@@ -1015,35 +1172,36 @@
 </thead>
 <tbody>
 <tr>
-<td>k8s_ca_data</td>
-<td>Cluster CA data (base64).</td>
+<td><a name="output_k8s_ca_data"></a> <a href="#output_k8s_ca_data">k8s_ca_data</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_cluster_name</td>
-<td>EKS cluster name.</td>
+<td><a name="output_k8s_cluster_name"></a> <a href="#output_k8s_cluster_name">k8s_cluster_name</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_endpoint</td>
-<td>EKS API endpoint.</td>
+<td><a name="output_k8s_endpoint"></a> <a href="#output_k8s_endpoint">k8s_endpoint</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_node_group_security_id</td>
-<td>Security group ID for nodes.</td>
+<td><a name="output_k8s_node_group_security_id"></a> <a href="#output_k8s_node_group_security_id">k8s_node_group_security_id</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_openid_provider_arn</td>
-<td>OIDC provider ARN for IRSA.</td>
+<td><a name="output_k8s_openid_provider_arn"></a> <a href="#output_k8s_openid_provider_arn">k8s_openid_provider_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_openid_provider_url</td>
-<td>OIDC provider URL.</td>
+<td><a name="output_k8s_openid_provider_url"></a> <a href="#output_k8s_openid_provider_url">k8s_openid_provider_url</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>k8s_version</td>
-<td>Kubernetes version.</td>
+<td><a name="output_k8s_version"></a> <a href="#output_k8s_version">k8s_version</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1266,18 +1424,42 @@
         
         
         
-        <a href="#what-it-does"
+        <a href="#requirements"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            What it does
+            Requirements
         </a>
         
 
         
-        <a href="#fields"
+        <a href="#providers"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Fields
+            Providers
+        </a>
+        
+
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Modules
+        </a>
+        
+
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Resources
+        </a>
+        
+
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Inputs
         </a>
         
 

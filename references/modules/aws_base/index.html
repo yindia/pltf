@@ -895,7 +895,9 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Provision networking (VPC), subnets across AZs, flow logs, NAT, and a default KMS key + log bucket for the environment.</p>
+    <!-- BEGIN_TF_DOCS -->
+<h1 id="aws_base">aws_base</h1>
+<p>Provision networking (VPC), subnets across AZs, flow logs, NAT, and a default KMS key + log bucket for the environment.</p>
 <h2 id="what-it-does">What it does</h2>
 <ul>
 <li>Creates a new VPC (or imports an existing one) with public/private subnets across three AZs.</li>
@@ -903,64 +905,255 @@
 <li>Enables VPC flow logs to the log bucket and provisions a default KMS key.</li>
 <li>Creates a log bucket for access/flow logs used by other modules.</li>
 </ul>
-<h2 id="fields">Fields</h2>
-<div class="table-wrapper"><table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Description</th>
-<th>Default</th>
-<th>Required</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>private_ipv4_cidr_blocks</td>
-<td>Cidr blocks for private subnets. One for each desired AZ</td>
-<td>['10.0.128.0/21', '10.0.136.0/21', '10.0.144.0/21']</td>
-<td>False</td>
-</tr>
-<tr>
-<td>private_subnet_ids</td>
-<td>List of pre-existing private subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.</td>
-<td></td>
-<td>False</td>
-</tr>
-<tr>
-<td>public_ipv4_cidr_blocks</td>
-<td>Cidr blocks for public subnets. One for each desired AZ</td>
-<td>['10.0.0.0/21', '10.0.8.0/21', '10.0.16.0/21']</td>
-<td>False</td>
-</tr>
-<tr>
-<td>public_subnet_ids</td>
-<td>List of pre-existing public subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.</td>
-<td></td>
-<td>False</td>
-</tr>
-<tr>
-<td>total_ipv4_cidr_block</td>
-<td>Cidr block to reserve for whole vpc</td>
-<td>10.0.0.0/16</td>
-<td>False</td>
-</tr>
-<tr>
-<td>vpc_id</td>
-<td>The ID of an pre-existing VPC to use instead of creating a new VPC for pltf</td>
-<td></td>
-<td>False</td>
-</tr>
-<tr>
-<td>vpc_log_retention</td>
-<td></td>
-<td>90</td>
-<td>False</td>
-</tr>
-</tbody>
-</table></div>
 <h2 id="bring-your-own-vpc">Bring your own VPC</h2>
 <p>To use an existing VPC, set <code>vpc_id</code>, <code>public_subnet_ids</code>, and <code>private_subnet_ids</code>. Public subnets must route to an internet gateway and assign public IPs. Private subnets must route 0.0.0.0/0 to a NAT gateway with a public IP. Misconfigured routes may yield Terraform errors like "No routes matching supplied arguments found in Route Table". IPv6 imports are not validated; dual-stack may work but is not verified.</p>
-<h2 id="outputs">Outputs</h2>
+<h4 id="providers">Providers</h4>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="modules">Modules</h4>
+<p>No modules.</p>
+<h4 id="resources">Resources</h4>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudwatch_log_group">aws_cloudwatch_log_group.vpc_flow_log</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/db_subnet_group">aws_db_subnet_group.main</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group">aws_default_security_group.default</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/docdb_subnet_group">aws_docdb_subnet_group.main</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/ebs_encryption_by_default">aws_ebs_encryption_by_default.default</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/eip">aws_eip.nat_eips</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/elasticache_subnet_group">aws_elasticache_subnet_group.main</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/flow_log">aws_flow_log.vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role">aws_iam_role.vpc_flow_log</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role_policy">aws_iam_role_policy.vpc_flow_log</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_service_linked_role">aws_iam_service_linked_role.autoscaling</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway">aws_internet_gateway.igw</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_alias">aws_kms_alias.alias</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key">aws_kms_key.key</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway">aws_nat_gateway.nat_gateways</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route">aws_route.nat_routes</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table">aws_route_table.private_route_tables</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table">aws_route_table.public_route_table</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association">aws_route_table_association.private_associations</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association">aws_route_table_association.public_association</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket">aws_s3_bucket.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_acl">aws_s3_bucket_acl.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_lifecycle_configuration">aws_s3_bucket_lifecycle_configuration.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_ownership_controls">aws_s3_bucket_ownership_controls.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_policy">aws_s3_bucket_policy.log_bucket_policy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_public_access_block">aws_s3_bucket_public_access_block.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_server_side_encryption_configuration">aws_s3_bucket_server_side_encryption_configuration.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket_versioning">aws_s3_bucket_versioning.log_bucket</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.db</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.documentdb</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/security_group">aws_security_group.elasticache</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet">aws_subnet.private_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet">aws_subnet.public_subnets</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc">aws_vpc.vpc</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint">aws_vpc_endpoint.s3</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc_endpoint_route_table_association">aws_vpc_endpoint_route_table_association.s3</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id">random_id.bucket_suffix</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id">random_id.vpc_flow_log_suffix</a></td>
+<td>resource</td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="inputs">Inputs</h4>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_private_ipv4_cidr_blocks"></a> <a href="#input_private_ipv4_cidr_blocks">private_ipv4_cidr_blocks</a></td>
+<td>Cidr blocks for private subnets. One for each desired AZ</td>
+<td><code>list(string)</code></td>
+</tr>
+<tr>
+<td><a name="input_private_subnet_ids"></a> <a href="#input_private_subnet_ids">private_subnet_ids</a></td>
+<td>List of pre-existing private subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.</td>
+<td><code>list(string)</code></td>
+</tr>
+<tr>
+<td><a name="input_public_ipv4_cidr_blocks"></a> <a href="#input_public_ipv4_cidr_blocks">public_ipv4_cidr_blocks</a></td>
+<td>Cidr blocks for public subnets. One for each desired AZ</td>
+<td><code>list(string)</code></td>
+</tr>
+<tr>
+<td><a name="input_public_subnet_ids"></a> <a href="#input_public_subnet_ids">public_subnet_ids</a></td>
+<td>List of pre-existing public subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.</td>
+<td><code>list(string)</code></td>
+</tr>
+<tr>
+<td><a name="input_total_ipv4_cidr_block"></a> <a href="#input_total_ipv4_cidr_block">total_ipv4_cidr_block</a></td>
+<td>Cidr block to reserve for whole vpc</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>The ID of an pre-existing VPC to use instead of creating a new VPC for pltf</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_vpc_log_retention"></a> <a href="#input_vpc_log_retention">vpc_log_retention</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4 id="outputs">Outputs</h4>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
@@ -970,35 +1163,52 @@
 </thead>
 <tbody>
 <tr>
-<td>kms_account_key_arn</td>
-<td>ARN of the default KMS key for environment resources</td>
+<td><a name="output_db_aws_security_group"></a> <a href="#output_db_aws_security_group">db_aws_security_group</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>kms_account_key_id</td>
-<td>ID of the default KMS key</td>
+<td><a name="output_documentdb_aws_security_group"></a> <a href="#output_documentdb_aws_security_group">documentdb_aws_security_group</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>private_subnet_ids</td>
-<td>Private subnet IDs provisioned/imported</td>
+<td><a name="output_elasticache_aws_security_group"></a> <a href="#output_elasticache_aws_security_group">elasticache_aws_security_group</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>public_nat_ips</td>
-<td>Elastic IPs of NAT gateways</td>
+<td><a name="output_kms_account_key_arn"></a> <a href="#output_kms_account_key_arn">kms_account_key_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>public_subnets_ids</td>
-<td>Public subnet IDs provisioned/imported</td>
+<td><a name="output_kms_account_key_id"></a> <a href="#output_kms_account_key_id">kms_account_key_id</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>s3_log_bucket_name</td>
-<td>Name of the environment log bucket</td>
+<td><a name="output_kms_key_alias"></a> <a href="#output_kms_key_alias">kms_key_alias</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>vpc_id</td>
-<td>VPC ID provisioned/imported</td>
+<td><a name="output_private_subnet_ids"></a> <a href="#output_private_subnet_ids">private_subnet_ids</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="output_public_nat_ips"></a> <a href="#output_public_nat_ips">public_nat_ips</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="output_public_subnets_ids"></a> <a href="#output_public_subnets_ids">public_subnets_ids</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="output_s3_log_bucket_name"></a> <a href="#output_s3_log_bucket_name">s3_log_bucket_name</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="output_vpc_id"></a> <a href="#output_vpc_id">vpc_id</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1229,27 +1439,43 @@
         
 
         
-        <a href="#fields"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Fields
-        </a>
-        
-
-        
         <a href="#bring-your-own-vpc"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
             Bring your own VPC
         </a>
         
-
+        
+        <a href="#providers"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            Providers
+        </a>
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            Modules
+        </a>
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            Resources
+        </a>
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            Inputs
+        </a>
         
         <a href="#outputs"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
+            data-active="false" data-depth="3">
             Outputs
         </a>
+        
         
 
         

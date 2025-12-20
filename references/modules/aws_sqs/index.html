@@ -895,54 +895,128 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Creates an SQS queue with encryption, visibility timeout, redrive policy, and optional DLQ linkage.</p>
-<h2 id="what-it-does">What it does</h2>
-<ul>
-<li>Creates an SQS queue (standard or FIFO) with a dedicated KMS CMK.</li>
-<li>Configures default queue policy allowing account root, SNS, and EventBridge producers.</li>
-<li>Supports content-based deduplication, delivery delays, retention, and long polling.</li>
-<li>Outputs KMS ARN for wiring IRSA/IAM consumers.</li>
-</ul>
-<h2 id="fields">Fields</h2>
+    <!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements</h2>
+<p>No requirements.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modules">Modules</h2>
+<p>No modules.</p>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key">aws_kms_key.key</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue">aws_sqs_queue.terraform_queue</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy">aws_sqs_queue_policy.default</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity">aws_caller_identity.current</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.kms_policy</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document">aws_iam_policy_document.sqs_queue_policy</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="inputs">Inputs</h2>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Description</th>
+<th>Type</th>
 <th>Default</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>content_based_deduplication</td>
-<td>Enable content-based deduplication for FIFO queues.</td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_content_based_deduplication"></a> <a href="#input_content_based_deduplication">content_based_deduplication</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>delay_seconds</td>
-<td></td>
-<td>0</td>
-<td>False</td>
+<td><a name="input_delay_seconds"></a> <a href="#input_delay_seconds">delay_seconds</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>0</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>fifo</td>
-<td>Create a FIFO queue (adds .fifo suffix).</td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>message_retention_seconds</td>
-<td></td>
-<td>345600</td>
-<td>False</td>
+<td><a name="input_fifo"></a> <a href="#input_fifo">fifo</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>receive_wait_time_seconds</td>
-<td></td>
-<td>0</td>
-<td>False</td>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_message_retention_seconds"></a> <a href="#input_message_retention_seconds">message_retention_seconds</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>345600</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_receive_wait_time_seconds"></a> <a href="#input_receive_wait_time_seconds">receive_wait_time_seconds</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>0</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 </tbody>
 </table></div>
@@ -956,23 +1030,24 @@
 </thead>
 <tbody>
 <tr>
-<td>kms_arn</td>
-<td>KMS key ARN for the queue.</td>
+<td><a name="output_kms_arn"></a> <a href="#output_kms_arn">kms_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>queue_arn</td>
-<td>SQS queue ARN.</td>
+<td><a name="output_queue_arn"></a> <a href="#output_queue_arn">queue_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>queue_id</td>
-<td>SQS queue URL.</td>
+<td><a name="output_queue_id"></a> <a href="#output_queue_id">queue_id</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>queue_name</td>
-<td>SQS queue name.</td>
+<td><a name="output_queue_name"></a> <a href="#output_queue_name">queue_name</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1195,18 +1270,42 @@
         
         
         
-        <a href="#what-it-does"
+        <a href="#requirements"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            What it does
+            Requirements
         </a>
         
 
         
-        <a href="#fields"
+        <a href="#providers"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Fields
+            Providers
+        </a>
+        
+
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Modules
+        </a>
+        
+
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Resources
+        </a>
+        
+
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Inputs
         </a>
         
 

@@ -1,23 +1,43 @@
-# aws_iam_user
+<!-- BEGIN_TF_DOCS -->
+## Requirements
 
-Creates IAM users with optional access keys and managed/inline policy attachments.
+No requirements.
 
-## What it does
+## Providers
 
-- Creates an IAM user with inline/managed policies.
-- Optionally auto-generates policies from `links` and returns access keys if created.
+| Name | Version |
+|------|---------|
+| <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
-## Fields
+## Modules
 
-Name | Description | Default | Required
---- | --- | --- | ---
-extra_iam_policies |  | [] | False
-iam_policy |  |  | True
-links |  | [] | False
+No modules.
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [aws_iam_policy.vanilla_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy) | resource |
+| [aws_iam_user.user](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user) | resource |
+| [aws_iam_user_policy.pass_role_to_self](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy) | resource |
+| [aws_iam_user_policy_attachment.extra_policies_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy_attachment) | resource |
+| [aws_iam_user_policy_attachment.vanilla_role_attachment](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_user_policy_attachment) | resource |
+| [aws_iam_policy_document.pass_role_to_self](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_env_name"></a> [env\_name](#input\_env\_name) | Env name | `string` | n/a | yes |
+| <a name="input_extra_iam_policies"></a> [extra\_iam\_policies](#input\_extra\_iam\_policies) | n/a | `list(string)` | `[]` | no |
+| <a name="input_iam_policy"></a> [iam\_policy](#input\_iam\_policy) | iam policy | `any` | `null` | no |
+| <a name="input_layer_name"></a> [layer\_name](#input\_layer\_name) | Layer name | `string` | n/a | yes |
+| <a name="input_links"></a> [links](#input\_links) | Links for module | `any` | `[]` | no |
+| <a name="input_module_name"></a> [module\_name](#input\_module\_name) | Module name | `string` | n/a | yes |
 
 ## Outputs
 
-Name | Description
---- | ---
-user_arn | IAM user ARN.
-
+| Name | Description |
+|------|-------------|
+| <a name="output_user_arn"></a> [user\_arn](#output\_user\_arn) | n/a |
+<!-- END_TF_DOCS -->

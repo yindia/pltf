@@ -895,27 +895,96 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Defines IAM policies (inline or managed) to attach to roles/users created by other modules.</p>
-<h2 id="what-it-does">What it does</h2>
-<ul>
-<li>Creates a standalone IAM policy from a JSON document for reuse.</li>
-</ul>
-<h2 id="fields">Fields</h2>
+    <!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements</h2>
+<p>No requirements.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modules">Modules</h2>
+<p>No modules.</p>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_policy">aws_iam_policy.policy</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.policy_suffix</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity">aws_caller_identity.current</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region">aws_region.current</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="inputs">Inputs</h2>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Description</th>
+<th>Type</th>
 <th>Default</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>file</td>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_file"></a> <a href="#input_file">file</a></td>
 <td>Json file path containing the Policy</td>
-<td></td>
-<td>False</td>
+<td><code>string</code></td>
+<td><code>""</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 </tbody>
 </table></div>
@@ -929,19 +998,20 @@
 </thead>
 <tbody>
 <tr>
-<td>policy_arn</td>
-<td>IAM policy ARN.</td>
+<td><a name="output_policy_arn"></a> <a href="#output_policy_arn">policy_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>policy_id</td>
-<td>IAM policy ID.</td>
+<td><a name="output_policy_id"></a> <a href="#output_policy_id">policy_id</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>policy_name</td>
-<td>IAM policy name.</td>
+<td><a name="output_policy_name"></a> <a href="#output_policy_name">policy_name</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1164,18 +1234,42 @@
         
         
         
-        <a href="#what-it-does"
+        <a href="#requirements"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            What it does
+            Requirements
         </a>
         
 
         
-        <a href="#fields"
+        <a href="#providers"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Fields
+            Providers
+        </a>
+        
+
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Modules
+        </a>
+        
+
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Resources
+        </a>
+        
+
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Inputs
         </a>
         
 

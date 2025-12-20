@@ -895,58 +895,143 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Creates a Route53 hosted zone and ACM certificate with DNS validation, wiring records for ingress/load balancers.</p>
-<h2 id="what-it-does">What it does</h2>
-<ul>
-<li>Creates Route53 hosted zone and ACM cert with DNS validation or import.</li>
-<li>Exposes NS records and cert ARN for downstream modules.</li>
-</ul>
-<h2 id="fields">Fields</h2>
+    <!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements</h2>
+<p>No requirements.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modules">Modules</h2>
+<p>No modules.</p>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate">aws_acm_certificate.certificate</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate">aws_acm_certificate.imported_certificate</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/acm_certificate_validation">aws_acm_certificate_validation.example_com</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_record">aws_route53_record.validation_record</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route53_zone">aws_route53_zone.public</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter">aws_ssm_parameter.certificate_body</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter">aws_ssm_parameter.certificate_chain</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/ssm_parameter">aws_ssm_parameter.private_key</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="inputs">Inputs</h2>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Description</th>
+<th>Type</th>
 <th>Default</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>cert_chain_included</td>
-<td></td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_cert_chain_included"></a> <a href="#input_cert_chain_included">cert_chain_included</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>delegated</td>
-<td></td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_delegated"></a> <a href="#input_delegated">delegated</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>domain</td>
-<td></td>
-<td></td>
-<td>True</td>
+<td><a name="input_domain"></a> <a href="#input_domain">domain</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>external_cert_arn</td>
-<td></td>
-<td></td>
-<td>False</td>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>force_update</td>
-<td></td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_external_cert_arn"></a> <a href="#input_external_cert_arn">external_cert_arn</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>""</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>upload_cert</td>
-<td></td>
-<td>False</td>
-<td>False</td>
+<td><a name="input_force_update"></a> <a href="#input_force_update">force_update</a></td>
+<td>tflint-ignore: terraform_unused_declarations</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_upload_cert"></a> <a href="#input_upload_cert">upload_cert</a></td>
+<td>n/a</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 </tbody>
 </table></div>
@@ -960,23 +1045,24 @@
 </thead>
 <tbody>
 <tr>
-<td>cert_arn</td>
-<td>ACM certificate ARN (created/imported/external).</td>
+<td><a name="output_cert_arn"></a> <a href="#output_cert_arn">cert_arn</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>domain</td>
-<td>Domain name of the hosted zone.</td>
+<td><a name="output_domain"></a> <a href="#output_domain">domain</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>name_servers</td>
-<td>Delegated name servers.</td>
+<td><a name="output_name_servers"></a> <a href="#output_name_servers">name_servers</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>zone_id</td>
-<td>Route53 hosted zone ID.</td>
+<td><a name="output_zone_id"></a> <a href="#output_zone_id">zone_id</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1199,18 +1285,42 @@
         
         
         
-        <a href="#what-it-does"
+        <a href="#requirements"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            What it does
+            Requirements
         </a>
         
 
         
-        <a href="#fields"
+        <a href="#providers"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Fields
+            Providers
+        </a>
+        
+
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Modules
+        </a>
+        
+
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Resources
+        </a>
+        
+
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Inputs
         </a>
         
 

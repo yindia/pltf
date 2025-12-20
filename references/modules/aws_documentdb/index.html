@@ -895,47 +895,160 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Provision a DocumentDB cluster with subnet groups, encryption, backups, and security groups in the base VPC.</p>
-<h2 id="what-it-does">What it does</h2>
-<ul>
-<li>Creates a DocumentDB cluster with configurable engine version and instance count.</li>
-<li>Uses subnet groups and security groups from the VPC; enables encryption.</li>
-<li>Supports deletion protection and exposes host/user/password outputs.</li>
-</ul>
-<h2 id="fields">Fields</h2>
+    <!-- BEGIN_TF_DOCS -->
+<h2 id="requirements">Requirements</h2>
+<p>No requirements.</p>
+<h2 id="providers">Providers</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
+<td>n/a</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="modules">Modules</h2>
+<p>No modules.</p>
+<h2 id="resources">Resources</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/docdb_cluster">aws_docdb_cluster.cluster</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/docdb_cluster_instance">aws_docdb_cluster_instance.cluster_instances</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password">random_password.documentdb_auth</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/string">random_string.db_name_hash</a></td>
+<td>resource</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/kms_key">aws_kms_key.main</a></td>
+<td>data source</td>
+</tr>
+<tr>
+<td><a href="https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group">aws_security_group.security_group</a></td>
+<td>data source</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="inputs">Inputs</h2>
 <div class="table-wrapper"><table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Description</th>
+<th>Type</th>
 <th>Default</th>
-<th>Required</th>
+<th style="text-align: center;">Required</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>deletion_protection</td>
+<td><a name="input_deletion_protection"></a> <a href="#input_deletion_protection">deletion_protection</a></td>
 <td>A value that indicates whether the DB cluster has deletion protection enabled. The database can't be deleted when deletion protection is enabled.</td>
-<td>False</td>
-<td>False</td>
+<td><code>bool</code></td>
+<td><code>false</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>engine_version</td>
-<td></td>
-<td>4.0.0</td>
-<td>False</td>
+<td><a name="input_documentdb_aws_security_group"></a> <a href="#input_documentdb_aws_security_group">documentdb_aws_security_group</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 <tr>
-<td>instance_class</td>
-<td></td>
-<td>db.r5.large</td>
-<td>False</td>
+<td><a name="input_engine_version"></a> <a href="#input_engine_version">engine_version</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"4.0.0"</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
-<td>instance_count</td>
+<td><a name="input_env_name"></a> <a href="#input_env_name">env_name</a></td>
+<td>Env name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_instance_class"></a> <a href="#input_instance_class">instance_class</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"db.r5.large"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_instance_count"></a> <a href="#input_instance_count">instance_count</a></td>
 <td>Number of Instances for aws_docdb_cluster_instance</td>
-<td>1</td>
-<td>False</td>
+<td><code>number</code></td>
+<td><code>1</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_kms_account_key_arn"></a> <a href="#input_kms_account_key_arn">kms_account_key_arn</a></td>
+<td>tflint-ignore: terraform_unused_declarations</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_kms_key_alias"></a> <a href="#input_kms_key_alias">kms_key_alias</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
+<td>Layer name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_module_name"></a> <a href="#input_module_name">module_name</a></td>
+<td>Module name</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_private_subnet_ids"></a> <a href="#input_private_subnet_ids">private_subnet_ids</a></td>
+<td>tflint-ignore: terraform_unused_declarations</td>
+<td><code>list(string)</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_vpc_id"></a> <a href="#input_vpc_id">vpc_id</a></td>
+<td>tflint-ignore: terraform_unused_declarations</td>
+<td><code>string</code></td>
+<td>n/a</td>
+<td style="text-align: center;">yes</td>
 </tr>
 </tbody>
 </table></div>
@@ -949,19 +1062,20 @@
 </thead>
 <tbody>
 <tr>
-<td>db_host</td>
-<td>Cluster endpoint.</td>
+<td><a name="output_db_host"></a> <a href="#output_db_host">db_host</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>db_password</td>
-<td>Master password.</td>
+<td><a name="output_db_password"></a> <a href="#output_db_password">db_password</a></td>
+<td>n/a</td>
 </tr>
 <tr>
-<td>db_user</td>
-<td>Master username.</td>
+<td><a name="output_db_user"></a> <a href="#output_db_user">db_user</a></td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
+<!-- END_TF_DOCS -->
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1184,18 +1298,42 @@
         
         
         
-        <a href="#what-it-does"
+        <a href="#requirements"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            What it does
+            Requirements
         </a>
         
 
         
-        <a href="#fields"
+        <a href="#providers"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Fields
+            Providers
+        </a>
+        
+
+        
+        <a href="#modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Modules
+        </a>
+        
+
+        
+        <a href="#resources"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Resources
+        </a>
+        
+
+        
+        <a href="#inputs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Inputs
         </a>
         
 
