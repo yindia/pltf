@@ -5,21 +5,21 @@
 class Pltf < Formula
   desc "pltf CLI turns Environment and Service YAML into validated Terraform."
   homepage "https://github.com/yindia/pltf"
-  version "0.0.1-beta"
+  version "0.0.2-beta"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/yindia/pltf/releases/download/v0.0.1-beta/pltf_0.0.1-beta_darwin_amd64.tar.gz"
-      sha256 "13733a97ab51c522a50889451fe4a44f8a05e5af5b75d881001ef2b3d7c82f85"
+      url "https://github.com/yindia/pltf/releases/download/v0.0.2-beta/pltf_0.0.2-beta_darwin_amd64.tar.gz"
+      sha256 "c8409d75fbd5ece43e9fa840bdc4346a6ccf87ecc9f6f82903843e876d1b7be1"
 
       def install
         bin.install "pltf"
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/yindia/pltf/releases/download/v0.0.1-beta/pltf_0.0.1-beta_darwin_arm64.tar.gz"
-      sha256 "d1ecc159175d799a7a4cbbe0de72e48752d2201b2c6cad164a4f2c4ea4154b43"
+      url "https://github.com/yindia/pltf/releases/download/v0.0.2-beta/pltf_0.0.2-beta_darwin_arm64.tar.gz"
+      sha256 "dbae4358deb12db9393b138d0007c5a2d8c132a59c28f2bee8b8d21ad2602b28"
 
       def install
         bin.install "pltf"
@@ -29,15 +29,15 @@ class Pltf < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/yindia/pltf/releases/download/v0.0.1-beta/pltf_0.0.1-beta_linux_amd64.tar.gz"
-      sha256 "9f941cd430df1de0faa4402f324c3e6e3e0df58784fa26411526808f09a27bef"
+      url "https://github.com/yindia/pltf/releases/download/v0.0.2-beta/pltf_0.0.2-beta_linux_amd64.tar.gz"
+      sha256 "af2a304589071f8ce887354109784e6199995211094f4d61cb7ea104bb9d061f"
       def install
         bin.install "pltf"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/yindia/pltf/releases/download/v0.0.1-beta/pltf_0.0.1-beta_linux_arm64.tar.gz"
-      sha256 "2041907fc85f09ea6f5c3ecbea0bd1267a63bf3e35b108145b4e9a479fdbf544"
+      url "https://github.com/yindia/pltf/releases/download/v0.0.2-beta/pltf_0.0.2-beta_linux_arm64.tar.gz"
+      sha256 "d10f5c9e99bc43617839842051485b0a0b9e6ace95e4c95298f3fd1563935c39"
       def install
         bin.install "pltf"
       end
