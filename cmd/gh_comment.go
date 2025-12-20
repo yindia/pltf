@@ -24,6 +24,7 @@ type tfRunSummary struct {
 	OutDir string
 	Err    string
 	Plan   *planSummary
+	AI     string
 }
 
 type ghEvent struct {
@@ -123,6 +124,14 @@ func buildPRCommentBody(run tfRunSummary) string {
 			for _, a := range run.Plan.Deletes {
 				sb.WriteString(fmt.Sprintf("- %s\n", a))
 			}
+			sb.WriteString("\n")
+		}
+		sb.WriteString("</details>\n")
+	}
+	if strings.TrimSpace(run.AI) != "" {
+		sb.WriteString("\n<details><summary>AI risk review</summary>\n\n")
+		sb.WriteString(run.AI)
+		if !strings.HasSuffix(run.AI, "\n") {
 			sb.WriteString("\n")
 		}
 		sb.WriteString("</details>\n")

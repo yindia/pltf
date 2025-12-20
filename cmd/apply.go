@@ -329,12 +329,21 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-detailed-exitcode")
 		}
 		planPath := opts.planFile
+		planArg := opts.planFile
 		tempPlan := false
 		if strings.TrimSpace(planPath) == "" {
-			planPath = filepath.Join(ctx.outDir, ".pltf-plan.tfplan")
+			planArg = ".pltf-plan.tfplan"
+			planPath = filepath.Join(ctx.outDir, planArg)
 			tempPlan = true
+		} else {
+			if filepath.IsAbs(planPath) {
+				planArg = planPath
+			} else {
+				planArg = planPath
+				planPath = filepath.Join(ctx.outDir, planPath)
+			}
 		}
-		args = append(args, "-out="+planPath)
+		args = append(args, "-out="+planArg)
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
 			runErr = fmt.Errorf("terraform plan failed: %w", err)
 		} else {
@@ -376,6 +385,9 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			status.Err = runErr.Error()
 		} else {
 			status.Status = "succeeded"
+		}
+		if status.Plan != nil {
+			status.AI = maybeAICritique(status)
 		}
 		if err := maybeUpsertPRComment(status); err != nil {
 			fmt.Fprintf(os.Stderr, "warn: failed to update PR comment: %v\n", err)
