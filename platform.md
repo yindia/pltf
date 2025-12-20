@@ -53,3 +53,107 @@ pltf module init --path ./modules/aws_eks [--force]
 ## Backends
 - `backend.type` can be `s3|gcs|azurerm` (independent of provider).
 - `backend.profile` supports cross-account S3; optional `region`, `container`, `resource_group`.
+
+## CI/CD integration
+
+Below are example GitHub Actions workflows that use `pltf` to plan/apply.
+
+### Matrix plan across environments
+Plans every environment entry in a spec. Uses `example/env.yaml` as a template; adjust paths and secrets per your repo.
+
+```yaml
+name: Terraform Plan (matrix)
+
+on:
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [dev, staging, prod]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+      - name: Install pltf
+        run: |
+          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Terraform plan (${{ matrix.env }})
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-1
+        run: |
+          pltf terraform plan -f example/env.yaml --env ${{ matrix.env }}
+```
+
+### Deploy on branch/tag
+- `main` merges deploy to staging
+- tag pushes deploy to production
+- other branches can deploy to a "development" environment (optional apply)
+
+```yaml
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ "*" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+      - name: Install pltf
+        run: |
+          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Select env
+        id: select
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            echo "env=prod" >> "$GITHUB_OUTPUT"
+          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            echo "env=staging" >> "$GITHUB_OUTPUT"
+          else
+            echo "env=development" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Plan
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-1
+        run: |
+          pltf terraform plan -f example/env.yaml --env ${{ steps.select.outputs.env }}
+      - name: Apply (staging/prod only)
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-1
+        run: |
+          pltf terraform apply -f example/env.yaml --env ${{ steps.select.outputs.env }} --auto-approve
+```
+
+Notes:
+- Replace AWS env vars with GCP/Azure equivalents if using those providers.
+- The PR plan job posts a sticky comment with diffs and optional AI risk review when `OPENAI_API_KEY` is set.
+- For services, swap `example/env.yaml` with your service spec and set the correct env list.
