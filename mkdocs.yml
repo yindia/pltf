@@ -2,6 +2,7 @@ site_name: PLTF CLI Documentation
 repo_url: https://github.com/yindia/pltf
 theme:
   name: shadcn
+  topbar_sections: true
   features:
     - content.code.select
     - content.code.annotate
@@ -68,25 +69,27 @@ nav:
   - References:
       - AWS:
           - Overview: references/aws.md
-          - Modules:
-              - aws_base: references/modules/aws_base.md
-              - aws_dns: references/modules/aws_dns.md
-              - aws_documentdb: references/modules/aws_documentdb.md
-              - aws_dynamodb: references/modules/aws_dynamodb.md
-              - aws_eks: references/modules/aws_eks.md
-              - aws_iam_policy: references/modules/aws_iam_policy.md
-              - aws_iam_role: references/modules/aws_iam_role.md
-              - aws_iam_user: references/modules/aws_iam_user.md
-              - aws_mysql: references/modules/aws_mysql.md
-              - aws_nodegroup: references/modules/aws_nodegroup.md
-              - aws_postgres: references/modules/aws_postgres.md
-              - aws_redis: references/modules/aws_redis.md
-              - aws_s3: references/modules/aws_s3.md
-              - aws_ses: references/modules/aws_ses.md
-              - aws_sns: references/modules/aws_sns.md
-              - aws_sqs: references/modules/aws_sqs.md
           - EKS Access: references/aws_eks_access.md
           - EKS Upgrade: references/aws_eks_upgrade.md
+  - Modules:
+      - AWS:
+        - aws_base: references/modules/aws_base.md
+        - aws_dns: references/modules/aws_dns.md
+        - aws_documentdb: references/modules/aws_documentdb.md
+        - aws_dynamodb: references/modules/aws_dynamodb.md
+        - aws_eks: references/modules/aws_eks.md
+        - aws_iam_policy: references/modules/aws_iam_policy.md
+        - aws_iam_role: references/modules/aws_iam_role.md
+        - aws_iam_user: references/modules/aws_iam_user.md
+        - aws_mysql: references/modules/aws_mysql.md
+        - aws_nodegroup: references/modules/aws_nodegroup.md
+        - aws_postgres: references/modules/aws_postgres.md
+        - aws_redis: references/modules/aws_redis.md
+        - aws_s3: references/modules/aws_s3.md
+        - aws_ses: references/modules/aws_ses.md
+        - aws_sns: references/modules/aws_sns.md
+        - aws_sqs: references/modules/aws_sqs.md
+
   - Security:
       - AWS Architecture: security/aws.md
       - Kubernetes Architecture: security/kubernetes.md
