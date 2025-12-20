@@ -37,4 +37,5 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_KEY }}
           AWS_DEFAULT_REGION: ap-northeast-1
         run: |
+          set -x
           pltf terraform plan -f example/env.yaml --env prod

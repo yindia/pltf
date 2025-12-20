@@ -43,6 +43,7 @@ func maybeUpsertPRComment(run tfRunSummary) error {
 	token := os.Getenv("GITHUB_TOKEN")
 	repoFull := os.Getenv("GITHUB_REPOSITORY")
 	if strings.TrimSpace(token) == "" || strings.TrimSpace(repoFull) == "" {
+		fmt.Fprintln(os.Stderr, "info: skipping PR comment, missing GITHUB_TOKEN or GITHUB_REPOSITORY")
 		return nil
 	}
 
@@ -65,16 +66,27 @@ func maybeUpsertPRComment(run tfRunSummary) error {
 
 	existingID, found, err := findExistingPRComment(ctx, client, token, owner, repo, prNumber)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "warn: list PR comments failed: %v\n", err)
 		return err
 	}
 
 	if found {
 		url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/comments/%d", owner, repo, existingID)
-		return doGitHubRequest(ctx, client, token, http.MethodPatch, url, map[string]string{"body": body}, nil)
+		if err := doGitHubRequest(ctx, client, token, http.MethodPatch, url, map[string]string{"body": body}, nil); err != nil {
+			fmt.Fprintf(os.Stderr, "warn: edit PR comment failed: %v\n", err)
+			return err
+		}
+		fmt.Fprintf(os.Stderr, "info: updated PR comment %d\n", existingID)
+		return nil
 	}
 
 	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/issues/%d/comments", owner, repo, prNumber)
-	return doGitHubRequest(ctx, client, token, http.MethodPost, url, map[string]string{"body": body}, nil)
+	if err := doGitHubRequest(ctx, client, token, http.MethodPost, url, map[string]string{"body": body}, nil); err != nil {
+		fmt.Fprintf(os.Stderr, "warn: create PR comment failed: %v\n", err)
+		return err
+	}
+	fmt.Fprintln(os.Stderr, "info: created PR comment")
+	return nil
 }
 
 func buildPRCommentBody(run tfRunSummary) string {
@@ -223,12 +235,14 @@ func doGitHubRequest(ctx context.Context, client *http.Client, token, method, ur
 
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "warn: github request failed: %v\n", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
 		b, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		fmt.Fprintf(os.Stderr, "warn: github API %s %s failed: %s - %s\n", method, url, resp.Status, string(b))
 		return fmt.Errorf("github API %s %s: %s - %s", method, url, resp.Status, string(b))
 	}
 
