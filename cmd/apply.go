@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -269,7 +270,7 @@ func prepareStackContext(file, env, out string) (stackContext, error) {
 	}
 
 	ctx.env = env
-	ctx.outDir = filepath.Clean(ctx.outDir)
+	ctx.outDir, _ = filepath.Abs(filepath.Clean(ctx.outDir))
 	return ctx, nil
 }
 
@@ -303,6 +304,11 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		return args
 	}
 
+	var runErr error
+	var planSum *planSummary
+	runStatus := "succeeded"
+	var planArgs []string
+	var planExit int
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -310,7 +316,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-auto-approve")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform apply failed: %w", err)
+			runErr = fmt.Errorf("terraform apply failed: %w", err)
 		}
 	case "destroy":
 		args := []string{"destroy"}
@@ -318,18 +324,52 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-auto-approve")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform destroy failed: %w", err)
+			runErr = fmt.Errorf("terraform destroy failed: %w", err)
 		}
 	case "plan":
 		args := []string{"plan"}
 		if opts.detailedExit {
 			args = append(args, "-detailed-exitcode")
 		}
-		if opts.planFile != "" {
-			args = append(args, "-out="+opts.planFile)
+		planPath := opts.planFile
+		planArg := opts.planFile
+		tempPlan := false
+		if strings.TrimSpace(planPath) == "" {
+			planArg = ".pltf-plan.tfplan"
+			planPath = filepath.Join(ctx.outDir, planArg)
+			tempPlan = true
+		} else {
+			if filepath.IsAbs(planPath) {
+				planArg = planPath
+			} else {
+				planArg = planPath
+				planPath = filepath.Join(ctx.outDir, planPath)
+			}
 		}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform plan failed: %w", err)
+		args = append(args, "-out="+planArg)
+		planArgs = append(planArgs, common(args)...)
+		planExit, runErr = runCmdExit(ctx.outDir, "terraform", planArgs...)
+		if runErr != nil && !(opts.detailedExit && planExit == 2) {
+			runErr = fmt.Errorf("terraform plan failed: %w", runErr)
+		}
+		if opts.detailedExit && planExit == 2 && runErr == nil {
+			runStatus = "changes"
+		}
+		planPathOnDisk := planPath
+		if !filepath.IsAbs(planPathOnDisk) {
+			planPathOnDisk = filepath.Clean(planPathOnDisk)
+			if !strings.HasPrefix(planPathOnDisk, ctx.outDir) {
+				planPathOnDisk = filepath.Join(ctx.outDir, planPathOnDisk)
+			}
+		}
+		if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
+			planSum = sum
+			planSum.RawPlanArgs = planArgs
+		} else {
+			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
+		}
+		if tempPlan {
+			_ = os.Remove(planPathOnDisk)
 		}
 	case "output":
 		args := []string{"output"}
@@ -340,16 +380,38 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			args = append(args, "-json")
 		}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform output failed: %w", err)
+			runErr = fmt.Errorf("terraform output failed: %w", err)
 		}
 	case "force-unlock":
 		args := []string{"force-unlock", "-force", lockID}
 		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform force-unlock failed: %w", err)
+			runErr = fmt.Errorf("terraform force-unlock failed: %w", err)
 		}
 	}
 
-	return nil
+	if action == "plan" || action == "apply" {
+		status := tfRunSummary{
+			Action: action,
+			Spec:   file,
+			Env:    env,
+			OutDir: ctx.outDir,
+			Plan:   planSum,
+		}
+		if runErr != nil {
+			status.Status = "failed"
+			status.Err = runErr.Error()
+		} else {
+			status.Status = runStatus
+		}
+		if status.Plan != nil {
+			status.AI = maybeAICritique(status)
+		}
+		if err := maybeUpsertPRComment(status); err != nil {
+			fmt.Fprintf(os.Stderr, "warn: failed to update PR comment: %v\n", err)
+		}
+	}
+
+	return runErr
 }
 
 func init() {

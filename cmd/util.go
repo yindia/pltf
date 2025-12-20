@@ -171,6 +171,34 @@ func runCmd(dir, name string, args ...string) error {
 	return cmd.Run()
 }
 
+func runCmdExit(dir, name string, args ...string) (int, error) {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
+	if err == nil {
+		return 0, nil
+	}
+	if exitErr, ok := err.(*exec.ExitError); ok {
+		if status, ok := exitErr.Sys().(interface{ ExitStatus() int }); ok {
+			return status.ExitStatus(), err
+		}
+	}
+	return 1, err
+}
+
+func runCmdOutput(dir, name string, args ...string) (string, error) {
+	cmd := exec.Command(name, args...)
+	cmd.Dir = dir
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
+}
+
 func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
 	if opts.noColor {
 		args = append(args, "-no-color")
