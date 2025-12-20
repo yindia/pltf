@@ -270,7 +270,7 @@ func prepareStackContext(file, env, out string) (stackContext, error) {
 	}
 
 	ctx.env = env
-	ctx.outDir = filepath.Clean(ctx.outDir)
+	ctx.outDir, _ = filepath.Abs(filepath.Clean(ctx.outDir))
 	return ctx, nil
 }
 
@@ -357,7 +357,10 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		}
 		planPathOnDisk := planPath
 		if !filepath.IsAbs(planPathOnDisk) {
-			planPathOnDisk = filepath.Clean(filepath.Join(ctx.outDir, planPathOnDisk))
+			planPathOnDisk = filepath.Clean(planPathOnDisk)
+			if !strings.HasPrefix(planPathOnDisk, ctx.outDir) {
+				planPathOnDisk = filepath.Join(ctx.outDir, planPathOnDisk)
+			}
 		}
 		if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
 			planSum = sum

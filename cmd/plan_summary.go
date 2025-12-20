@@ -33,9 +33,9 @@ func collectPlanSummary(outDir, planFile string) (*planSummary, error) {
 	}
 	planPath := planFile
 	if !filepath.IsAbs(planFile) {
-		// If caller already resolved to outDir, avoid double-joining.
-		if !strings.HasPrefix(planFile, outDir) {
-			planPath = filepath.Join(outDir, planFile)
+		planPath = filepath.Clean(planPath)
+		if !strings.HasPrefix(planPath, outDir) {
+			planPath = filepath.Join(outDir, planPath)
 		}
 	}
 	if _, err := os.Stat(planPath); err != nil {
