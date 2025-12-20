@@ -349,14 +349,18 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		if err := runCmd(ctx.outDir, "terraform", planArgs...); err != nil {
 			runErr = fmt.Errorf("terraform plan failed: %w", err)
 		} else {
-			if sum, err := collectPlanSummary(ctx.outDir, planPath); err == nil {
+			planPathOnDisk := planPath
+			if !filepath.IsAbs(planPathOnDisk) {
+				planPathOnDisk = filepath.Clean(filepath.Join(ctx.outDir, planPathOnDisk))
+			}
+			if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
 				planSum = sum
 				planSum.RawPlanArgs = planArgs
 			} else {
 				fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 			}
 			if tempPlan {
-				_ = os.Remove(planPath)
+				_ = os.Remove(planPathOnDisk)
 			}
 		}
 	case "output":
