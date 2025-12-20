@@ -74,8 +74,8 @@ func collectPlanSummary(outDir, planFile string) (*planSummary, error) {
 	}
 
 	if text, err := runCmdOutput(outDir, "terraform", "show", "-no-color", planPath); err == nil {
-		// Keep a large chunk, but avoid runaway comments.
-		sum.Text = truncateForComment(strings.TrimSpace(text))
+		// Keep full plan output; GitHub comment limit is large enough for typical plans.
+		sum.Text = strings.TrimSpace(text)
 	}
 
 	return sum, nil

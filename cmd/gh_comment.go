@@ -146,7 +146,7 @@ func buildPRCommentBody(run tfRunSummary) string {
 			sb.WriteString("\n</details>\n")
 		}
 		if strings.TrimSpace(run.Plan.Text) != "" {
-			sb.WriteString("\n<details><summary>Terraform plan output (truncated)</summary>\n\n")
+			sb.WriteString("\n<details><summary>Terraform plan output</summary>\n\n")
 			sb.WriteString("```\n")
 			sb.WriteString(run.Plan.Text)
 			if !strings.HasSuffix(run.Plan.Text, "\n") {
