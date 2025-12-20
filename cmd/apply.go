@@ -306,7 +306,9 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 
 	var runErr error
 	var planSum *planSummary
+	runStatus := "succeeded"
 	var planArgs []string
+	var planExit int
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -346,22 +348,25 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		}
 		args = append(args, "-out="+planArg)
 		planArgs = append(planArgs, common(args)...)
-		if err := runCmd(ctx.outDir, "terraform", planArgs...); err != nil {
-			runErr = fmt.Errorf("terraform plan failed: %w", err)
+		planExit, runErr = runCmdExit(ctx.outDir, "terraform", planArgs...)
+		if runErr != nil && !(opts.detailedExit && planExit == 2) {
+			runErr = fmt.Errorf("terraform plan failed: %w", runErr)
+		}
+		if opts.detailedExit && planExit == 2 && runErr == nil {
+			runStatus = "changes"
+		}
+		planPathOnDisk := planPath
+		if !filepath.IsAbs(planPathOnDisk) {
+			planPathOnDisk = filepath.Clean(filepath.Join(ctx.outDir, planPathOnDisk))
+		}
+		if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
+			planSum = sum
+			planSum.RawPlanArgs = planArgs
 		} else {
-			planPathOnDisk := planPath
-			if !filepath.IsAbs(planPathOnDisk) {
-				planPathOnDisk = filepath.Clean(filepath.Join(ctx.outDir, planPathOnDisk))
-			}
-			if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
-				planSum = sum
-				planSum.RawPlanArgs = planArgs
-			} else {
-				fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
-			}
-			if tempPlan {
-				_ = os.Remove(planPathOnDisk)
-			}
+			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
+		}
+		if tempPlan {
+			_ = os.Remove(planPathOnDisk)
 		}
 	case "output":
 		args := []string{"output"}
@@ -393,7 +398,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			status.Status = "failed"
 			status.Err = runErr.Error()
 		} else {
-			status.Status = "succeeded"
+			status.Status = runStatus
 		}
 		if status.Plan != nil {
 			status.AI = maybeAICritique(status)
