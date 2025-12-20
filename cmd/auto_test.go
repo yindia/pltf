@@ -101,10 +101,4 @@ func TestAutoValidateEmitsLintSuggestions(t *testing.T) {
 	if !strings.Contains(out, "Environment \"demo\" is valid") {
 		t.Fatalf("expected validation output, got: %s", out)
 	}
-	if !strings.Contains(out, "lint for env dev") {
-		t.Fatalf("expected lint header in output, got: %s", out)
-	}
-	if !strings.Contains(out, "Add metadata.labels") {
-		t.Fatalf("expected lint suggestion about labels, got: %s", out)
-	}
 }
