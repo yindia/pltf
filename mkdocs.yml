@@ -91,7 +91,10 @@ nav:
         - aws_ses: references/modules/aws_ses.md
         - aws_sns: references/modules/aws_sns.md
         - aws_sqs: references/modules/aws_sqs.md
-
+  - Examples:
+      - ML Cluster: example/ml.md
+      - Full Stack application: example/fsapp.md
+      - Airflow: example/airflow.md
   - Security:
       - AWS Architecture: security/aws.md
       - Kubernetes Architecture: security/kubernetes.md
