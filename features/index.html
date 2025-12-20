@@ -1092,56 +1092,48 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Each major capability has its own page:</p>
+    <p>pltf focuses on faster, safer Terraform generation with predictable wiring. Deep dives live under <code>docs/features/*</code>.</p>
+<h2 id="map-of-features">Map of features</h2>
 <ul>
-<li><a href="profiles/">Profiles &amp; Defaults</a></li>
-<li><a href="validation/">Validation &amp; Lint</a></li>
-<li><a href="backends/">Backends</a></li>
-<li><a href="custom-modules/">Custom Modules</a></li>
-<li><a href="placeholders/">Placeholders &amp; Wiring</a></li>
-<li><a href="secrets/">Secrets</a></li>
-<li><a href="variables/">Variables</a></li>
-<li><a href="telemetry/">Telemetry</a></li>
+<li><a href="profiles/">Profiles &amp; Defaults</a>: org/user defaults (<code>modules_root</code>, <code>default_env</code>, telemetry).</li>
+<li><a href="validation/">Validation &amp; Lint</a>: structural checks before render/apply.</li>
+<li><a href="backends/">Backends</a>: <code>s3|gcs|azurerm</code> state backends, independent of target cloud.</li>
+<li><a href="custom-modules/">Custom Modules</a>: bring-your-own <code>module.yaml</code> catalog.</li>
+<li><a href="placeholders/">Placeholders &amp; Wiring</a>: <code>${env_name}</code>, <code>${layer_name}</code>, <code>${module.&lt;id&gt;.&lt;output&gt;}</code>, <code>${parent.&lt;output&gt;}</code>, <code>${var.&lt;name&gt;}</code>.</li>
+<li><a href="secrets/">Secrets</a>: keep secrets out of specs; render as TF vars, not locals.</li>
+<li><a href="variables/">Variables</a>: env/service vars and CLI <code>--var</code> overrides.</li>
+<li><a href="telemetry/">Telemetry</a>: opt-in/opt-out behavior.</li>
+</ul>
+<h2 id="terraform-generation-and-execution">Terraform generation and execution</h2>
+<ul>
+<li>Render-only: <code>pltf generate -f &lt;spec&gt; --env &lt;name&gt; -o &lt;dir&gt;</code> (no cloud creds required).</li>
+<li>Generate + run Terraform: <code>pltf terraform plan|apply|destroy|output|graph</code> regenerates code every time before invoking Terraform.</li>
+<li>Outputs land under <code>.pltf/&lt;env&gt;/&lt;layer&gt;/...</code> with providers, backends, modules, and outputs files.</li>
+</ul>
+<p>Examples:
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>example/env.yaml<span class="w"> </span>--env<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/env/prod
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w"> </span>-f<span class="w"> </span>example/service.yaml<span class="w"> </span>--env<span class="w"> </span>prod
+</span></code></pre></div></p>
+<h2 id="variables-placeholders-links">Variables, placeholders, links</h2>
+<ul>
+<li>Reuse specs with <code>${env_name}</code>, <code>${layer_name}</code>, <code>${parent.&lt;output&gt;}</code>, <code>${module.&lt;id&gt;.&lt;output&gt;}</code>, <code>${var.&lt;name&gt;}</code>.</li>
+<li>Links let modules consume other module outputs without hand-wiring Terraform.</li>
+<li>CLI overrides: <code>--var key=value</code> augment or replace spec variables.</li>
 </ul>
 <h2 id="secrets">Secrets</h2>
 <ul>
-<li><strong>What:</strong> Manage app secrets without embedding them in specs/code. Secrets are stored as Kubernetes secrets and injected as env vars.</li>
-<li><strong>Why:</strong> Avoid leaking credentials; keep rotation simple.</li>
-<li><strong>Usage:</strong> Define secret keys in your spec under <code>secrets</code> and supply values via environment variables or CLI <code>--var</code>. Secrets are treated as TF variables, not locals.</li>
-<li><strong>Notes:</strong> Services restart to pick up changes unless <code>--no-restart</code> is used. Bulk updates can consume <code>.env</code>-style inputs; values should come from env/CI secret stores, not hardcoded files.</li>
+<li>Declare secret keys under <code>envRef.&lt;name&gt;.secrets</code>; supply values via environment/CI secrets.</li>
+<li>Rendered as Terraform variables to avoid embedding values in generated code.</li>
 </ul>
-<h2 id="terraform-generator">Terraform Generator</h2>
+<h2 id="custom-modules">Custom modules</h2>
 <ul>
-<li><strong>What:</strong> Render Terraform from env/service specs without applying; handy for review, migration, or running TF directly.</li>
-<li><strong>Why:</strong> Keep portability—inspect/modify TF, hand to CI, or migrate away without lock-in.</li>
-<li><strong>Commands:</strong> <code>pltf generate</code> for TF only; <code>pltf terraform plan|apply|destroy|output|force-unlock</code> to generate + run.</li>
-<li><strong>Example (env):</strong>
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/env/prod
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># outputs providers.tf, backend.tf, modules/&lt;...&gt;, outputs.tf, versions.tf</span>
-</span></code></pre></div></li>
-<li><strong>Example (service):</strong>
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/service/payments/prod
-</span></code></pre></div></li>
-<li><strong>Notes:</strong> Does not require cloud credentials to render. Backends are written per spec (<code>s3|gcs|azurerm</code>). Generated modules directory is self-contained for review or VCS.</li>
+<li>Run <code>pltf module init --path &lt;module_dir&gt;</code> to scaffold <code>module.yaml</code>.</li>
+<li>Reference with <code>source: custom</code> and point <code>--modules</code> or profile <code>modules_root</code> to your catalog.</li>
 </ul>
-<h2 id="variables">Variables</h2>
+<h2 id="validation-and-lint">Validation and lint</h2>
 <ul>
-<li><strong>What:</strong> Minimal templating to reuse specs across envs/services.</li>
-<li><strong>Types:</strong> CLI <code>--var</code>, env-level <code>variables</code>, and placeholders.</li>
-<li><strong>Placeholders:</strong> <code>${env_name}</code>, <code>${layer_name}</code>, <code>${module.&lt;id&gt;.&lt;output&gt;}</code>, <code>${parent.&lt;output&gt;}</code>, <code>${var.&lt;name&gt;}</code>.</li>
-<li><strong>Spec inputs:</strong> Declare <code>variables</code> in env specs or use <code>--var key=value</code> at runtime; service specs inherit envRef variables and can override via CLI.</li>
-<li><strong>Example (env):</strong>
-  <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">variables</span><span class="p">:</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">  </span><span class="nt">min_nodes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;2&quot;</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">  </span><span class="nt">max_nodes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5&quot;</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="nt">modules</span><span class="p">:</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_eks</span>
-</span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="w">    </span><span class="nt">min_nodes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${var.min_nodes}&quot;</span>
-</span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="w">    </span><span class="nt">max_nodes</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;${var.max_nodes}&quot;</span>
-</span></code></pre></div>
-  <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>--var<span class="w"> </span><span class="nv">min_nodes</span><span class="o">=</span><span class="m">3</span><span class="w"> </span>--var<span class="w"> </span><span class="nv">max_nodes</span><span class="o">=</span><span class="m">6</span>
-</span></code></pre></div></li>
-<li><strong>Parent outputs:</strong> In services, <code>${parent.&lt;output&gt;}</code> references environment outputs (e.g., <code>${parent.domain}</code>).</li>
+<li><code>pltf validate</code> runs structural checks before generation.</li>
+<li>Terraform <code>plan/apply</code> via <code>pltf terraform ...</code> always regenerates to reduce drift and catches wiring issues early.</li>
 </ul>
   </div>
 </article>
@@ -1365,6 +1357,30 @@
         
         
         
+        <a href="#map-of-features"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Map of features
+        </a>
+        
+
+        
+        <a href="#terraform-generation-and-execution"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Terraform generation and execution
+        </a>
+        
+
+        
+        <a href="#variables-placeholders-links"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Variables, placeholders, links
+        </a>
+        
+
+        
         <a href="#secrets"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
@@ -1373,18 +1389,18 @@
         
 
         
-        <a href="#terraform-generator"
+        <a href="#custom-modules"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Terraform Generator
+            Custom modules
         </a>
         
 
         
-        <a href="#variables"
+        <a href="#validation-and-lint"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Variables
+            Validation and lint
         </a>
         
 
