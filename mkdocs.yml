@@ -47,6 +47,13 @@ nav:
   - FAQ: faq.md
   - GitHub: https://github.com/yindia/pltf
   - Getting Started:
+      - Concepts:
+          - Overview: concepts/overview.md
+          - Environment: concepts/environment.md
+          - Layer: concepts/layer.md
+          - Module: concepts/module.md
+          - Config: specs.md
+          - Modules & Wiring: modules.md
       - AWS: getting-started/aws.md
   - Platform:
       - pltf: cli/pltf.md
@@ -67,13 +74,6 @@ nav:
         - list: cli/pltf_module_list.md
         - get: cli/pltf_module_get.md
         - init: cli/pltf_module_init.md
-      - Concepts:
-          - Overview: concepts/overview.md
-          - Environment: concepts/environment.md
-          - Layer: concepts/layer.md
-          - Module: concepts/module.md
-          - Config: specs.md
-          - Modules & Wiring: modules.md
       - Features:
         - Overview: features.md
         - Profiles & Defaults: features/profiles.md
