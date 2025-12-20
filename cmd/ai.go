@@ -74,7 +74,7 @@ func maybeAICritique(run tfRunSummary) string {
 		Messages: []aiMsg{
 			{
 				Role:    "system",
-				Content: "You are an expert cloud/Terraform reviewer. Provide a concise risk assessment focusing on destructive changes, blast radius, IAM changes, and dependency impact. Keep it under 120 words.",
+				Content: "You are an expert cloud/Terraform reviewer. Analyze the Terraform plan diff and produce a concise risk summary. Prioritize: destructive changes and their blast radius; IAM and network surface changes; data loss or downtime risks; state/backends/provider drift; unsafe defaults. Be concise (<120 words), use clear bullets, and call out blockers vs cautions.",
 			},
 			{
 				Role:    "user",
