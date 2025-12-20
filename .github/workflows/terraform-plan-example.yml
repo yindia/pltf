@@ -27,7 +27,7 @@ jobs:
 
       - name: Install pltf (from source)
         run: |
-          go install ./...
+          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
 
       - name: Terraform Plan (example/env.yaml)
