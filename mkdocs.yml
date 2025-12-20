@@ -49,25 +49,41 @@ nav:
   - Getting Started:
       - AWS: getting-started/aws.md
   - Platform:
+      - pltf: cli/pltf.md
+      - generate: cli/pltf_generate.md
+      - lint: cli/pltf_lint.md
+      - validate: cli/pltf_validate.md
+      - preview: cli/pltf_preview.md
+      - terraform:
+        - Overview: cli/pltf_terraform.md
+        - plan: cli/pltf_terraform_plan.md
+        - apply: cli/pltf_terraform_apply.md
+        - destroy: cli/pltf_terraform_destroy.md
+        - force-unlock: cli/pltf_terraform_force-unlock.md
+        - output: cli/pltf_terraform_output.md
+        - graph: cli/pltf_terraform_graph.md
+      - module:
+        - Overview: cli/pltf_module.md
+        - list: cli/pltf_module_list.md
+        - get: cli/pltf_module_get.md
+        - init: cli/pltf_module_init.md
       - Concepts:
           - Overview: concepts/overview.md
           - Environment: concepts/environment.md
-          - Module: concepts/module.md
           - Layer: concepts/layer.md
-      - Platform Usage: platform.md
-      - CLI Reference: usage.md
+          - Module: concepts/module.md
+          - Config: specs.md
+          - Modules & Wiring: modules.md
       - Features:
-          - Overview: features.md
-          - Profiles & Defaults: features/profiles.md
-          - Validation & Lint: features/validation.md
-          - Backends: features/backends.md
-          - Custom Modules: features/custom-modules.md
-          - Placeholders & Wiring: features/placeholders.md
-          - Secrets: features/secrets.md
-          - Variables: features/variables.md
-          - Telemetry: features/telemetry.md
-      - Spec Guide: specs.md
-      - Modules & Wiring: modules.md
+        - Overview: features.md
+        - Profiles & Defaults: features/profiles.md
+        - Validation & Lint: features/validation.md
+        - Backends: features/backends.md
+        - Custom Modules: features/custom-modules.md
+        - Placeholders & Wiring: features/placeholders.md
+        - Secrets: features/secrets.md
+        - Variables: features/variables.md
+        - Telemetry: features/telemetry.md
   - References:
       - AWS:
           - Overview: references/aws.md
