@@ -306,6 +306,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 
 	var runErr error
 	var planSum *planSummary
+	var planArgs []string
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -344,11 +345,15 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			}
 		}
 		args = append(args, "-out="+planArg)
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
+		planArgs = append(planArgs, common(args)...)
+		if err := runCmd(ctx.outDir, "terraform", planArgs...); err != nil {
 			runErr = fmt.Errorf("terraform plan failed: %w", err)
 		} else {
 			if sum, err := collectPlanSummary(ctx.outDir, planPath); err == nil {
 				planSum = sum
+				planSum.RawPlanArgs = planArgs
+			} else {
+				fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 			}
 			if tempPlan {
 				_ = os.Remove(planPath)

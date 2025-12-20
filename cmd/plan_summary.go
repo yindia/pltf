@@ -8,13 +8,14 @@ import (
 )
 
 type planSummary struct {
-	Added     int
-	Changed   int
-	Destroyed int
-	Adds      []string
-	Changes   []string
-	Deletes   []string
-	Text      string
+	Added       int
+	Changed     int
+	Destroyed   int
+	Adds        []string
+	Changes     []string
+	Deletes     []string
+	Text        string
+	RawPlanArgs []string
 }
 
 type tfPlanJSON struct {

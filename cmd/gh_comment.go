@@ -168,6 +168,12 @@ func buildPRCommentBody(run tfRunSummary) string {
 	if strings.TrimSpace(run.Env) != "" {
 		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
 	}
+	if run.Plan != nil && len(run.Plan.RawPlanArgs) > 0 {
+		for _, a := range run.Plan.RawPlanArgs {
+			sb.WriteString(" ")
+			sb.WriteString(a)
+		}
+	}
 	sb.WriteString("\n```\n")
 	sb.WriteString("\n_This comment updates automatically on pushes to the PR._\n")
 	return sb.String()
