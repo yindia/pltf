@@ -18,8 +18,8 @@ To use an existing VPC, set `vpc_id`, `public_subnet_ids`, and `private_subnet_i
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider_aws) | n/a |
-| <a name="provider_random"></a> [random](#provider_random) | n/a |
+| <a name="provider_aws"></a> [aws](#provider_aws) | 6.27.0 |
+| <a name="provider_random"></a> [random](#provider_random) | 3.7.2 |
 
 #### Modules
 

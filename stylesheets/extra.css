@@ -10,6 +10,21 @@
   --md-tooltip-width: 600px;
 }
 
+html,
+body {
+  min-height: 100vh;
+  height: auto;
+}
+
+.md-main,
+.md-main__inner,
+.md-content,
+.md-content__inner {
+  min-height: 100vh;
+  height: auto;
+  overflow: visible;
+}
+
 .code-block-wrapper {
   position: relative;
 }
@@ -43,7 +58,10 @@
   transform: translateY(0);
 }
 
-.wrap-lines code {
+.wrap-lines code,
+pre,
+code {
   white-space: pre-wrap;
   word-break: break-word;
+  overflow-x: auto;
 }

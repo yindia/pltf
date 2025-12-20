@@ -752,18 +752,20 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>pltf is Infrastructure-as-Code with a higher-level abstraction. You write configuration files, then run the pltf CLI (locally or in CI/CD) to connect to your cloud account and provision resources using Terraform under the hood.</p>
-<p><img alt="Architecture" src="../../images/hero.png" /> <!-- Replace with your hero image --></p>
-<h2 id="how-it-works">How It Works</h2>
-<p>1) Author YAML specs.
-2) Run <code>pltf preview|validate|generate|terraform ...</code>.
-3) The CLI renders Terraform (providers, backends, locals, remote state) and can execute Terraform for you.</p>
-<p>There are two primary spec types:</p>
+    <p>pltf raises the abstraction for Infrastructure-as-Code. You describe high-level constructs in YAML and let the CLI render the Terraform (providers, backends, locals, remote state) needed to stand them up. You keep the output and can run <code>terraform plan/apply</code> yourself or let pltf drive Terraform for you.</p>
+<p><img alt="Architecture" src="../../images/hero.png" /></p>
+<h2 id="core-specs">Core specs</h2>
 <ul>
-<li><strong>Environment</strong>: Specifies cloud, account, and region. Running an Environment sets up the base resources (e.g., Kubernetes cluster, networks, IAM, ingress). Typical patterns: one per staging/prod/QA, or one per engineer/PR for isolated sandboxes.</li>
-<li><strong>Service</strong> (Layer): Specifies the workload (often a microservice) and any non-Kubernetes resources it needs (e.g., databases, queues). pltf connects these seamlessly to the Environment.</li>
+<li><strong>Environment</strong>: The shared foundation—cloud/account/region plus base modules like VPC, DNS, EKS/GKE/AKS, IAM. Often one per prod/stage/QA, or per engineer/PR sandbox.</li>
+<li><strong>Service</strong> (Layer): A workload’s resources—databases, queues, buckets, roles, charts—wired into an Environment.</li>
 </ul>
-<p>Environment and Service specs link via <code>metadata.ref</code> (path to env) and <code>envRef</code> (per-environment overrides).</p>
+<p>Services point at Environments via <code>metadata.ref</code> (path to env file) and <code>envRef</code> (per-environment overrides). Module links let services consume environment outputs without hand-written interpolation.</p>
+<h2 id="loop">Loop</h2>
+<ol>
+<li>Author/update YAML specs (Environment + Service).</li>
+<li><code>pltf validate | preview | terraform plan/apply</code> (regenerates Terraform each run).</li>
+<li>Inspect outputs/graphs; iterate.</li>
+</ol>
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -985,6 +987,22 @@
         
         
         
+        
+        <a href="#core-specs"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Core specs
+        </a>
+        
+
+        
+        <a href="#loop"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Loop
+        </a>
+        
+
         
         
         

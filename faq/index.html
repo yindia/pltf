@@ -678,14 +678,24 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <blockquote>
-<p>Placeholder content. Replace with real Q&amp;A.</p>
-</blockquote>
-<ul>
-<li><strong>What is pltf?</strong> A CLI that turns YAML specs into Terraform.</li>
-<li><strong>Can I use custom modules?</strong> Yes, set <code>source: custom</code> and provide a custom modules root.</li>
-<li><strong>How do I pick a backend?</strong> Set <code>backend.type</code> to <code>s3|gcs|azurerm</code> regardless of provider.</li>
-</ul>
+    <p><strong>Is pltf production-ready?</strong><br />
+It’s under active development. Pin a release, review generated Terraform, and run plans in non-prod first.</p>
+<p><strong>Which clouds are supported?</strong><br />
+Terraform output is portable; module coverage today is focused on AWS. GCP/Azure are on the roadmap and can be added via custom modules.</p>
+<p><strong>How do Environment and Service specs relate?</strong><br />
+<code>Service.metadata.ref</code> points to an Environment file. <code>envRef</code> selects the environment entry (e.g., <code>prod</code>) and lets you override variables/secrets for that service.</p>
+<p><strong>Can I bring my own modules?</strong><br />
+Yes. Add a <code>module.yaml</code> with inputs/outputs/schema and set <code>source: custom</code> (or point <code>modules_root</code> to your catalog). pltf will wire variables/links and emit Terraform.</p>
+<p><strong>Do I have to run Terraform with pltf?</strong><br />
+No. You can just generate Terraform and run <code>terraform plan/apply</code> yourself. The CLI can also run Terraform for you after regeneration to keep code and state aligned.</p>
+<p><strong>Which state backends can I use?</strong><br />
+<code>s3</code>, <code>gcs</code>, or <code>azurerm</code> regardless of target cloud. Configure credentials via profiles or env vars just like plain Terraform.</p>
+<p><strong>How are secrets handled?</strong><br />
+Put secrets under <code>envRef.&lt;name&gt;.secrets</code>. They are rendered as Terraform variables and should be sourced from your secret manager or CI env, not hardcoded.</p>
+<p><strong>How do module links work?</strong><br />
+Use <code>links</code> to reference other module outputs (e.g., an IAM role ARN for a Helm chart). The generator wires those into Terraform expressions; no manual interpolation needed.</p>
+<p><strong>Where do I start?</strong><br />
+Clone the repo and use the samples: <code>example/env.yaml</code> and <code>example/service.yaml</code>. Run <code>pltf preview</code> then <code>pltf terraform plan --env prod</code> to see the rendered code and plan.</p>
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">

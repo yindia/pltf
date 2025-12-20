@@ -73,5 +73,5 @@ Generate `module.yaml` for your own Terraform module via `pltf module init --pat
 pltf uses Terraform under the hood, so you’re never locked in. Extend with your own Terraform or take the generated code with you.
 
 ## Next Steps
-- Learn about [Layer/Service](service.md) (coming soon).
-- Explore the module API in [References](../references/aws.md) and per-module pages.
+- Learn about [Layer/Service](layer.md).
+- Explore module APIs in [References](../references/aws.md) and per-module pages.

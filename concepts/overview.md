@@ -1,17 +1,16 @@
 # Concepts Overview
 
-pltf is Infrastructure-as-Code with a higher-level abstraction. You write configuration files, then run the pltf CLI (locally or in CI/CD) to connect to your cloud account and provision resources using Terraform under the hood.
+pltf raises the abstraction for Infrastructure-as-Code. You describe high-level constructs in YAML and let the CLI render the Terraform (providers, backends, locals, remote state) needed to stand them up. You keep the output and can run `terraform plan/apply` yourself or let pltf drive Terraform for you.
 
-![Architecture](../images/hero.png) <!-- Replace with your hero image -->
+![Architecture](../images/hero.png)
 
-## How It Works
-1) Author YAML specs.
-2) Run `pltf preview|validate|generate|terraform ...`.
-3) The CLI renders Terraform (providers, backends, locals, remote state) and can execute Terraform for you.
+## Core specs
+- **Environment**: The shared foundation—cloud/account/region plus base modules like VPC, DNS, EKS/GKE/AKS, IAM. Often one per prod/stage/QA, or per engineer/PR sandbox.
+- **Service** (Layer): A workload’s resources—databases, queues, buckets, roles, charts—wired into an Environment.
 
-There are two primary spec types:
+Services point at Environments via `metadata.ref` (path to env file) and `envRef` (per-environment overrides). Module links let services consume environment outputs without hand-written interpolation.
 
-- **Environment**: Specifies cloud, account, and region. Running an Environment sets up the base resources (e.g., Kubernetes cluster, networks, IAM, ingress). Typical patterns: one per staging/prod/QA, or one per engineer/PR for isolated sandboxes.
-- **Service** (Layer): Specifies the workload (often a microservice) and any non-Kubernetes resources it needs (e.g., databases, queues). pltf connects these seamlessly to the Environment.
-
-Environment and Service specs link via `metadata.ref` (path to env) and `envRef` (per-environment overrides).
+## Loop
+1. Author/update YAML specs (Environment + Service).
+2. `pltf validate | preview | terraform plan/apply` (regenerates Terraform each run).
+3. Inspect outputs/graphs; iterate.

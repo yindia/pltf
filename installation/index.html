@@ -678,36 +678,38 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <h2 id="homebrew-macoslinux">Homebrew (macOS/Linux)</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>yindia/pltf
+    <blockquote>
+<p>pltf is in active development. Pin a release when installing for production workflows.</p>
+</blockquote>
+<h2 id="homebrew-macoslinux">Homebrew (macOS/Linux)</h2>
+<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>yindia/pltf
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>brew<span class="w"> </span>install<span class="w"> </span>pltf
 </span></code></pre></div>
-<p>If you previously tapped another repo, run <code>brew untap &lt;old&gt;</code> before tapping <code>yindia/pltf</code>.</p>
+If you had a different tap, <code>brew untap &lt;old&gt;</code> first.</p>
 <h2 id="install-script-macoslinuxwindows-via-wsl-or-git-bash">Install script (macOS/Linux/Windows via WSL or Git Bash)</h2>
 <p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-sSL<span class="w"> </span>https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </span></code></pre></div>
 Environment overrides:
-- <code>REPO_OWNER</code> / <code>REPO_NAME</code> to point at a fork
-- <code>VERSION</code> to pin a release tag (e.g. <code>v1.2.3</code>)
-- <code>DEST</code> to change install path (defaults to <code>/usr/local/bin</code>)</p>
+- <code>REPO_OWNER</code> / <code>REPO_NAME</code>: install from a fork
+- <code>VERSION</code>: pin a release tag (e.g., <code>v0.1.0</code>)
+- <code>DEST</code>: install path (default <code>/usr/local/bin</code>)</p>
 <h2 id="docker">Docker</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>pltf<span class="w"> </span>.
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>pltf<span class="w"> </span>--help
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span>ghcr.io/yindia/pltf:sha-713a58e<span class="w"> </span>--help
 </span></code></pre></div>
 <h2 id="from-source">From source</h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>go<span class="w"> </span>install<span class="w"> </span>./...
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># or to build a local binary</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="c1"># or build a local binary</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>go<span class="w"> </span>build<span class="w"> </span>-o<span class="w"> </span>bin/pltf<span class="w"> </span>main.go
 </span></code></pre></div>
-<h2 id="verify">Verify</h2>
+<h2 id="verify-the-install">Verify the install</h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pltf<span class="w"> </span>--help
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>example/env.yaml
 </span></code></pre></div>
 <h2 id="upgrade">Upgrade</h2>
 <ul>
 <li>Homebrew: <code>brew upgrade pltf</code></li>
-<li>Script: rerun the install script with the desired <code>VERSION</code></li>
-<li>From source: <code>git pull</code> then rebuild</li>
+<li>Script: rerun the install script with your desired <code>VERSION</code></li>
+<li>Source: <code>git pull</code> then rebuild</li>
 </ul>
   </div>
 </article>
@@ -963,10 +965,10 @@ Environment overrides:
         
 
         
-        <a href="#verify"
+        <a href="#verify-the-install"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Verify
+            Verify the install
         </a>
         
 
