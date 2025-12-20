@@ -103,30 +103,36 @@ func buildPRCommentBody(run tfRunSummary) string {
 		sb.WriteString(fmt.Sprintf("- error: `%s`\n", truncateForComment(run.Err)))
 	}
 	if run.Plan != nil {
-		sb.WriteString("\n<details><summary>Plan summary</summary>\n\n")
-		sb.WriteString(fmt.Sprintf("- add: %d\n- change: %d\n- destroy: %d\n\n", run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+		sb.WriteString("\nPlan summary:\n")
+		sb.WriteString(fmt.Sprintf("- add: %d\n- change: %d\n- destroy: %d\n", run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+
 		if len(run.Plan.Adds) > 0 {
-			sb.WriteString("**Add**\n")
+			sb.WriteString("\n<details><summary>Added (")
+			sb.WriteString(fmt.Sprintf("%d", run.Plan.Added))
+			sb.WriteString(")</summary>\n\n")
 			for _, a := range run.Plan.Adds {
 				sb.WriteString(fmt.Sprintf("- %s\n", a))
 			}
-			sb.WriteString("\n")
+			sb.WriteString("\n</details>\n")
 		}
 		if len(run.Plan.Changes) > 0 {
-			sb.WriteString("**Change**\n")
+			sb.WriteString("\n<details><summary>Changed (")
+			sb.WriteString(fmt.Sprintf("%d", run.Plan.Changed))
+			sb.WriteString(")</summary>\n\n")
 			for _, a := range run.Plan.Changes {
 				sb.WriteString(fmt.Sprintf("- %s\n", a))
 			}
-			sb.WriteString("\n")
+			sb.WriteString("\n</details>\n")
 		}
 		if len(run.Plan.Deletes) > 0 {
-			sb.WriteString("**Destroy**\n")
+			sb.WriteString("\n<details><summary>Destroyed (")
+			sb.WriteString(fmt.Sprintf("%d", run.Plan.Destroyed))
+			sb.WriteString(")</summary>\n\n")
 			for _, a := range run.Plan.Deletes {
 				sb.WriteString(fmt.Sprintf("- %s\n", a))
 			}
-			sb.WriteString("\n")
+			sb.WriteString("\n</details>\n")
 		}
-		sb.WriteString("</details>\n")
 	}
 	if strings.TrimSpace(run.AI) != "" {
 		sb.WriteString("\n<details><summary>AI risk review</summary>\n\n")

@@ -33,7 +33,7 @@ type aiResponse struct {
 }
 
 func maybeAICritique(run tfRunSummary) string {
-	key := os.Getenv("OPEN_AI_KEY")
+	key := getAIKey()
 	if strings.TrimSpace(key) == "" {
 		return ""
 	}
@@ -106,4 +106,11 @@ func maybeAICritique(run tfRunSummary) string {
 		return ""
 	}
 	return strings.TrimSpace(aiResp.Choices[0].Message.Content)
+}
+
+func getAIKey() string {
+	if v := strings.TrimSpace(os.Getenv("OPENAI_API_KEY")); v != "" {
+		return v
+	}
+	return strings.TrimSpace(os.Getenv("OPEN_AI_KEY"))
 }
