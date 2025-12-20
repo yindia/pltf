@@ -1,50 +1,62 @@
 # Environment
 
-The common frame that powers your infrastructure.
+The shared foundation for your stacks: cloud, account/project, region, and base modules (VPC, DNS, EKS/GKE/AKS, IAM).
 
-## What is an Environment?
-Environment specs declare which cloud/account/region to configure. From this file, pltf can create the base resources (e.g., Kubernetes clusters, networks, IAM roles, ingress). You’ll usually have one per staging/prod/QA; you can also create per-engineer or per-PR environments for isolated sandboxes.
+![Environment](../images/hero.png)
 
-![Environment](../images/hero.png) <!-- Replace with your environment graphic -->
+## Definition (example)
+Based on `example/env.yaml`:
 
-## Definition (YAML)
 ```yaml
 apiVersion: platform.io/v1
 kind: Environment
+
 metadata:
   name: example-aws
-  org: myorg
-  provider: aws        # cloud provider
+  org: pltf
+  provider: aws
   labels:
     team: platform
-backend:
-  type: s3             # s3|gcs|azurerm
-  bucket: my-tf-bucket # optional; auto-named if omitted
-  region: us-east-1
+    cost_center: shared
 environments:
   prod:
-    account: "123456789012"
-    region: us-east-1
+    account: "556169302489"
+    region: ap-northeast-1
     variables:
-      base_domain: prod.example.com
+      base_domain: prod.pltf.internal
+      cluster_name: pltf-data
 modules:
   - id: base
     type: aws_base
+  - id: dns
+    type: aws_dns
+    inputs:
+      domain: ${{var.base_domain}}
+      delegated: false
   - id: eks
     type: aws_eks
     inputs:
-      cluster_name: var.base_domain
+      cluster_name: "pltf-app-${layer_name}-${env_name}"
+      k8s_version: 1.33
+      enable_metrics: false
+      max_nodes: 15
+  - id: nodegroup1
+    type: aws_nodegroup
+    inputs:
+      max_nodes: 15
+      node_disk_size: 20
 ```
 
-Key points:
-- `metadata` sets name/org/provider and optional labels (become global tags).
-- `backend.type` can be `s3|gcs|azurerm` (independent of provider). `backend.profile` supports cross-account S3.
-- `environments` map holds per-env account/region/vars/secrets; pick one via `--env` or profile `default_env`.
-- `modules` are shared across services; use embedded catalog or `source: custom` to pull from your own root.
+## Key points
 
-## State Storage
-pltf uses your cloud’s native bucket for remote state (S3/GCS/Azurerm). One bucket per environment; state and metadata for the environment and its services live as separate objects. Backends are managed via `backend.*` and can be cross-cloud (e.g., Azure env with S3 backend).
+- **Metadata**: name/org/provider; labels become tags.
+- **environments**: per-env account/region/vars/secrets; select with `--env prod`.
+- **modules**: shared building blocks. Use the embedded catalog or `source: custom` with your module root.
+- **Backends**: choose `s3|gcs|azurerm` independently of provider; use profiles for cross-account S3 (set in profiles or flags).
 
-## Next Steps
-- Learn about [Modules](../modules.md).
-- Explore [Service](service.md) (coming soon) to connect workloads to environments.
+## Outputs and linking
+Environment module outputs are addressable by Services via links or `${module.<id>.<output>}`. This keeps Services thin while reusing the foundation.
+
+## Next steps
+- See [Layer/Service](layer.md) to attach workloads.
+- Browse module APIs in [References](../references/aws.md) and the per-module pages.

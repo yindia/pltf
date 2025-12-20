@@ -1,40 +1,44 @@
 # pltf
 
-The next generation of Infrastructure-as-Code: work with high-level constructs instead of getting lost in low-level cloud configuration.
+The next generation of Infrastructure-as-Code. Describe high-level constructs; ship Terraform you can own.
 
-pltf is a higher-level Infrastructure-as-Code framework. Instead of hand-crafting low-level cloud config, you describe **environments** and **services** in concise YAML. pltf turns those high-level constructs into Terraform so you keep full portability—generate the code, extend it, or take it with you.
+pltf turns concise YAML into ready-to-run Terraform for AWS, GCP, and Azure. You model two things:
 
-![Architecture](images/hero.png) <!-- Replace with your downloaded image -->
+- **Environment**: cloud, account/project, region, shared modules (VPC, DNS, EKS/GKE/AKS, IAM).
+- **Service**: an app’s resources (databases, queues, buckets, roles, charts) wired into an Environment.
 
-## Why pltf
-Infrastructure-as-code is essential, but working directly with low-level cloud and Terraform can be complex. pltf bakes in cloud/IaC best practices so you can set up automated, scalable, and secure infrastructure quickly—without being a full-time DevOps engineer. Because pltf emits Terraform, you avoid lock-in and can extend or own the generated code at any time.
+The CLI validates your specs, renders providers/backends/locals/remote state, and can run `terraform plan/apply` end-to-end. Because the output is plain Terraform, you keep portability—extend it or take it with you.
 
-## How It Works
-With pltf you write configuration files and run the CLI (locally or in CI/CD). The CLI connects to your cloud, renders Terraform (providers/backends/locals/remote state), and can execute Terraform for you.
+![Architecture](images/hero.png)
 
-> Status: active development, not yet production-hardened. Pin versions and review generated code before applying.
+> Status: active development; review generated Terraform before applying to production.
 
-There are two primary spec types:
+## Why teams use pltf
+- **Faster IaC**: generate consistent Terraform from YAML instead of hand-rolling cloud glue.
+- **Cloud agnostic outputs**: state backends `s3|gcs|azurerm`, provider wiring, and locals are emitted for you.
+- **Module catalog + custom modules**: ship with AWS modules and accept your own `module.yaml` definitions.
+- **Safe automation**: `pltf terraform plan/apply/destroy/output/graph` re-renders code every run to keep drift in check.
+- **Validation & lint**: structural checks catch missing refs, bad wiring, and secrets placement early.
 
-- **Environment**: defines cloud/provider, account, region, backend, and shared modules (clusters, networks, IAM, ingress, etc.). You might have one per staging/prod/QA, or per engineer/PR for isolated sandboxes.
-- **Service**: defines an application workload and the non-Kubernetes resources it needs, linked to an Environment. Service specs seamlessly connect to environment outputs and modules.
+## Grounded example
+Use the repo samples as a blueprint:
 
-Environment and service specs are linked via `metadata.ref` and `envRef`.
+- `example/env.yaml` defines an AWS environment (`example-aws`) with prod account/region, base domain, EKS, nodegroups, VPC/DNS.
+- `example/service.yaml` defines a service (`payments-api`) that binds to that environment, adds Postgres, S3, SNS/SQS, and IAM roles, and shows how to pass variables/secrets and link modules.
 
-## What You Can Do
-- **Generate IaC fast**: turn Environment/Service YAML into Terraform with consistent providers/backends/remote state.
-- **Mix modules**: use the embedded catalog or your own (`source: custom`) with the same wiring rules.
-- **Choose backends**: store state in `s3|gcs|azurerm` regardless of target cloud; use profiles for cross-account S3.
-- **Run Terraform safely**: `pltf terraform plan/apply/destroy/output/unlock` auto-generate before executing TF.
-- **Validate & lint**: structural checks plus suggestions (labels, unused vars).
-- **Preview**: see provider/backend/labels/modules without running TF.
+## Typical workflow
+1. Create or edit your environment and service specs.
+2. Validate and preview wiring:
+   - `pltf validate -f example/env.yaml`
+   - `pltf preview -f example/service.yaml --env prod`
+3. Generate or run Terraform:
+   - `pltf terraform plan -f example/service.yaml --env prod`
+   - `pltf terraform apply -f example/service.yaml --env prod`
+4. Inspect outputs and graphs:
+   - `pltf terraform output -f example/service.yaml --env prod`
+   - `pltf terraform graph -f example/service.yaml --env prod | dot -Tpng > graph.png`
 
-## Next Steps
-- Follow [Getting Started](getting-started/aws.md).
-- Explore repo examples (`example/env.yaml`, `example/service.yaml`).
-- Review [Security](security/aws.md).
-
-## Quick Links
+## Quick links
 - [Installation](installation.md)
 - [Getting Started](getting-started/aws.md)
 - [Platform Usage](platform.md)
@@ -42,5 +46,4 @@ Environment and service specs are linked via `metadata.ref` and `envRef`.
 - [Spec Guide](specs.md)
 - [Modules & Wiring](modules.md)
 - [Features](features.md)
-- [References](references/aws.md)
 - [Security](security/aws.md)
