@@ -1,0 +1,16 @@
+# aws_base
+
+Provision networking (VPC), subnets across AZs, flow logs, NAT, and a default KMS key + log bucket for the environment.
+
+## What it does
+
+- Creates a new VPC (or imports an existing one) with public/private subnets across three AZs.
+- Adds internet/NAT gateways and route tables for public/private egress.
+- Enables VPC flow logs to the log bucket and provisions a default KMS key.
+- Creates a log bucket for access/flow logs used by other modules.
+
+## Bring your own VPC
+
+To use an existing VPC, set `vpc_id`, `public_subnet_ids`, and `private_subnet_ids`. Public subnets must route to an internet gateway and assign public IPs. Private subnets must route 0.0.0.0/0 to a NAT gateway with a public IP. Misconfigured routes may yield Terraform errors like "No routes matching supplied arguments found in Route Table". IPv6 imports are not validated; dual-stack may work but is not verified.
+
+
