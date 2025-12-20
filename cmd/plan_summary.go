@@ -14,6 +14,7 @@ type planSummary struct {
 	Adds      []string
 	Changes   []string
 	Deletes   []string
+	Text      string
 }
 
 type tfPlanJSON struct {
@@ -66,6 +67,10 @@ func collectPlanSummary(outDir, planFile string) (*planSummary, error) {
 			sum.Destroyed++
 			sum.Deletes = append(sum.Deletes, rc.Address)
 		}
+	}
+
+	if text, err := runCmdOutput(outDir, "terraform", "show", "-no-color", planPath); err == nil {
+		sum.Text = truncateForComment(strings.TrimSpace(text))
 	}
 
 	return sum, nil

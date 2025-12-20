@@ -174,6 +174,7 @@ func runCmd(dir, name string, args ...string) error {
 func runCmdOutput(dir, name string, args ...string) (string, error) {
 	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
+	cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
 		return "", err
