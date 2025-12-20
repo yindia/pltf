@@ -41,36 +41,37 @@ func collectPlanSummary(outDir, planFile string) (*planSummary, error) {
 	if _, err := os.Stat(planPath); err != nil {
 		return nil, err
 	}
-	out, err := runCmdOutput(outDir, "terraform", "show", "-json", planPath)
-	if err != nil {
-		return nil, err
-	}
-
-	var plan tfPlanJSON
-	if err := json.Unmarshal([]byte(out), &plan); err != nil {
-		return nil, err
-	}
-
 	sum := &planSummary{}
-	for _, rc := range plan.ResourceChanges {
-		actions := map[string]bool{}
-		for _, a := range rc.Change.Actions {
-			actions[a] = true
+
+	out, err := runCmdOutput(outDir, "terraform", "show", "-json", planPath)
+	if err == nil {
+		var plan tfPlanJSON
+		if err := json.Unmarshal([]byte(out), &plan); err == nil {
+			for _, rc := range plan.ResourceChanges {
+				actions := map[string]bool{}
+				for _, a := range rc.Change.Actions {
+					actions[a] = true
+				}
+				switch {
+				case actions["create"] && actions["delete"]:
+					sum.Changed++
+					sum.Changes = append(sum.Changes, rc.Address)
+				case actions["update"]:
+					sum.Changed++
+					sum.Changes = append(sum.Changes, rc.Address)
+				case actions["create"]:
+					sum.Added++
+					sum.Adds = append(sum.Adds, rc.Address)
+				case actions["delete"]:
+					sum.Destroyed++
+					sum.Deletes = append(sum.Deletes, rc.Address)
+				}
+			}
+		} else {
+			fmt.Fprintf(os.Stderr, "warn: unable to parse plan JSON: %v\n", err)
 		}
-		switch {
-		case actions["create"] && actions["delete"]:
-			sum.Changed++
-			sum.Changes = append(sum.Changes, rc.Address)
-		case actions["update"]:
-			sum.Changed++
-			sum.Changes = append(sum.Changes, rc.Address)
-		case actions["create"]:
-			sum.Added++
-			sum.Adds = append(sum.Adds, rc.Address)
-		case actions["delete"]:
-			sum.Destroyed++
-			sum.Deletes = append(sum.Deletes, rc.Address)
-		}
+	} else {
+		fmt.Fprintf(os.Stderr, "warn: terraform show -json failed: %v\n", err)
 	}
 
 	if text, err := runCmdOutput(outDir, "terraform", "show", "-no-color", planPath); err == nil {

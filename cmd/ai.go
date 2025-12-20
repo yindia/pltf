@@ -64,6 +64,10 @@ func maybeAICritique(run tfRunSummary) string {
 			b.WriteString("- " + a + "\n")
 		}
 	}
+	if strings.TrimSpace(run.Plan.Text) != "" {
+		b.WriteString("\nplan text:\n")
+		b.WriteString(run.Plan.Text)
+	}
 
 	reqBody := aiRequest{
 		Model: "gpt-4o-mini",
