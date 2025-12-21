@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"fmt"
 )
 
 type planSummary struct {
@@ -17,6 +17,7 @@ type planSummary struct {
 	Deletes     []string
 	Text        string
 	RawPlanArgs []string
+	PlanJSON    string
 }
 
 type tfPlanJSON struct {

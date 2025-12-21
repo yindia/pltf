@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -366,44 +365,33 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 				planPathOnDisk = filepath.Join(ctx.outDir, planPathOnDisk)
 			}
 		}
-		planJSON := ""
+		planJSONPath := ""
 		if tempPlan || strings.TrimSpace(planPathOnDisk) != "" {
-			planJSON = strings.TrimSuffix(planPathOnDisk, filepath.Ext(planPathOnDisk)) + ".json"
-			if _, err := runCmdOutput(ctx.outDir, "terraform", "show", "-json", planPathOnDisk); err != nil {
+			planJSONPath = strings.TrimSuffix(planPathOnDisk, filepath.Ext(planPathOnDisk)) + ".json"
+			out, err := runCmdOutput(ctx.outDir, "terraform", "show", "-json", planPathOnDisk)
+			if err != nil {
 				fmt.Fprintf(os.Stderr, "warn: terraform show -json failed: %v\n", err)
-			} else {
-				if err := os.WriteFile(planJSON, []byte{}, 0o644); err != nil {
-					fmt.Fprintf(os.Stderr, "warn: unable to prepare plan json file: %v\n", err)
-				} else {
-					out, err := runCmdOutput(ctx.outDir, "terraform", "show", "-json", planPathOnDisk)
-					if err != nil {
-						fmt.Fprintf(os.Stderr, "warn: terraform show -json failed: %v\n", err)
-					} else {
-						if err := os.WriteFile(planJSON, []byte(out), 0o644); err != nil {
-							fmt.Fprintf(os.Stderr, "warn: write plan json failed: %v\n", err)
-						}
-					}
-				}
+			} else if err := os.WriteFile(planJSONPath, []byte(out), 0o644); err != nil {
+				fmt.Fprintf(os.Stderr, "warn: write plan json failed: %v\n", err)
 			}
 		}
 		if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
 			planSum = sum
 			planSum.RawPlanArgs = planArgs
+			if planJSONPath != "" {
+				planSum.PlanJSON = planJSONPath
+			}
 		} else {
 			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 		}
-		if opts.rover && planJSON != "" {
-			if _, err := exec.LookPath("rover"); err != nil {
-				fmt.Fprintf(os.Stderr, "warn: rover binary not found in PATH, skipping rover run\n")
-			} else {
-				if _, err := runCmdOutput(ctx.outDir, "rover", "-planJSONPath="+planJSON); err != nil {
-					fmt.Fprintf(os.Stderr, "warn: rover run failed: %v\n", err)
-				}
+		if opts.rover && planJSONPath != "" {
+			if err := runCmd(ctx.outDir, "rover", "-planJSONPath="+planJSONPath); err != nil {
+				fmt.Fprintf(os.Stderr, "warn: rover run failed: %v\n", err)
 			}
 		}
 		if tempPlan {
 			_ = os.Remove(planPathOnDisk)
-			_ = os.Remove(planJSON)
+			_ = os.Remove(planJSONPath)
 		}
 	case "output":
 		args := []string{"output"}
