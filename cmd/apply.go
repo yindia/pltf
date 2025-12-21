@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -54,6 +55,7 @@ var (
 	planRefresh    bool
 	planDetailed   bool
 	planOutFile    string
+	planRover      bool
 
 	outputFile       string
 	outputEnv        string
@@ -309,6 +311,9 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	runStatus := "succeeded"
 	var planArgs []string
 	var planExit int
+	planPath := opts.planFile
+	planArg := opts.planFile
+	tempPlan := false
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -331,9 +336,6 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		if opts.detailedExit {
 			args = append(args, "-detailed-exitcode")
 		}
-		planPath := opts.planFile
-		planArg := opts.planFile
-		tempPlan := false
 		if strings.TrimSpace(planPath) == "" {
 			planArg = ".pltf-plan.tfplan"
 			planPath = filepath.Join(ctx.outDir, planArg)
@@ -362,14 +364,44 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 				planPathOnDisk = filepath.Join(ctx.outDir, planPathOnDisk)
 			}
 		}
+		planJSON := ""
+		if tempPlan || strings.TrimSpace(planPathOnDisk) != "" {
+			planJSON = strings.TrimSuffix(planPathOnDisk, filepath.Ext(planPathOnDisk)) + ".json"
+			if _, err := runCmdOutput(ctx.outDir, "terraform", "show", "-json", planPathOnDisk); err != nil {
+				fmt.Fprintf(os.Stderr, "warn: terraform show -json failed: %v\n", err)
+			} else {
+				if err := os.WriteFile(planJSON, []byte{}, 0o644); err != nil {
+					fmt.Fprintf(os.Stderr, "warn: unable to prepare plan json file: %v\n", err)
+				} else {
+					out, err := runCmdOutput(ctx.outDir, "terraform", "show", "-json", planPathOnDisk)
+					if err != nil {
+						fmt.Fprintf(os.Stderr, "warn: terraform show -json failed: %v\n", err)
+					} else {
+						if err := os.WriteFile(planJSON, []byte(out), 0o644); err != nil {
+							fmt.Fprintf(os.Stderr, "warn: write plan json failed: %v\n", err)
+						}
+					}
+				}
+			}
+		}
 		if sum, err := collectPlanSummary(ctx.outDir, planPathOnDisk); err == nil {
 			planSum = sum
 			planSum.RawPlanArgs = planArgs
 		} else {
 			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 		}
+		if opts.rover && planJSON != "" {
+			if _, err := exec.LookPath("rover"); err != nil {
+				fmt.Fprintf(os.Stderr, "warn: rover binary not found in PATH, skipping rover run\n")
+			} else {
+				if _, err := runCmdOutput(ctx.outDir, "rover", "-planJSONPath="+planJSON); err != nil {
+					fmt.Fprintf(os.Stderr, "warn: rover run failed: %v\n", err)
+				}
+			}
+		}
 		if tempPlan {
 			_ = os.Remove(planPathOnDisk)
+			_ = os.Remove(planJSON)
 		}
 	case "output":
 		args := []string{"output"}
@@ -466,6 +498,7 @@ func init() {
 	planCmd.Flags().BoolVarP(&planRefresh, "refresh", "r", true, "Update state prior to actions")
 	planCmd.Flags().BoolVarP(&planDetailed, "detailed-exitcode", "d", false, "Use detailed exit codes for plan (2 = changes present)")
 	planCmd.Flags().StringVarP(&planOutFile, "plan-file", "P", "", "Write plan to a file (terraform -out)")
+	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover against the generated plan.json (requires rover binary in PATH)")
 
 	outputCmd.Flags().StringVarP(&outputFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	outputCmd.Flags().StringVarP(&outputEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")
