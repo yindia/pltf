@@ -168,6 +168,7 @@ local dry runs with the same generation defaults as apply.`,
 			refresh:      &planRefresh,
 			planFile:     planOutFile,
 			detailedExit: planDetailed,
+			rover:        planRover,
 		})
 	},
 }
@@ -218,6 +219,7 @@ type tfExecOpts struct {
 	detailedExit bool
 	jsonOutput   bool
 	autoApprove  bool
+	rover        bool
 }
 
 type stackContext struct {
