@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"pltf/pkg/config"
+	rover "rover"
 )
 
 var (
@@ -155,7 +156,8 @@ var planCmd = &cobra.Command{
 plan file output, targets, locking, refresh toggles, and parallelism. Ideal for CI or
 local dry runs with the same generation defaults as apply.`,
 	Example: `  pltf terraform plan -f env.yaml -e prod
-  pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`,
+  pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan
+  pltf terraform plan -f env.yaml -e prod --rover   # renders plan.json and opens rover (https://github.com/yindia/rover)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", tfExecOpts{
 			targets:      planTargets,
@@ -385,8 +387,22 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 		}
 		if opts.rover && planJSONPath != "" {
-			if err := runCmd(ctx.outDir, "rover", "-planJSONPath="+planJSONPath); err != nil {
-				fmt.Fprintf(os.Stderr, "warn: rover run failed: %v\n", err)
+			r, err := rover.New(rover.Config{
+				WorkingDir:   ctx.outDir,
+				TfPath:       "terraform",
+				PlanJSONPath: planJSONPath,
+				PlanPath:     planPathOnDisk,
+				// Optional fields: TfVarsFiles, TfVars, TfBackendConfigs,
+				// WorkspaceName, TFCOrgName, TFCWorkspaceName, ShowSensitive, GenImage, TFCNewRun.
+			})
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "warn: rover init failed: %v\n", err)
+			} else {
+				if err := r.GenerateAssets(); err != nil {
+					fmt.Fprintf(os.Stderr, "warn: rover asset generation failed: %v\n", err)
+				} else if err := r.StartServer("0.0.0.0:9000"); err != nil {
+					fmt.Fprintf(os.Stderr, "warn: rover server failed: %v\n", err)
+				}
 			}
 		}
 		if tempPlan {
@@ -488,7 +504,7 @@ func init() {
 	planCmd.Flags().BoolVarP(&planRefresh, "refresh", "r", true, "Update state prior to actions")
 	planCmd.Flags().BoolVarP(&planDetailed, "detailed-exitcode", "d", false, "Use detailed exit codes for plan (2 = changes present)")
 	planCmd.Flags().StringVarP(&planOutFile, "plan-file", "P", "", "Write plan to a file (terraform -out)")
-	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover against the generated plan.json (requires rover binary in PATH)")
+	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover (https://github.com/yindia/rover) against the generated plan.json (requires rover binary in PATH)")
 
 	outputCmd.Flags().StringVarP(&outputFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	outputCmd.Flags().StringVarP(&outputEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")

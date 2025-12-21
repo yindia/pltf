@@ -16,8 +16,8 @@ func autoValidate(file, env string) error {
 
 func autoValidateWithOutput(out io.Writer, file, env string) error {
 	var (
-		envCfg  *config.EnvironmentConfig
-		svcCfg  *config.ServiceConfig
+		envCfg *config.EnvironmentConfig
+		svcCfg *config.ServiceConfig
 		// envName string
 	)
 

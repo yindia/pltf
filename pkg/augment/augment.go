@@ -103,4 +103,3 @@ func mergePolicies(base, extra map[string]interface{}) map[string]interface{} {
 	}
 	return base
 }
-

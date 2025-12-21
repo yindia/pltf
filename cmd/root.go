@@ -18,6 +18,7 @@ var RootCmd *cobra.Command
 func init() {
 	RootCmd = rootCmd
 }
+
 // rootCmd is the base command for the CLI.
 // Subcommands like `env` and `service` are added to this in their own init() funcs.
 var rootCmd = &cobra.Command{

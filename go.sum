@@ -258,8 +258,8 @@ github.com/vmihailenco/msgpack/v4 v4.3.12/go.mod h1:gborTTJjAo/GWTqqRjrLCn9pgNN+
 github.com/vmihailenco/tagparser v0.1.1/go.mod h1:OeAg3pn3UbLjkWt+rN9oFYB6u/cQgqMEUPoW2WPyhdI=
 github.com/xanzy/ssh-agent v0.3.0 h1:wUMzuKtKilRgBAD1sUb8gOwwRr2FGoBVumcjoOACClI=
 github.com/xanzy/ssh-agent v0.3.0/go.mod h1:3s9xbODqPuuhK9JV1R321M/FlMZSBvE5aY6eAcqrDh0=
-github.com/yindia/rover v0.0.0-20251221063306-b1971efda3cb h1:ovYIWfglnTowi4xns3cqZEM1ZZkApxSGstPQ1K4cq/M=
-github.com/yindia/rover v0.0.0-20251221063306-b1971efda3cb/go.mod h1:K+ZEGrS1Wu8SKzdma3yFZJcuTExnnFF7Ii1cA+uw9Kk=
+github.com/yindia/rover v0.0.0-20251221105530-c42bb80451fb h1:eO6Z6YLqjem8/FnN9Q4eEywNbtK4f+UZhYXdk+xlVjc=
+github.com/yindia/rover v0.0.0-20251221105530-c42bb80451fb/go.mod h1:K+ZEGrS1Wu8SKzdma3yFZJcuTExnnFF7Ii1cA+uw9Kk=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zclconf/go-cty v1.2.0/go.mod h1:hOPWgoHbaTUnI5k4D2ld+GRpFJSCe6bCM7m1q/N4PQ8=
 github.com/zclconf/go-cty v1.9.1/go.mod h1:vVKLxnk3puL4qRAv72AO+W99LUD4da90g3uUAzyuvAk=
