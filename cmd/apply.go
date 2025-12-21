@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -387,9 +388,15 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			fmt.Fprintf(os.Stderr, "warn: failed to collect plan summary: %v\n", err)
 		}
 		if opts.rover && planJSONPath != "" {
+			tfPath := "terraform"
+			if p, err := exec.LookPath("terraform"); err == nil {
+				tfPath = p
+			} else {
+				fmt.Fprintf(os.Stderr, "warn: terraform not found in PATH for rover (defaulting to %q): %v\n", tfPath, err)
+			}
 			r, err := rover.New(rover.Config{
 				WorkingDir:   ctx.outDir,
-				TfPath:       "terraform",
+				TfPath:       tfPath,
 				PlanJSONPath: planJSONPath,
 				PlanPath:     planPathOnDisk,
 				// Optional fields: TfVarsFiles, TfVars, TfBackendConfigs,
