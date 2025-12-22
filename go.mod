@@ -137,4 +137,4 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
-replace rover => ../rover
+replace rover => github.com/yindia/rover v0.0.0-20251222163023-c8d58b5ffb70
