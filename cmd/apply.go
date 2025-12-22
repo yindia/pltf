@@ -1,12 +1,17 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/aquasecurity/defsec/pkg/extrafs"
+	tfscanner "github.com/aquasecurity/defsec/pkg/scanners/terraform"
+	defsecTypes "github.com/aquasecurity/defsec/pkg/types"
 	"github.com/spf13/cobra"
 
 	"pltf/pkg/config"
@@ -57,6 +62,7 @@ var (
 	planDetailed   bool
 	planOutFile    string
 	planRover      bool
+	planScan       bool
 
 	outputFile       string
 	outputEnv        string
@@ -158,7 +164,8 @@ plan file output, targets, locking, refresh toggles, and parallelism. Ideal for 
 local dry runs with the same generation defaults as apply.`,
 	Example: `  pltf terraform plan -f env.yaml -e prod
   pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan
-  pltf terraform plan -f env.yaml -e prod --rover   # renders plan.json and opens rover (https://github.com/yindia/rover)`,
+  pltf terraform plan -f env.yaml -e prod --rover   # renders plan.json and opens rover (https://github.com/yindia/rover)
+  pltf terraform plan -f env.yaml -e prod --scan    # run tfsec against generated TF`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", tfExecOpts{
 			targets:      planTargets,
@@ -171,6 +178,7 @@ local dry runs with the same generation defaults as apply.`,
 			planFile:     planOutFile,
 			detailedExit: planDetailed,
 			rover:        planRover,
+			scan:         planScan,
 		})
 	},
 }
@@ -222,6 +230,7 @@ type tfExecOpts struct {
 	jsonOutput   bool
 	autoApprove  bool
 	rover        bool
+	scan         bool
 }
 
 type stackContext struct {
@@ -289,6 +298,16 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	ctx, err := prepareStackContext(file, env, out)
 	if err != nil {
 		return err
+	}
+
+	// Optional security scan happens before init/plan to fail fast.
+	var scanSum *tfsecSummary
+	if action == "plan" && opts.scan {
+		var err error
+		scanSum, err = runTfsecScan(ctx.outDir)
+		if err != nil {
+			return fmt.Errorf("tfsec scan failed: %w", err)
+		}
 	}
 
 	bk, err := computeBackend(ctx.envCfg, ctx.env)
@@ -441,6 +460,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			Env:    env,
 			OutDir: ctx.outDir,
 			Plan:   planSum,
+			Scan:   scanSum,
 		}
 		if runErr != nil {
 			status.Status = "failed"
@@ -457,6 +477,181 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	return runErr
+}
+
+type tfsecFinding struct {
+	Severity    string
+	Rule        string
+	Location    string
+	Description string
+	Impact      string
+	Resolution  string
+	Links       []string
+	Snippet     string
+}
+
+type tfsecSummary struct {
+	ExitCode int
+	Failed   int
+	Low      int
+	Medium   int
+	High     int
+	Critical int
+	Findings []tfsecFinding
+	Timings  struct {
+		DiskIO     time.Duration
+		Parsing    time.Duration
+		Adaptation time.Duration
+		Checks     time.Duration
+		Total      time.Duration
+	}
+	Counts struct {
+		ModulesDownloaded int
+		ModulesProcessed  int
+		BlocksProcessed   int
+		FilesRead         int
+		Passed            int
+		Ignored           int
+	}
+}
+
+func runTfsecScan(dir string) (*tfsecSummary, error) {
+	root := filepath.Clean(dir)
+	scnr := tfscanner.New()
+	results, metrics, err := scnr.ScanFSWithMetrics(context.Background(), extrafs.OSDir(root), ".")
+	if err != nil {
+		return nil, err
+	}
+	exit := tfsecExitCode(metrics)
+	summary := &tfsecSummary{
+		ExitCode: exit,
+		Failed:   metrics.Executor.Counts.Failed,
+		Low:      metrics.Executor.Counts.Low,
+		Medium:   metrics.Executor.Counts.Medium,
+		High:     metrics.Executor.Counts.High,
+		Critical: metrics.Executor.Counts.Critical,
+	}
+	summary.Counts.ModulesDownloaded = metrics.Parser.Counts.ModuleDownloads
+	summary.Counts.ModulesProcessed = metrics.Parser.Counts.Modules
+	summary.Counts.BlocksProcessed = metrics.Parser.Counts.Blocks
+	summary.Counts.FilesRead = metrics.Parser.Counts.Files
+	summary.Counts.Passed = metrics.Executor.Counts.Passed
+	summary.Counts.Ignored = metrics.Executor.Counts.Ignored
+	summary.Timings.DiskIO = metrics.Parser.Timings.DiskIODuration
+	summary.Timings.Parsing = metrics.Parser.Timings.ParseDuration
+	summary.Timings.Adaptation = metrics.Executor.Timings.Adaptation
+	summary.Timings.Checks = metrics.Executor.Timings.RunningChecks
+	summary.Timings.Total = metrics.Timings.Total
+	for _, res := range results {
+		f := tfsecFinding{
+			Severity:    string(res.Severity()),
+			Rule:        res.Rule().LongID(),
+			Location:    res.Range().String(),
+			Description: res.Description(),
+			Impact:      res.Rule().Impact,
+			Resolution:  res.Rule().Resolution,
+			Links:       res.Rule().Links,
+			Snippet:     renderSnippet(root, res.Range()),
+		}
+		summary.Findings = append(summary.Findings, f)
+	}
+
+	if exit != 0 {
+		fmt.Fprintf(os.Stderr, "warn: tfsec reported issues (exit=%d, failed=%d low=%d medium=%d high=%d critical=%d)\n",
+			exit, summary.Failed, summary.Low, summary.Medium, summary.High, summary.Critical)
+		printTfsecFindings(summary)
+	}
+	printTfsecInsights(summary)
+	return summary, nil
+}
+
+func printTfsecFindings(summary *tfsecSummary) {
+	for _, f := range summary.Findings {
+		fmt.Fprintf(os.Stderr, "  - [%s] %s (%s)\n    Description: %s\n    Impact: %s\n    Resolution: %s\n",
+			f.Severity, f.Rule, f.Location, f.Description, f.Impact, f.Resolution)
+		if len(f.Links) > 0 {
+			fmt.Fprintf(os.Stderr, "    More: %s\n", strings.Join(f.Links, ", "))
+		}
+		if f.Snippet != "" {
+			fmt.Fprintf(os.Stderr, "    Code:\n%s", f.Snippet)
+		}
+	}
+}
+
+func renderSnippet(root string, rng defsecTypes.Range) string {
+	start := rng.GetStartLine()
+	end := rng.GetEndLine()
+	filename := rng.GetFilename()
+	local := rng.GetLocalFilename()
+	path := filepath.Join(root, filename)
+	if _, err := os.Stat(path); err != nil {
+		alt := filepath.Join(root, local)
+		if _, err2 := os.Stat(alt); err2 == nil {
+			path = alt
+		} else {
+			return ""
+		}
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(data), "\n")
+	if start <= 0 {
+		start = 1
+	}
+	if end <= 0 || end > len(lines) {
+		end = len(lines)
+	}
+	var b strings.Builder
+	for i := start; i <= end; i++ {
+		fmt.Fprintf(&b, "      %4d | %s\n", i, lines[i-1])
+	}
+	return b.String()
+}
+
+func tfsecExitCode(metrics tfscanner.Metrics) int {
+	if metrics.Executor.Counts.Failed == 0 {
+		return 0
+	}
+	if metrics.Executor.Counts.Failed == metrics.Executor.Counts.Low {
+		return 2
+	}
+	return 1
+}
+
+func printTfsecInsights(summary *tfsecSummary) {
+	fmt.Fprintln(os.Stderr, "  timings")
+	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
+	fmt.Fprintf(os.Stderr, "  disk i/o             %s\n", formatDurationMs(summary.Timings.DiskIO))
+	fmt.Fprintf(os.Stderr, "  parsing              %s\n", formatDurationMs(summary.Timings.Parsing))
+	fmt.Fprintf(os.Stderr, "  adaptation           %s\n", formatDurationMs(summary.Timings.Adaptation))
+	fmt.Fprintf(os.Stderr, "  checks               %s\n", formatDurationMs(summary.Timings.Checks))
+	fmt.Fprintf(os.Stderr, "  total                %s\n\n", formatDurationMs(summary.Timings.Total))
+
+	fmt.Fprintln(os.Stderr, "  counts")
+	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
+	fmt.Fprintf(os.Stderr, "  modules downloaded   %d\n", summary.Counts.ModulesDownloaded)
+	fmt.Fprintf(os.Stderr, "  modules processed    %d\n", summary.Counts.ModulesProcessed)
+	fmt.Fprintf(os.Stderr, "  blocks processed     %d\n", summary.Counts.BlocksProcessed)
+	fmt.Fprintf(os.Stderr, "  files read           %d\n\n", summary.Counts.FilesRead)
+
+	fmt.Fprintln(os.Stderr, "  results")
+	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
+	fmt.Fprintf(os.Stderr, "  passed               %d\n", summary.Counts.Passed)
+	fmt.Fprintf(os.Stderr, "  ignored              %d\n", summary.Counts.Ignored)
+	fmt.Fprintf(os.Stderr, "  critical             %d\n", summary.Critical)
+	fmt.Fprintf(os.Stderr, "  high                 %d\n", summary.High)
+	fmt.Fprintf(os.Stderr, "  medium               %d\n", summary.Medium)
+	fmt.Fprintf(os.Stderr, "  low                  %d\n\n", summary.Low)
+
+	totalProblems := summary.Failed
+	fmt.Fprintf(os.Stderr, "  %d passed, %d ignored, %d potential problem(s) detected.\n", summary.Counts.Passed, summary.Counts.Ignored, totalProblems)
+}
+
+func formatDurationMs(d time.Duration) string {
+	ms := float64(d) / float64(time.Millisecond)
+	return fmt.Sprintf("%.6fms", ms)
 }
 
 func init() {
@@ -512,6 +707,7 @@ func init() {
 	planCmd.Flags().BoolVarP(&planDetailed, "detailed-exitcode", "d", false, "Use detailed exit codes for plan (2 = changes present)")
 	planCmd.Flags().StringVarP(&planOutFile, "plan-file", "P", "", "Write plan to a file (terraform -out)")
 	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover (https://github.com/yindia/rover) against the generated plan.json (requires rover binary in PATH)")
+	planCmd.Flags().BoolVar(&planScan, "scan", false, "Run tfsec security scan against the generated Terraform")
 
 	outputCmd.Flags().StringVarP(&outputFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	outputCmd.Flags().StringVarP(&outputEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")

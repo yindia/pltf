@@ -25,6 +25,7 @@ type tfRunSummary struct {
 	Err    string
 	Plan   *planSummary
 	AI     string
+	Scan   *tfsecSummary
 }
 
 type ghEvent struct {
@@ -163,6 +164,40 @@ func buildPRCommentBody(run tfRunSummary) string {
 		}
 		sb.WriteString("</details>\n")
 	}
+	if run.Scan != nil {
+		sb.WriteString("\n<details><summary>Security scan (tfsec)</summary>\n\n")
+		sb.WriteString(fmt.Sprintf("- exit: %d\n- failed: %d (low=%d, medium=%d, high=%d, critical=%d)\n\n",
+			run.Scan.ExitCode, run.Scan.Failed, run.Scan.Low, run.Scan.Medium, run.Scan.High, run.Scan.Critical))
+		sb.WriteString("Insights:\n```\n")
+		sb.WriteString(formatTfsecInsightsForComment(run.Scan))
+		sb.WriteString("```\n\n")
+		if len(run.Scan.Findings) > 0 {
+			sb.WriteString("Findings:\n")
+			for _, f := range run.Scan.Findings {
+				sb.WriteString(fmt.Sprintf("  - [%s] %s (%s)\n", f.Severity, f.Rule, f.Location))
+				if f.Description != "" {
+					sb.WriteString(fmt.Sprintf("    Desc: %s\n", f.Description))
+				}
+				if f.Impact != "" {
+					sb.WriteString(fmt.Sprintf("    Impact: %s\n", f.Impact))
+				}
+				if f.Resolution != "" {
+					sb.WriteString(fmt.Sprintf("    Resolution: %s\n", f.Resolution))
+				}
+				if len(f.Links) > 0 {
+					sb.WriteString(fmt.Sprintf("    More: %s\n", strings.Join(f.Links, ", ")))
+				}
+				if f.Snippet != "" {
+					sb.WriteString("    Code:\n")
+					sb.WriteString(f.Snippet)
+				}
+				sb.WriteString("\n")
+			}
+		} else {
+			sb.WriteString("No findings.\n")
+		}
+		sb.WriteString("</details>\n")
+	}
 	sb.WriteString("\n```\n")
 	sb.WriteString(fmt.Sprintf("pltf terraform %s -f %s", run.Action, run.Spec))
 	if strings.TrimSpace(run.Env) != "" {
@@ -185,6 +220,37 @@ func truncateForComment(s string) string {
 		return s
 	}
 	return s[:max] + "..."
+}
+
+func formatTfsecInsightsForComment(s *tfsecSummary) string {
+	var b strings.Builder
+	b.WriteString("timings\n")
+	b.WriteString("──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "disk i/o             %s\n", formatDurationMs(s.Timings.DiskIO))
+	fmt.Fprintf(&b, "parsing              %s\n", formatDurationMs(s.Timings.Parsing))
+	fmt.Fprintf(&b, "adaptation           %s\n", formatDurationMs(s.Timings.Adaptation))
+	fmt.Fprintf(&b, "checks               %s\n", formatDurationMs(s.Timings.Checks))
+	fmt.Fprintf(&b, "total                %s\n\n", formatDurationMs(s.Timings.Total))
+
+	b.WriteString("counts\n")
+	b.WriteString("──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "modules downloaded   %d\n", s.Counts.ModulesDownloaded)
+	fmt.Fprintf(&b, "modules processed    %d\n", s.Counts.ModulesProcessed)
+	fmt.Fprintf(&b, "blocks processed     %d\n", s.Counts.BlocksProcessed)
+	fmt.Fprintf(&b, "files read           %d\n\n", s.Counts.FilesRead)
+
+	b.WriteString("results\n")
+	b.WriteString("──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "passed               %d\n", s.Counts.Passed)
+	fmt.Fprintf(&b, "ignored              %d\n", s.Counts.Ignored)
+	fmt.Fprintf(&b, "critical             %d\n", s.Critical)
+	fmt.Fprintf(&b, "high                 %d\n", s.High)
+	fmt.Fprintf(&b, "medium               %d\n", s.Medium)
+	fmt.Fprintf(&b, "low                  %d\n\n", s.Low)
+
+	totalProblems := s.Failed
+	fmt.Fprintf(&b, "%d passed, %d ignored, %d potential problem(s) detected.\n", s.Counts.Passed, s.Counts.Ignored, totalProblems)
+	return b.String()
 }
 
 func detectPRNumber() (int, error) {
