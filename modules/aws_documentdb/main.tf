@@ -31,11 +31,11 @@ resource "aws_docdb_cluster_instance" "cluster_instances" {
 }
 
 resource "aws_docdb_cluster" "cluster" {
-  cluster_identifier      = "pltf-${var.layer_name}-${var.module_name}-${random_string.db_name_hash.result}"
-  master_username         = "master_user"
-  master_password         = random_password.documentdb_auth.result
-  db_subnet_group_name    = "pltf-${var.env_name}-docdb"
-  engine_version          = var.engine_version
+  cluster_identifier   = "pltf-${var.layer_name}-${var.module_name}-${random_string.db_name_hash.result}"
+  master_username      = "master_user"
+  master_password      = random_password.documentdb_auth.result
+  db_subnet_group_name = "pltf-${var.env_name}-docdb"
+  engine_version       = var.engine_version
   enabled_cloudwatch_logs_exports = [
     "audit",
     "profiler"

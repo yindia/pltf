@@ -512,6 +512,7 @@ type tfsecSummary struct {
 	High     int
 	Critical int
 	Findings []tfsecFinding
+	Report   string
 	Timings  struct {
 		DiskIO     time.Duration
 		Parsing    time.Duration
@@ -575,27 +576,14 @@ func runTfsecScan(dir string) (*tfsecSummary, error) {
 		}
 		summary.Findings = append(summary.Findings, f)
 	}
+	summary.Report = formatTfsecReport(summary)
 
 	if exit != 0 {
 		fmt.Fprintf(os.Stderr, "warn: tfsec reported issues (exit=%d, failed=%d low=%d medium=%d high=%d critical=%d)\n",
 			exit, summary.Failed, summary.Low, summary.Medium, summary.High, summary.Critical)
-		printTfsecFindings(summary)
 	}
-	printTfsecInsights(summary)
+	fmt.Fprint(os.Stderr, summary.Report)
 	return summary, nil
-}
-
-func printTfsecFindings(summary *tfsecSummary) {
-	for _, f := range summary.Findings {
-		fmt.Fprintf(os.Stderr, "  - [%s] %s (%s)\n    Description: %s\n    Impact: %s\n    Resolution: %s\n",
-			f.Severity, f.Rule, f.Location, f.Description, f.Impact, f.Resolution)
-		if len(f.Links) > 0 {
-			fmt.Fprintf(os.Stderr, "    More: %s\n", strings.Join(f.Links, ", "))
-		}
-		if f.Snippet != "" {
-			fmt.Fprintf(os.Stderr, "    Code:\n%s", f.Snippet)
-		}
-	}
 }
 
 func renderSnippet(root string, rng defsecTypes.Range) string {
@@ -677,6 +665,45 @@ func formatTfsecInsights(summary *tfsecSummary) string {
 
 	totalProblems := summary.Failed
 	fmt.Fprintf(&b, "  %d passed, %d ignored, %d potential problem(s) detected.\n", summary.Counts.Passed, summary.Counts.Ignored, totalProblems)
+	return b.String()
+}
+
+func formatTfsecReport(summary *tfsecSummary) string {
+	var b strings.Builder
+	for i, f := range summary.Findings {
+		fmt.Fprintf(&b, "Result #%d %s %s\n", i+1, strings.ToUpper(f.Severity), f.Description)
+		b.WriteString("────────────────────────────────────────────────────────────────────────────────\n")
+		if f.Location != "" {
+			fmt.Fprintf(&b, "  %s\n", f.Location)
+			b.WriteString("────────────────────────────────────────────────────────────────────────────────\n")
+		}
+		if f.Snippet != "" {
+			b.WriteString(f.Snippet)
+			if !strings.HasSuffix(f.Snippet, "\n") {
+				b.WriteString("\n")
+			}
+		}
+		if f.Rule != "" {
+			fmt.Fprintf(&b, "          ID %s\n", f.Rule)
+		}
+		if f.Impact != "" {
+			fmt.Fprintf(&b, "      Impact %s\n", f.Impact)
+		}
+		if f.Resolution != "" {
+			fmt.Fprintf(&b, "  Resolution %s\n", f.Resolution)
+		}
+		if len(f.Links) > 0 {
+			b.WriteString("\n  More Information\n")
+			for _, link := range f.Links {
+				fmt.Fprintf(&b, "  - %s\n", link)
+			}
+		}
+		b.WriteString("────────────────────────────────────────────────────────────────────────────────\n\n")
+	}
+	if len(summary.Findings) == 0 {
+		b.WriteString("No tfsec findings.\n\n")
+	}
+	b.WriteString(formatTfsecInsights(summary))
 	return b.String()
 }
 

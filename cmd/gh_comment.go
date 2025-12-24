@@ -156,6 +156,9 @@ func truncateForComment(s string) string {
 }
 
 func formatTfsecInsightsForComment(s *tfsecSummary) string {
+	if strings.TrimSpace(s.Report) != "" {
+		return s.Report
+	}
 	var b strings.Builder
 	b.WriteString("timings\n")
 	b.WriteString("──────────────────────────────────────────\n")
