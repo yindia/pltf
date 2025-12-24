@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"encoding/json"
 	"time"
 
 	"github.com/aquasecurity/defsec/pkg/extrafs"
@@ -63,6 +64,7 @@ var (
 	planOutFile    string
 	planRover      bool
 	planScan       bool
+	planCost       bool
 
 	outputFile       string
 	outputEnv        string
@@ -165,7 +167,8 @@ local dry runs with the same generation defaults as apply.`,
 	Example: `  pltf terraform plan -f env.yaml -e prod
   pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan
   pltf terraform plan -f env.yaml -e prod --rover   # renders plan.json and opens rover (https://github.com/yindia/rover)
-  pltf terraform plan -f env.yaml -e prod --scan    # run tfsec against generated TF`,
+  pltf terraform plan -f env.yaml -e prod --scan    # run tfsec against generated TF
+  pltf terraform plan -f env.yaml -e prod --cost    # run infracost breakdown (if infracost binary present)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", tfExecOpts{
 			targets:      planTargets,
@@ -179,6 +182,7 @@ local dry runs with the same generation defaults as apply.`,
 			detailedExit: planDetailed,
 			rover:        planRover,
 			scan:         planScan,
+			cost:         planCost,
 		})
 	},
 }
@@ -231,6 +235,7 @@ type tfExecOpts struct {
 	autoApprove  bool
 	rover        bool
 	scan         bool
+	cost         bool
 }
 
 type stackContext struct {
@@ -337,6 +342,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	planPath := opts.planFile
 	planArg := opts.planFile
 	tempPlan := false
+	var costSum *costSummary
 	switch action {
 	case "apply":
 		args := []string{"apply"}
@@ -431,6 +437,13 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 				}
 			}
 		}
+		if opts.cost && planJSONPath != "" {
+			if sum, err := runInfracost(planJSONPath, ctx.outDir); err != nil {
+				fmt.Fprintf(os.Stderr, "warn: infracost run failed: %v\n", err)
+			} else {
+				costSum = sum
+			}
+		}
 		if tempPlan {
 			_ = os.Remove(planPathOnDisk)
 			_ = os.Remove(planJSONPath)
@@ -461,6 +474,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			OutDir: ctx.outDir,
 			Plan:   planSum,
 			Scan:   scanSum,
+			Cost:   costSum,
 		}
 		if runErr != nil {
 			status.Status = "failed"
@@ -513,6 +527,12 @@ type tfsecSummary struct {
 		Passed            int
 		Ignored           int
 	}
+}
+
+type costSummary struct {
+	TotalMonthly string
+	Breakdown    string
+	Raw          string
 }
 
 func runTfsecScan(dir string) (*tfsecSummary, error) {
@@ -654,6 +674,53 @@ func formatDurationMs(d time.Duration) string {
 	return fmt.Sprintf("%.6fms", ms)
 }
 
+func runInfracost(planJSONPath, workdir string) (*costSummary, error) {
+	if _, err := exec.LookPath("infracost"); err != nil {
+		return nil, fmt.Errorf("infracost binary not found in PATH")
+	}
+	if strings.TrimSpace(planJSONPath) == "" {
+		return nil, fmt.Errorf("plan json path is empty")
+	}
+	args := []string{"breakdown", "--path", planJSONPath, "--format", "json"}
+	out, err := runCmdOutput(workdir, "infracost", args...)
+	if err != nil {
+		return nil, err
+	}
+	sum := &costSummary{Raw: out}
+	if t := extractInfracostTotal(out); t != "" {
+		sum.TotalMonthly = t
+	}
+	if txt, err := runCmdOutput(workdir, "infracost", "breakdown", "--path", planJSONPath, "--format", "table"); err == nil {
+		sum.Breakdown = txt
+	}
+	return sum, nil
+}
+
+func extractInfracostTotal(jsonStr string) string {
+	type total struct {
+		TotalMonthlyCost string `json:"totalMonthlyCost"`
+	}
+	type root struct {
+		Projects []struct {
+			Breakdown total `json:"breakdown"`
+		} `json:"projects"`
+		Summary total `json:"summary"`
+	}
+	var r root
+	if err := json.Unmarshal([]byte(jsonStr), &r); err != nil {
+		return ""
+	}
+	if r.Summary.TotalMonthlyCost != "" {
+		return r.Summary.TotalMonthlyCost
+	}
+	for _, p := range r.Projects {
+		if p.Breakdown.TotalMonthlyCost != "" {
+			return p.Breakdown.TotalMonthlyCost
+		}
+	}
+	return ""
+}
+
 func init() {
 	terraformCmd := &cobra.Command{Use: "terraform", Short: "Terraform helpers (generate+init+tf commands)"}
 	rootCmd.AddCommand(terraformCmd)
@@ -708,6 +775,7 @@ func init() {
 	planCmd.Flags().StringVarP(&planOutFile, "plan-file", "P", "", "Write plan to a file (terraform -out)")
 	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover (https://github.com/yindia/rover) against the generated plan.json (requires rover binary in PATH)")
 	planCmd.Flags().BoolVar(&planScan, "scan", false, "Run tfsec security scan against the generated Terraform")
+	planCmd.Flags().BoolVar(&planCost, "cost", false, "Run infracost breakdown against the plan (requires infracost binary in PATH and INFRACOST_API_KEY)")
 
 	outputCmd.Flags().StringVarP(&outputFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	outputCmd.Flags().StringVarP(&outputEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")
