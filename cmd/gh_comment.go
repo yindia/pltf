@@ -132,7 +132,7 @@ func buildPRCommentBody(run tfRunSummary) string {
 	sb.WriteString("\n---\n\n")
 	sb.WriteString("To apply all these changes, comment:\n\n")
 	sb.WriteString("```\n")
-	sb.WriteString(fmt.Sprintf("pltf terraform %s -f %s", run.Action, run.Spec))
+	sb.WriteString(fmt.Sprintf("pltf terraform apply -f %s --auto-approve", run.Spec))
 	if strings.TrimSpace(run.Env) != "" {
 		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
 	}
