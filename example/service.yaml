@@ -5,9 +5,21 @@ metadata:
   name: payments-api
   ref: ./env.yaml
   envRef:
+    dev:
+      variables:
+        db_name: "dev"
+      secrets:
+        api_key: 
+          key: api_key
+    stage:
+      variables:
+        db_name: "stage"
+      secrets:
+        api_key: 
+          key: api_key
     prod:
       variables:
-        db_name: "testing"
+        db_name: "prod"
       secrets:
         api_key: 
           key: api_key

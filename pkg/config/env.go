@@ -15,7 +15,7 @@ type EnvironmentMetadata struct {
 	Org      string                 `yaml:"org"`
 	Provider string                 `yaml:"provider"` // "aws", etc.
 	Labels   map[string]string      `yaml:"labels"`
-	Approve  []ApprovalRequirement  `yaml:"approve,omitempty"`
+	// Approve  []ApprovalRequirement  `yaml:"approve,omitempty"`
 }
 
 type EnvironmentEntry struct {

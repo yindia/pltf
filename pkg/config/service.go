@@ -16,7 +16,7 @@ type ServiceMetadata struct {
 	Ref     string                        `yaml:"ref"`    // path to env.yaml
 	EnvRef  map[string]ServiceEnvRefEntry `yaml:"envRef"` // dev, prod, ...
 	Labels  map[string]string             `yaml:"labels,omitempty"`
-	Approve []ApprovalRequirement         `yaml:"approve,omitempty"`
+	// Approve []ApprovalRequirement         `yaml:"approve,omitempty"`
 }
 
 type ServiceEnvRefEntry struct {
