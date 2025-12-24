@@ -45,4 +45,4 @@ jobs:
           INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
         run: |
           set -x
-          pltf terraform plan -f example/env.yaml --env prod --scan --cost
+          pltf terraform plan -f example/e2e.yaml --env dev --scan --cost
