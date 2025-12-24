@@ -22,10 +22,10 @@ func (e *EnvironmentConfig) Validate() error {
 	if e.Metadata.Provider == "" {
 		return fmt.Errorf("metadata.provider is required")
 	}
-	if e.Metadata.GitProvider == "" {
-		e.Metadata.GitProvider = GitProviderGitHub
+	if e.GitProvider == "" {
+		e.GitProvider = GitProviderGitHub
 	}
-	if err := validateGitProvider("metadata.gitProvider", string(e.Metadata.GitProvider)); err != nil {
+	if err := validateGitProvider("metadata.gitProvider", string(e.GitProvider)); err != nil {
 		return err
 	}
 
@@ -64,10 +64,10 @@ func (s *ServiceConfig) Validate(env *EnvironmentConfig) error {
 	if s.Metadata.Ref == "" {
 		return fmt.Errorf("metadata.ref (path to environment) is required")
 	}
-	if s.Metadata.GitProvider == "" {
-		s.Metadata.GitProvider = GitProviderGitHub
+	if s.GitProvider == "" {
+		s.GitProvider = GitProviderGitHub
 	}
-	if err := validateGitProvider("metadata.gitProvider", string(s.Metadata.GitProvider)); err != nil {
+	if err := validateGitProvider("metadata.gitProvider", string(s.GitProvider)); err != nil {
 		return err
 	}
 
