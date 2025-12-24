@@ -4,6 +4,7 @@ package config
 type EnvironmentConfig struct {
 	APIVersion   string                      `yaml:"apiVersion"`
 	Kind         string                      `yaml:"kind"` // should be "Environment"
+	GitProvider GitProvider          `yaml:"gitProvider,omitempty"`
 	Metadata     EnvironmentMetadata         `yaml:"metadata"`
 	Backend      Backend                     `yaml:"backend"`
 	Environments map[string]EnvironmentEntry `yaml:"environments"` // dev, prod, ...
@@ -15,7 +16,7 @@ type EnvironmentMetadata struct {
 	Org      string                 `yaml:"org"`
 	Provider string                 `yaml:"provider"` // "aws", etc.
 	Labels   map[string]string      `yaml:"labels"`
-	// Approve  []ApprovalRequirement  `yaml:"approve,omitempty"`
+	// Approve    []ApprovalRequirement `yaml:"approve,omitempty"`
 }
 
 type EnvironmentEntry struct {

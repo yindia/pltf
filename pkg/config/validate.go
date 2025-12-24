@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"strings"
 )
 
 // Validate checks the EnvironmentConfig for structural issues.
@@ -20,6 +21,12 @@ func (e *EnvironmentConfig) Validate() error {
 	}
 	if e.Metadata.Provider == "" {
 		return fmt.Errorf("metadata.provider is required")
+	}
+	if e.Metadata.GitProvider == "" {
+		e.Metadata.GitProvider = GitProviderGitHub
+	}
+	if err := validateGitProvider("metadata.gitProvider", string(e.Metadata.GitProvider)); err != nil {
+		return err
 	}
 
 	if len(e.Environments) == 0 {
@@ -56,6 +63,12 @@ func (s *ServiceConfig) Validate(env *EnvironmentConfig) error {
 	}
 	if s.Metadata.Ref == "" {
 		return fmt.Errorf("metadata.ref (path to environment) is required")
+	}
+	if s.Metadata.GitProvider == "" {
+		s.Metadata.GitProvider = GitProviderGitHub
+	}
+	if err := validateGitProvider("metadata.gitProvider", string(s.Metadata.GitProvider)); err != nil {
+		return err
 	}
 
 	if len(s.Metadata.EnvRef) == 0 {
@@ -121,4 +134,16 @@ func contextSuffix(context string) string {
 		return ""
 	}
 	return fmt.Sprintf(" in %s", context)
+}
+
+func validateGitProvider(field, value string) error {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	switch normalizeGitProvider(value) {
+	case string(GitProviderGitHub), string(GitProviderGitLab), string(GitProviderBitbucket):
+		return nil
+	default:
+		return fmt.Errorf("%s must be one of: github, gitlab, bitbucket", field)
+	}
 }
