@@ -564,6 +564,10 @@ func runTfsecScan(dir string) (*tfsecSummary, error) {
 	summary.Timings.Checks = metrics.Executor.Timings.RunningChecks
 	summary.Timings.Total = metrics.Timings.Total
 	for _, res := range results {
+		status := strings.ToLower(fmt.Sprint(res.Status()))
+		if !strings.Contains(status, "fail") {
+			continue
+		}
 		f := tfsecFinding{
 			Severity:    string(res.Severity()),
 			Rule:        res.Rule().LongID(),
@@ -699,9 +703,6 @@ func formatTfsecReport(summary *tfsecSummary) string {
 			}
 		}
 		b.WriteString("────────────────────────────────────────────────────────────────────────────────\n\n")
-	}
-	if len(summary.Findings) == 0 {
-		b.WriteString("No tfsec findings.\n\n")
 	}
 	b.WriteString(formatTfsecInsights(summary))
 	return b.String()
