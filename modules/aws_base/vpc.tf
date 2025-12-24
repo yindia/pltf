@@ -19,7 +19,7 @@ resource "aws_flow_log" "vpc" {
   iam_role_arn    = aws_iam_role.vpc_flow_log[0].arn
   log_destination = aws_cloudwatch_log_group.vpc_flow_log[0].arn
   traffic_type    = "ALL"
-  vpc_id          = local.vpc_id
+  vpc_id          = aws_vpc.vpc[0].id
 }
 
 resource "random_id" "vpc_flow_log_suffix" {

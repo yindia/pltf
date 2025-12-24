@@ -49,6 +49,12 @@ variable "public_ipv4_cidr_blocks" {
   ]
 }
 
+variable "public_subnet_map_public_ip_on_launch" {
+  description = "Whether instances launched in public subnets receive a public IP by default."
+  type        = bool
+  default     = false
+}
+
 variable "vpc_id" {
   description = "The ID of an pre-existing VPC to use instead of creating a new VPC for pltf"
   type        = string

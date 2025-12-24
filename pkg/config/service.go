@@ -12,10 +12,11 @@ type ServiceConfig struct {
 	Modules    []Module        `yaml:"modules"`
 }
 type ServiceMetadata struct {
-	Name   string                        `yaml:"name"`
-	Ref    string                        `yaml:"ref"`    // path to env.yaml
-	EnvRef map[string]ServiceEnvRefEntry `yaml:"envRef"` // dev, prod, ...
-	Labels map[string]string             `yaml:"labels,omitempty"`
+	Name    string                        `yaml:"name"`
+	Ref     string                        `yaml:"ref"`    // path to env.yaml
+	EnvRef  map[string]ServiceEnvRefEntry `yaml:"envRef"` // dev, prod, ...
+	Labels  map[string]string             `yaml:"labels,omitempty"`
+	Approve []ApprovalRequirement         `yaml:"approve,omitempty"`
 }
 
 type ServiceEnvRefEntry struct {

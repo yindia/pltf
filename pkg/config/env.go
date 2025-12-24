@@ -11,10 +11,11 @@ type EnvironmentConfig struct {
 }
 
 type EnvironmentMetadata struct {
-	Name     string            `yaml:"name"`
-	Org      string            `yaml:"org"`
-	Provider string            `yaml:"provider"` // "aws", etc.
-	Labels   map[string]string `yaml:"labels"`
+	Name     string                 `yaml:"name"`
+	Org      string                 `yaml:"org"`
+	Provider string                 `yaml:"provider"` // "aws", etc.
+	Labels   map[string]string      `yaml:"labels"`
+	Approve  []ApprovalRequirement  `yaml:"approve,omitempty"`
 }
 
 type EnvironmentEntry struct {
