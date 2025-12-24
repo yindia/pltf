@@ -55,5 +55,5 @@ variable "same_region_replication" {
 
 variable "enable_logging" {
   type    = bool
-  default = false
+  default = true
 }

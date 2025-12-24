@@ -641,37 +641,43 @@ func tfsecExitCode(metrics tfscanner.Metrics) int {
 }
 
 func printTfsecInsights(summary *tfsecSummary) {
-	fmt.Fprintln(os.Stderr, "  timings")
-	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
-	fmt.Fprintf(os.Stderr, "  disk i/o             %s\n", formatDurationMs(summary.Timings.DiskIO))
-	fmt.Fprintf(os.Stderr, "  parsing              %s\n", formatDurationMs(summary.Timings.Parsing))
-	fmt.Fprintf(os.Stderr, "  adaptation           %s\n", formatDurationMs(summary.Timings.Adaptation))
-	fmt.Fprintf(os.Stderr, "  checks               %s\n", formatDurationMs(summary.Timings.Checks))
-	fmt.Fprintf(os.Stderr, "  total                %s\n\n", formatDurationMs(summary.Timings.Total))
-
-	fmt.Fprintln(os.Stderr, "  counts")
-	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
-	fmt.Fprintf(os.Stderr, "  modules downloaded   %d\n", summary.Counts.ModulesDownloaded)
-	fmt.Fprintf(os.Stderr, "  modules processed    %d\n", summary.Counts.ModulesProcessed)
-	fmt.Fprintf(os.Stderr, "  blocks processed     %d\n", summary.Counts.BlocksProcessed)
-	fmt.Fprintf(os.Stderr, "  files read           %d\n\n", summary.Counts.FilesRead)
-
-	fmt.Fprintln(os.Stderr, "  results")
-	fmt.Fprintln(os.Stderr, "  ──────────────────────────────────────────")
-	fmt.Fprintf(os.Stderr, "  passed               %d\n", summary.Counts.Passed)
-	fmt.Fprintf(os.Stderr, "  ignored              %d\n", summary.Counts.Ignored)
-	fmt.Fprintf(os.Stderr, "  critical             %d\n", summary.Critical)
-	fmt.Fprintf(os.Stderr, "  high                 %d\n", summary.High)
-	fmt.Fprintf(os.Stderr, "  medium               %d\n", summary.Medium)
-	fmt.Fprintf(os.Stderr, "  low                  %d\n\n", summary.Low)
-
-	totalProblems := summary.Failed
-	fmt.Fprintf(os.Stderr, "  %d passed, %d ignored, %d potential problem(s) detected.\n", summary.Counts.Passed, summary.Counts.Ignored, totalProblems)
+	fmt.Fprint(os.Stderr, formatTfsecInsights(summary))
 }
 
 func formatDurationMs(d time.Duration) string {
 	ms := float64(d) / float64(time.Millisecond)
 	return fmt.Sprintf("%.6fms", ms)
+}
+
+func formatTfsecInsights(summary *tfsecSummary) string {
+	var b strings.Builder
+	b.WriteString("  timings\n")
+	b.WriteString("  ──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "  disk i/o             %s\n", formatDurationMs(summary.Timings.DiskIO))
+	fmt.Fprintf(&b, "  parsing              %s\n", formatDurationMs(summary.Timings.Parsing))
+	fmt.Fprintf(&b, "  adaptation           %s\n", formatDurationMs(summary.Timings.Adaptation))
+	fmt.Fprintf(&b, "  checks               %s\n", formatDurationMs(summary.Timings.Checks))
+	fmt.Fprintf(&b, "  total                %s\n\n", formatDurationMs(summary.Timings.Total))
+
+	b.WriteString("  counts\n")
+	b.WriteString("  ──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "  modules downloaded   %d\n", summary.Counts.ModulesDownloaded)
+	fmt.Fprintf(&b, "  modules processed    %d\n", summary.Counts.ModulesProcessed)
+	fmt.Fprintf(&b, "  blocks processed     %d\n", summary.Counts.BlocksProcessed)
+	fmt.Fprintf(&b, "  files read           %d\n\n", summary.Counts.FilesRead)
+
+	b.WriteString("  results\n")
+	b.WriteString("  ──────────────────────────────────────────\n")
+	fmt.Fprintf(&b, "  passed               %d\n", summary.Counts.Passed)
+	fmt.Fprintf(&b, "  ignored              %d\n", summary.Counts.Ignored)
+	fmt.Fprintf(&b, "  critical             %d\n", summary.Critical)
+	fmt.Fprintf(&b, "  high                 %d\n", summary.High)
+	fmt.Fprintf(&b, "  medium               %d\n", summary.Medium)
+	fmt.Fprintf(&b, "  low                  %d\n\n", summary.Low)
+
+	totalProblems := summary.Failed
+	fmt.Fprintf(&b, "  %d passed, %d ignored, %d potential problem(s) detected.\n", summary.Counts.Passed, summary.Counts.Ignored, totalProblems)
+	return b.String()
 }
 
 func runInfracost(planJSONPath, workdir string) (*costSummary, error) {

@@ -22,6 +22,7 @@ resource "aws_docdb_cluster_instance" "cluster_instances" {
   identifier                 = "pltf-${var.layer_name}-${var.module_name}-${random_string.db_name_hash.result}-${count.index}"
   cluster_identifier         = aws_docdb_cluster.cluster.id
   instance_class             = var.instance_class
+  kms_key_id                 = data.aws_kms_key.main.arn
   apply_immediately          = true
   auto_minor_version_upgrade = true
   lifecycle {
@@ -35,6 +36,10 @@ resource "aws_docdb_cluster" "cluster" {
   master_password         = random_password.documentdb_auth.result
   db_subnet_group_name    = "pltf-${var.env_name}-docdb"
   engine_version          = var.engine_version
+  enabled_cloudwatch_logs_exports = [
+    "audit",
+    "profiler"
+  ]
   storage_encrypted       = true
   kms_key_id              = data.aws_kms_key.main.arn
   vpc_security_group_ids  = [data.aws_security_group.security_group.id]
