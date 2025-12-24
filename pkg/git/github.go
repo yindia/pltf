@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -32,6 +33,15 @@ type ghEvent struct {
 type ghComment struct {
 	ID   int64  `json:"id"`
 	Body string `json:"body"`
+}
+
+type ghReview struct {
+	State             string `json:"state"`
+	AuthorAssociation string `json:"author_association"`
+	SubmittedAt       string `json:"submitted_at"`
+	User              struct {
+		Login string `json:"login"`
+	} `json:"user"`
 }
 
 func newGitHubCommenterFromEnv() (*githubCommenter, error) {
@@ -80,6 +90,63 @@ func (c *githubCommenter) UpsertPRComment(comment PRComment) error {
 	}
 	fmt.Fprintln(os.Stderr, "info: created PR comment")
 	return nil
+}
+
+func (c *githubCommenter) GetReviewSummary() (ReviewSummary, error) {
+	prNumber, err := detectPRNumber()
+	if err != nil {
+		return ReviewSummary{}, ErrNoPRNumber
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/pulls/%d/reviews?per_page=100", c.owner, c.repo, prNumber)
+	var reviews []ghReview
+	if err := doGitHubRequest(ctx, client, c.token, http.MethodGet, url, nil, &reviews); err != nil {
+		return ReviewSummary{}, err
+	}
+
+	type reviewEntry struct {
+		review ghReview
+		at     time.Time
+	}
+	latest := make(map[string]reviewEntry)
+	for _, r := range reviews {
+		login := strings.TrimSpace(r.User.Login)
+		if login == "" {
+			continue
+		}
+		t := parseReviewTime(r.SubmittedAt)
+		if prev, ok := latest[login]; ok {
+			if prev.at.After(t) {
+				continue
+			}
+		}
+		latest[login] = reviewEntry{review: r, at: t}
+	}
+
+	names := make([]string, 0, len(latest))
+	for name := range latest {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	summary := ReviewSummary{}
+	for _, name := range names {
+		r := latest[name].review
+		state := strings.ToUpper(strings.TrimSpace(r.State))
+		if state == "APPROVED" {
+			summary.Approvals++
+		}
+		summary.Reviews = append(summary.Reviews, ReviewStatus{
+			Name:   name,
+			Team:   strings.TrimSpace(r.AuthorAssociation),
+			Status: state,
+		})
+	}
+	return summary, nil
 }
 
 func detectPRNumber() (int, error) {
@@ -162,4 +229,15 @@ func splitRepo(full string) (owner, repo string, err error) {
 		return "", "", fmt.Errorf("invalid GITHUB_REPOSITORY: %q", full)
 	}
 	return parts[0], parts[1], nil
+}
+
+func parseReviewTime(s string) time.Time {
+	if strings.TrimSpace(s) == "" {
+		return time.Time{}
+	}
+	t, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
 }

@@ -29,9 +29,23 @@ type PRComment struct {
 	Marker string
 }
 
+// ReviewStatus describes a single reviewer's latest status.
+type ReviewStatus struct {
+	Name   string
+	Team   string
+	Status string
+}
+
+// ReviewSummary aggregates review status and approvals.
+type ReviewSummary struct {
+	Approvals int
+	Reviews   []ReviewStatus
+}
+
 // Commenter posts or updates a pull/merge request comment.
 type Commenter interface {
 	UpsertPRComment(comment PRComment) error
+	GetReviewSummary() (ReviewSummary, error)
 }
 
 // NewCommenter creates a commenter for the specified provider or auto-detected provider if empty.

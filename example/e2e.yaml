@@ -52,3 +52,49 @@ modules:
     inputs:
       max_nodes: 15
       node_disk_size: 20
+  - id: postgres
+    type: aws_postgres
+    inputs:
+      database_name: "${{var.db_name}}"
+  - id: s3
+    type: aws_s3
+    inputs:
+      bucket_name: "pltf-app-${layer_name}-${env_name}"
+    links:
+      readWrite: adminpltfrole
+      readWrite: userpltfrole
+  - id: topic
+    type: aws_sns
+    inputs:
+      sqs_subscribers:
+      - "${{module.notifcationsQueue.queue_arn}}"
+    links:
+      read: adminpltfrole
+  - id: notifcationsQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: schedulesQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: adminpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+      - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services: 
+        - namespace: "*"
+          service_name: "*"
+  - id: userpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+      - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services: 
+        - namespace: "*"
+          service_name: "*"
