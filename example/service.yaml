@@ -1,6 +1,6 @@
 apiVersion: platform.io/v1
 kind: Service
-
+gitProvider: github
 metadata:
   name: payments-api
   ref: ./env.yaml

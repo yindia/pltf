@@ -1,6 +1,6 @@
 apiVersion: platform.io/v1
 kind: Environment
-
+gitProvider: github
 metadata:
   name: example-aws
   org: pltf
