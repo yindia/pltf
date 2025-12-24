@@ -64,6 +64,11 @@ func buildPRCommentBody(run tfRunSummary) string {
 	sb.WriteString("### Terrateam Plan Output\n\n")
 	sb.WriteString(fmt.Sprintf("**%s** %s\n\n", run.Spec, statusEmoji+" "+titleCase(statusText)))
 
+	if run.Plan != nil {
+		sb.WriteString(fmt.Sprintf("Plan: %d to add, %d to change, %d to destroy\n\n",
+			run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+	}
+
 	sb.WriteString("<details><summary>Expand for plan output details</summary>\n\n")
 	sb.WriteString("```\n")
 	if run.Plan != nil && strings.TrimSpace(run.Plan.Text) != "" {
