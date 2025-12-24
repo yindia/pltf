@@ -1,0 +1,13 @@
+[workspace]
+authors = ["Yuvraj <evalsocket@gmail.com>"]
+channels = ["conda-forge"]
+name = "workspace"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+nodejs = ">=24.4.1,<24.5"
+go = ">=1.25.3,<2"
+python = ">=3.14.2,<3.15"

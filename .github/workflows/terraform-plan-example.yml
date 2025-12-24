@@ -39,4 +39,4 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -x
-          pltf terraform plan -f example/env.yaml --env prod
+          pltf terraform plan -f example/env.yaml --env prod --scan
