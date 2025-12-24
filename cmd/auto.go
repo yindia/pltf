@@ -68,6 +68,76 @@ func autoValidateWithOutput(out io.Writer, file, env string) error {
 	return nil
 }
 
+func autoValidateWithScan(out io.Writer, file, env, modules string) error {
+	absFile, err := filepath.Abs(file)
+	if err != nil {
+		return err
+	}
+	specDir := filepath.Dir(absFile)
+
+	kind, err := config.DetectKind(file)
+	if err != nil {
+		return err
+	}
+
+	embeddedRoot, customRoot, err := resolveModuleRoots(modules)
+	if err != nil {
+		return err
+	}
+
+	outDir, err := os.MkdirTemp("", "pltf-validate-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(outDir)
+
+	switch kind {
+	case "Environment":
+		envCfg, err := config.LoadEnvironmentConfig(file)
+		if err != nil {
+			return err
+		}
+		envName, err := selectEnvName(kind, env, envCfg, nil)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "Environment %q is valid (provider=%s, org=%s)\n",
+			envCfg.Metadata.Name,
+			envCfg.Metadata.Provider,
+			envCfg.Metadata.Org,
+		)
+		if err := generate.GenerateEnvironmentTF(envCfg, embeddedRoot, customRoot, envName, outDir, specDir, nil); err != nil {
+			return err
+		}
+
+	case "Service":
+		svcCfg, envCfg, err := config.LoadService(file)
+		if err != nil {
+			return err
+		}
+		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		if err != nil {
+			return err
+		}
+		fmt.Fprintf(out, "Service %q is valid and uses Environment %q (provider=%s)\n",
+			svcCfg.Metadata.Name,
+			envCfg.Metadata.Name,
+			envCfg.Metadata.Provider,
+		)
+		if err := generate.GenerateServiceTF(svcCfg, envCfg, embeddedRoot, customRoot, envName, outDir, specDir, nil); err != nil {
+			return err
+		}
+
+	default:
+		return fmt.Errorf("unknown or missing kind in %s (expected Environment or Service)", file)
+	}
+
+	if _, err := runTfsecScan(outDir); err != nil {
+		return fmt.Errorf("tfsec scan failed: %w", err)
+	}
+	return nil
+}
+
 func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
 	absFile, err := filepath.Abs(file)
 	if err != nil {

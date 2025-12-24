@@ -122,10 +122,10 @@ func buildPRCommentBody(run tfRunSummary) string {
 			}
 		}
 		if run.Scan != nil {
-			sb.WriteString("\nSecurity scan (tfsec):\n")
+			sb.WriteString("\n<details><summary>Security scan (tfsec)</summary>\n\n")
 			sb.WriteString("```\n")
 			sb.WriteString(formatTfsecInsightsForComment(run.Scan))
-			sb.WriteString("```\n")
+			sb.WriteString("```\n</details>\n")
 		}
 	}
 
