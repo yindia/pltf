@@ -29,9 +29,12 @@ jobs:
         run: |
           go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
           echo "$HOME/go/bin" >> "$GITHUB_PATH"
-      - run: |
-          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh && tar xzf infracost-linux-amd64.tar.gz -C /tmp && mv /tmp/infracost-linux-amd64 /usr/local/bin/infracost
-
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        # See https://github.com/infracost/actions/tree/master/setup for other inputs
+        # If you can't use this action, use Docker image infracost/infracost:ci-0.10
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
       - name: Terraform Plan (example/env.yaml)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
