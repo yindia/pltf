@@ -50,7 +50,7 @@ modules:
   - id: postgres
     type: aws_postgres
     inputs:
-      database_name: "${{var.db_name}}"
+      database_name: "${{layer_name}}=${{env_name}}"
   - id: s3
     type: aws_s3
     inputs:
