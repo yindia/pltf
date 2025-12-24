@@ -38,14 +38,14 @@ resource "aws_rds_cluster" "db_cluster" {
 }
 
 resource "aws_rds_cluster_instance" "db_instance" {
-  count                      = var.multi_az ? 2 : 1
-  identifier                 = "pltf-${var.layer_name}-${var.module_name}-${random_string.db_name_hash.result}-${count.index}"
-  cluster_identifier         = aws_rds_cluster.db_cluster.id
-  instance_class             = var.instance_class
-  engine                     = aws_rds_cluster.db_cluster.engine
-  engine_version             = aws_rds_cluster.db_cluster.engine_version
-  apply_immediately          = true
-  auto_minor_version_upgrade = false
+  count                           = var.multi_az ? 2 : 1
+  identifier                      = "pltf-${var.layer_name}-${var.module_name}-${random_string.db_name_hash.result}-${count.index}"
+  cluster_identifier              = aws_rds_cluster.db_cluster.id
+  instance_class                  = var.instance_class
+  engine                          = aws_rds_cluster.db_cluster.engine
+  engine_version                  = aws_rds_cluster.db_cluster.engine_version
+  apply_immediately               = true
+  auto_minor_version_upgrade      = false
   performance_insights_enabled    = true
   performance_insights_kms_key_id = data.aws_kms_key.main.arn
   lifecycle {
