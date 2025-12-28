@@ -38,7 +38,7 @@ func New() (*OpenAI, error) {
 		APIKey:   key,
 		Model:    model,
 		Endpoint: endpoint,
-	},
+	}, nil
 }
 
 type aiRequest struct {
