@@ -10,6 +10,8 @@ What It Does
 - 🛠️ Generates Terraform (providers, backend, locals, secrets, modules, outputs).
 - ▶️ Wraps Terraform commands (init/plan/apply/destroy/output) with auto-generation.
 - 🕸️ Emits DOT graphs (Terraform graph or spec-only dependency graph).
+- 🔓 Zero tool lock-in: generated Terraform stays in your repo and is fully yours.
+- 📈 Scale anytime with many engineers without enforced opinions or workflows.
 
 Install / Build
 ---------------
