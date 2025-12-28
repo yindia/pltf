@@ -365,7 +365,7 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 				return "", fmt.Errorf("environment %q not found in Environment; available: %s", candidate, strings.Join(sortedKeys(envCfg.Environments), ","))
 			}
 			if _, ok := svcCfg.Metadata.EnvRef[candidate]; !ok {
-				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeysEnvRef(svcCfg.Metadata.EnvRef), ","))
+				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeys(svcCfg.Metadata.EnvRef), ","))
 			}
 			return candidate, nil
 		}
@@ -396,21 +396,13 @@ func sortedKeys[T any](m map[string]T) []string {
 	return keys
 }
 
-func sortedKeysEnvRef(m map[string]config.ServiceEnvRefEntry) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 type profileConfig struct {
 	ModulesRoot string `yaml:"modules_root"`
 	DefaultEnv  string `yaml:"default_env"`
 	DefaultOut  string `yaml:"default_out"`
 	Telemetry   bool   `yaml:"telemetry"`
 }
+
 
 func loadProfile() *profileConfig {
 	profileOnce.Do(func() {
@@ -425,17 +417,21 @@ func loadProfile() *profileConfig {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			// No profile is fine.
+			if !os.IsNotExist(err) {
+				profileErr = err // File exists but is unreadable
+			}
 			return
 		}
 		var cfg profileConfig
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			profileErr = err
+			profileErr = fmt.Errorf("failed to parse profile %s: %w", path, err)
 			return
 		}
 		profileData = &cfg
 	})
 	if profileErr != nil {
+		// A corrupt profile is a non-fatal warning, not a hard error.
+		fmt.Fprintf(os.Stderr, "warn: unable to load profile: %v\n", profileErr)
 		return nil
 	}
 	return profileData
