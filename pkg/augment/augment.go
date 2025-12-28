@@ -5,11 +5,13 @@ import "pltf/pkg/config"
 // Context captures the data needed by augmentation plugins to generate extra
 // inputs (IAM policies, trusts, etc.) for modules in a stack.
 type Context struct {
-	Provider    string
-	EnvName     string
-	ServiceName string
-	Modules     []config.Module
-	Vars        map[string]interface{}
+	Provider     string
+	EnvName      string
+	ServiceName  string
+	IsService    bool
+	Modules      []config.Module
+	Vars         map[string]interface{}
+	ModuleScopes map[string]string
 }
 
 // Augmentation describes extra inputs to apply to a module.

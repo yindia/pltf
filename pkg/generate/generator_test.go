@@ -109,6 +109,66 @@ func TestGeneratorServiceUsesParentOutputs(t *testing.T) {
 	assertFiles(t, outDir, "versions.tf", "providers.tf", "state.tf", filepath.Join("eks.tf"))
 }
 
+func TestGeneratorServiceSkipsEnvDependsOn(t *testing.T) {
+	envCfg := &config.EnvironmentConfig{
+		Metadata: config.EnvironmentMetadata{
+			Name:     "example",
+			Org:      "testorg",
+			Provider: "aws",
+		},
+		Environments: map[string]config.EnvironmentEntry{
+			"dev": {Account: "111111111111", Region: "us-east-1"},
+		},
+		Modules: []config.Module{
+			{ID: "base", Type: "aws_base"},
+		},
+	}
+
+	svcCfg := &config.ServiceConfig{
+		Metadata: config.ServiceMetadata{
+			Name: "payments",
+			EnvRef: map[string]config.ServiceEnvRefEntry{
+				"dev": {},
+			},
+		},
+		Modules: []config.Module{
+			{
+				ID:   "eks",
+				Type: "aws_eks",
+				Inputs: map[string]interface{}{
+					"vpc_id": "module.base.vpc_id",
+					// satisfy required input
+					"cluster_name":   "svc-dev",
+					"enable_metrics": true,
+				},
+			},
+		},
+	}
+
+	modRoot, err := modules.Materialize()
+	if err != nil {
+		t.Fatalf("materialize embedded modules: %v", err)
+	}
+	outDir := t.TempDir()
+
+	g, err := NewGenerator(envCfg, svcCfg, modRoot, "", "dev", outDir, "", nil)
+	if err != nil {
+		t.Fatalf("NewGenerator(service) error: %v", err)
+	}
+	if err := g.Generate(); err != nil {
+		t.Fatalf("Generate(service) error: %v", err)
+	}
+
+	eksTf := filepath.Join(outDir, "eks.tf")
+	data, err := os.ReadFile(eksTf)
+	if err != nil {
+		t.Fatalf("read generated eks.tf: %v", err)
+	}
+	if strings.Contains(string(data), "depends_on") {
+		t.Fatalf("expected no depends_on for env-only dependencies, got:\n%s", string(data))
+	}
+}
+
 func TestGeneratorIgnoresEmptyCustomRoot(t *testing.T) {
 	envCfg := &config.EnvironmentConfig{
 		Metadata: config.EnvironmentMetadata{
