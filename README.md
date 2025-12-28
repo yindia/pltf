@@ -17,29 +17,24 @@ Install / Build
 - Build: `go build -o pltf ./main.go`
 - Install: `go install ./...`
 
-Quickstart
-----------
-- Validate: `pltf env validate -f env.yaml` or `pltf service validate -f service.yaml`
-- Generate TF only:
-  - Env: `pltf generate -f env.yaml -e dev`
-  - Service: `pltf generate -f service.yaml -e dev`
-  - Outputs land in `.pltf/<env_name>/env/<env>` (env) or `.pltf/<env_name>/<service>/env/<env>` (service).
-- Terraform wrapper:
-  - `pltf terraform plan -f env.yaml -e dev`
-  - `pltf terraform apply -f service.yaml -e dev --auto-approve`
-  - `pltf terraform output -f env.yaml -e dev --json`
-- Graphs:
-  - Terraform graph: `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
-  - Spec graph (no TF): `pltf terraform graph -f service.yaml -e dev --mode spec > spec.dot`
-- Other commands:
-  - `pltf env validate` / `pltf service validate`
-  - `pltf terraform destroy|output|force-unlock` (see `pltf terraform --help`)
-  - `pltf module list|get|init` to inspect or scaffold module metadata
+Command Reference
+-----------------
 
-Repo Examples
--------------
-- Env: `example/env.yaml` → `pltf generate -f example/env.yaml -e dev`
-- Service: `example/service.yaml` → `pltf generate -f example/service.yaml -e dev`
+| Command                       | Description                                                                                                                               |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `pltf generate`               | Generates Terraform code from a spec file. Auto-detects between Environment and Service specs.                                            |
+| `pltf validate`               | Validates the structure and syntax of a spec file. Can optionally run a security scan with `--scan`.                                      |
+| `pltf preview`                | Shows a summary of what will be generated (provider, backend, modules, etc.) without running Terraform.                                   |
+| `pltf version`                | Displays the version of `pltf`, Terraform, and key providers.                                                                             |
+| `pltf module init`            | Scans a Terraform module and generates a `module.yaml` metadata file.                                                                     |
+| `pltf module list`            | Lists all available modules found in the configured module sources.                                                                       |
+| `pltf module get`             | Shows detailed information about a specific module, including its inputs and outputs.                                                     |
+| `pltf terraform plan`         | Runs `terraform plan` on the generated code. Supports flags like `--scan` (tfsec), `--cost` (infracost), and `--rover` for visualization. |
+| `pltf terraform apply`        | Runs `terraform apply` on the generated code.                                                                                             |
+| `pltf terraform destroy`      | Runs `terraform destroy` on the generated code.                                                                                           |
+| `pltf terraform output`       | Runs `terraform output` to display outputs from the state.                                                                                |
+| `pltf terraform graph`        | Generates a dependency graph. Use `--mode spec` to create a graph from the spec file without running Terraform.                             |
+| `pltf terraform force-unlock` | Forcibly unlocks a Terraform state file.                                                                                                  |
 
 Behavior & Conventions
 ----------------------
