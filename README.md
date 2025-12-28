@@ -11,6 +11,86 @@ What It Does
 - 🛠️ Generates Terraform (providers, backend, locals, secrets, modules, outputs).
 - ▶️ Wraps Terraform commands (init/plan/apply/destroy/output) with auto-generation.
 - 🕸️ Emits DOT graphs (Terraform graph or spec-only dependency graph).
+- 🔓 Zero tool lock-in: generated Terraform stays in your repo and is fully yours.
+- 📈 Scale anytime with many engineers without enforced opinions or workflows.
+- 🔐 Security scanning via `--scan` (tfsec) and optional cost estimation via `--cost` (infracost).
+- 🌎 Cloud-agnostic backends: use `s3|gcs|azurerm` regardless of provider.
+- 🧩 Module catalog with custom module support (`source: custom` + `--modules`).
+
+Getting Started
+---------------
+1) Build the CLI:
+```bash
+go build -o pltf ./main.go
+```
+
+2) Create an environment spec (`env.yaml`):
+```yaml
+apiVersion: platform.io/v1
+kind: Environment
+metadata:
+  name: example-aws
+  org: pltf
+  provider: aws
+  labels:
+    team: platform
+backend:
+  type: s3
+  bucket: platform-tfstate
+  region: us-east-1
+environments:
+  dev:
+    account: "111111111111"
+    region: us-east-1
+    variables:
+      base_domain: dev.example.internal
+modules:
+  - id: base
+    type: aws_base
+  - id: dns
+    type: aws_dns
+    inputs:
+      domain: var.base_domain
+```
+
+3) Preview or validate:
+```bash
+./pltf preview -f env.yaml -e dev
+./pltf validate -f env.yaml -e dev
+```
+
+4) Generate Terraform:
+```bash
+./pltf generate -f env.yaml -e dev
+```
+
+5) Plan/apply with Terraform:
+```bash
+./pltf terraform plan -f env.yaml -e dev --scan
+./pltf terraform apply -f env.yaml -e dev
+```
+
+6) Add a service spec (`service.yaml`) that references the environment:
+```yaml
+apiVersion: platform.io/v1
+kind: Service
+metadata:
+  name: payments-api
+  ref: ./env.yaml
+  envRef:
+    dev: {}
+modules:
+  - id: app
+    type: aws_k8s_service
+    inputs:
+      public_uri: "/payments"
+      image: "ghcr.io/acme/payments:latest"
+```
+
+7) Plan/apply a service:
+```bash
+./pltf terraform plan -f service.yaml -e dev
+```
 
 Install / Build
 ---------------
@@ -44,6 +124,14 @@ Behavior & Conventions
 - Defaults: Respects `PLTF_DEFAULT_ENV` (or profile) for env selection; embedded modules are used unless `--modules` overrides.
 - Paths: Filesystem operations use platform-safe handling; generated HCL uses forward slashes for Terraform compatibility.
 - Coverage: Bundled modules are AWS-first today; contributions welcome for more services and providers.
+
+Key Features
+------------
+- Spec-driven infra: environment and service YAML with templated references (`module.*`, `parent.*`, `var.*`).
+- Autowiring: module inputs can be satisfied automatically via outputs in the same stack.
+- Remote state wiring for services via parent outputs.
+- IAM policy and IRSA trust augmentation for supported AWS modules.
+- Optional plan summarization, Rover visualization, and Infracost breakdowns.
 
 Provider Support
 ----------------
