@@ -1,16 +1,17 @@
 package generate
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"encoding/json"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 
 	"pltf/pkg/config"
@@ -230,3 +231,76 @@ func parseVarValue(v interface{}) interface{} {
 		return t
 	}
 }
+
+// module.<moduleID>.<outputName>
+func setAttrModuleOutputRef(body *hclwrite.Body, name, moduleID, outputName string) {
+	tokens := hclwrite.Tokens{
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte("module"),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte(moduleID),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte(outputName),
+		},
+	}
+	body.SetAttributeRaw(name, tokens)
+}
+
+// data.terraform_remote_state.env.outputs.<outputName>
+func setAttrParentOutputRef(body *hclwrite.Body, name, outputName string) {
+	tokens := hclwrite.Tokens{
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte("data"),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte("terraform_remote_state"),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte("env"),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte("outputs"),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenDot,
+			Bytes: []byte("."),
+		},
+		&hclwrite.Token{
+			Type:  hclsyntax.TokenIdent,
+			Bytes: []byte(outputName),
+		},
+	}
+	body.SetAttributeRaw(name, tokens)
+}
+
+
+

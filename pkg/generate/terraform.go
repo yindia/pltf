@@ -7,7 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/hashicorp/hcl/v2/hclsyntax"
+	"pltf/pkg/generate/cloud"
+	"pltf/pkg/provider"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -21,7 +22,7 @@ func writeVersionsTF(
 	backendBucket string,
 	backendKey string,
 	backendRegion string,
-	provider string,
+	providerType string,
 	backendType string,
 	locals map[string]interface{},
 	needsK8s bool,
@@ -35,105 +36,19 @@ func writeVersionsTF(
 
 	tfBlock := body.AppendNewBlock("terraform", nil)
 	tfBody := tfBlock.Body()
-	tfBody.SetAttributeValue("required_version", cty.StringVal(RequiredTfVersion))
+	tfBody.SetAttributeValue("required_version", cty.StringVal(provider.RequiredTfVersion))
+
+	p, err := cloud.New(providerType)
+	if err != nil {
+		return err
+	}
 
 	// required_providers block
 	rpBlock := tfBody.AppendNewBlock("required_providers", nil)
-	rpBody := rpBlock.Body()
-
-	switch provider {
-	case "aws", "":
-		rpBody.SetAttributeValue("aws", cty.ObjectVal(map[string]cty.Value{
-			"source":  cty.StringVal("hashicorp/aws"),
-			"version": cty.StringVal(AWSProviderVersion),
-		}))
-		if needsK8s {
-			rpBody.SetAttributeValue("kubernetes", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/kubernetes"),
-				"version": cty.StringVal(K8sProviderVersion),
-			}))
-		}
-		if needsHelm {
-			rpBody.SetAttributeValue("helm", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/helm"),
-				"version": cty.StringVal(HelmProviderVersion),
-			}))
-		}
-	case "azure", "azurerm":
-		rpBody.SetAttributeValue("azurerm", cty.ObjectVal(map[string]cty.Value{
-			"source":  cty.StringVal("hashicorp/azurerm"),
-			"version": cty.StringVal(AzureProviderVersion),
-		}))
-		if needsK8s {
-			rpBody.SetAttributeValue("kubernetes", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/kubernetes"),
-				"version": cty.StringVal(K8sProviderVersion),
-			}))
-		}
-		if needsHelm {
-			rpBody.SetAttributeValue("helm", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/helm"),
-				"version": cty.StringVal(HelmProviderVersion),
-			}))
-		}
-	case "gcp", "google":
-		rpBody.SetAttributeValue("google", cty.ObjectVal(map[string]cty.Value{
-			"source":  cty.StringVal("hashicorp/google"),
-			"version": cty.StringVal(GCPProviderVersion),
-		}))
-		if needsK8s {
-			rpBody.SetAttributeValue("kubernetes", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/kubernetes"),
-				"version": cty.StringVal(K8sProviderVersion),
-			}))
-		}
-		if needsHelm {
-			rpBody.SetAttributeValue("helm", cty.ObjectVal(map[string]cty.Value{
-				"source":  cty.StringVal("hashicorp/helm"),
-				"version": cty.StringVal(HelmProviderVersion),
-			}))
-		}
-	default:
-		return fmt.Errorf("unsupported provider %q in writeVersionsTF", provider)
-	}
+	p.RequiredProviders(rpBlock.Body(), needsK8s, needsHelm)
 
 	// backend block
-	switch backendType {
-	case "aws", "s3", "":
-		backendBlock := tfBody.AppendNewBlock("backend", []string{"s3"})
-		bb := backendBlock.Body()
-		bb.SetAttributeValue("bucket", cty.StringVal(backendBucket))
-		bb.SetAttributeValue("key", cty.StringVal(backendKey))
-		bb.SetAttributeValue("region", cty.StringVal(backendRegion))
-		// bb.SetAttributeValue("use_lockfile", cty.BoolVal(true))
-		if strings.TrimSpace(backendProfile) != "" {
-			bb.SetAttributeValue("profile", cty.StringVal(backendProfile))
-		}
-	case "gcp", "google", "gcs":
-		backendBlock := tfBody.AppendNewBlock("backend", []string{"gcs"})
-		bb := backendBlock.Body()
-		bb.SetAttributeValue("bucket", cty.StringVal(backendBucket))
-		// gcs backend uses "prefix" instead of "key"
-		bb.SetAttributeValue("prefix", cty.StringVal(backendKey))
-	case "azure", "azurerm":
-		if backendBucket == "" {
-			return fmt.Errorf("backend.bucket (storage account name) is required for azure")
-		}
-		if container == "" {
-			container = "tfstate"
-		}
-		backendBlock := tfBody.AppendNewBlock("backend", []string{"azurerm"})
-		bb := backendBlock.Body()
-		bb.SetAttributeValue("storage_account_name", cty.StringVal(backendBucket))
-		bb.SetAttributeValue("container_name", cty.StringVal(container))
-		bb.SetAttributeValue("key", cty.StringVal(backendKey))
-		if resourceGroup != "" {
-			bb.SetAttributeValue("resource_group_name", cty.StringVal(resourceGroup))
-		}
-	default:
-		// already handled above, but keep for safety
-		return fmt.Errorf("unsupported provider %q for backend", provider)
-	}
+	p.Backend(tfBody, backendBucket, backendKey, backendRegion, backendProfile, container, resourceGroup)
 
 	body.AppendNewline()
 
@@ -153,7 +68,7 @@ func writeVersionsTF(
 
 func writeProvidersTF(
 	outDir string,
-	provider string,
+	providerType string,
 	region string,
 	account string,
 	needsK8s bool,
@@ -167,29 +82,13 @@ func writeProvidersTF(
 		return fmt.Errorf("kubernetes or helm provider requested but no cluster module found")
 	}
 
-	// Core provider
-	switch provider {
-	case "aws", "":
-		provBlock := body.AppendNewBlock("provider", []string{"aws"})
-		provBody := provBlock.Body()
-		provBody.SetAttributeValue("region", cty.StringVal(region))
-		dt := provBody.AppendNewBlock("default_tags", nil)
-		tags := dt.Body()
-		tags.SetAttributeRaw("tags", defaultTagsTokens())
-	case "gcp", "google":
-		provBlock := body.AppendNewBlock("provider", []string{"google"})
-		provBody := provBlock.Body()
-		// assuming envEntry.Account is GCP project ID
-		provBody.SetAttributeValue("project", cty.StringVal(account))
-		provBody.SetAttributeValue("region", cty.StringVal(region))
-	case "azure", "azurerm":
-		provBlock := body.AppendNewBlock("provider", []string{"azurerm"})
-		provBody := provBlock.Body()
-		provBody.SetAttributeValue("subscription_id", cty.StringVal(account))
-		provBody.SetAttributeValue("features", cty.ObjectVal(map[string]cty.Value{}))
-	default:
-		return fmt.Errorf("unsupported provider %q in writeProvidersTF", provider)
+	p, err := cloud.New(providerType)
+	if err != nil {
+		return err
 	}
+
+	// Core provider
+	p.Provider(body, region, account)
 
 	if (needsK8s || needsHelm) && cluster != nil && cluster.auth != nil {
 		body.AppendNewline()
@@ -290,104 +189,3 @@ func writeSecretsTF(outDir string, secretNames map[string]bool) error {
 	return os.WriteFile(filepath.Join(outDir, "secrets.tf"), file.Bytes(), 0o644)
 }
 
-// module.<moduleID>.<outputName>
-func setAttrModuleOutputRef(body *hclwrite.Body, name, moduleID, outputName string) {
-	tokens := hclwrite.Tokens{
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte("module"),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte(moduleID),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte(outputName),
-		},
-	}
-	body.SetAttributeRaw(name, tokens)
-}
-
-// data.terraform_remote_state.env.outputs.<outputName>
-func setAttrParentOutputRef(body *hclwrite.Body, name, outputName string) {
-	tokens := hclwrite.Tokens{
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte("data"),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte("terraform_remote_state"),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte("env"),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte("outputs"),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenDot,
-			Bytes: []byte("."),
-		},
-		&hclwrite.Token{
-			Type:  hclsyntax.TokenIdent,
-			Bytes: []byte(outputName),
-		},
-	}
-	body.SetAttributeRaw(name, tokens)
-}
-
-func defaultTagsTokens() hclwrite.Tokens {
-	toks := hclwrite.Tokens{
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("merge")},
-		&hclwrite.Token{Type: hclsyntax.TokenOParen, Bytes: []byte("(")},
-		&hclwrite.Token{Type: hclsyntax.TokenOBrace, Bytes: []byte("{")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("Environment")},
-		&hclwrite.Token{Type: hclsyntax.TokenEqual, Bytes: []byte("=")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("local")},
-		&hclwrite.Token{Type: hclsyntax.TokenDot, Bytes: []byte(".")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("environment")},
-		&hclwrite.Token{Type: hclsyntax.TokenComma, Bytes: []byte(",")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("Owner")},
-		&hclwrite.Token{Type: hclsyntax.TokenEqual, Bytes: []byte("=")},
-	}
-	toks = append(toks, hclwrite.TokensForValue(cty.StringVal("PlatformTeam"))...)
-	toks = append(toks, &hclwrite.Token{Type: hclsyntax.TokenComma, Bytes: []byte(",")})
-	toks = append(toks,
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("terraform")},
-		&hclwrite.Token{Type: hclsyntax.TokenEqual, Bytes: []byte("=")},
-	)
-	toks = append(toks, hclwrite.TokensForValue(cty.StringVal("true"))...)
-	toks = append(toks,
-		&hclwrite.Token{Type: hclsyntax.TokenCBrace, Bytes: []byte("}")},
-		&hclwrite.Token{Type: hclsyntax.TokenComma, Bytes: []byte(",")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("local")},
-		&hclwrite.Token{Type: hclsyntax.TokenDot, Bytes: []byte(".")},
-		&hclwrite.Token{Type: hclsyntax.TokenIdent, Bytes: []byte("global_tags")},
-		&hclwrite.Token{Type: hclsyntax.TokenCParen, Bytes: []byte(")")},
-	)
-	return toks
-}

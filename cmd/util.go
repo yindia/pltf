@@ -19,6 +19,7 @@ import (
 
 	"pltf/modules"
 	"pltf/pkg/config"
+	"pltf/pkg/generate"
 )
 
 func parseVarFlags(pairs []string) (map[string]string, error) {
@@ -246,51 +247,16 @@ func computeBackend(envCfg *config.EnvironmentConfig, envName string) (backendDe
 	if !ok {
 		return backendDetails{}, fmt.Errorf("environment %q not found", envName)
 	}
-	bType := strings.ToLower(strings.TrimSpace(envCfg.Backend.Type))
-	if bType == "" {
-		bType = strings.ToLower(envCfg.Metadata.Provider)
+	bk, err := generate.ResolveBackendConfig(envCfg.Metadata.Provider, envCfg, envEntry)
+	if err != nil {
+		return backendDetails{}, err
 	}
-
-	bucket := envCfg.Backend.Bucket
-	container := envCfg.Backend.Container
-	resourceGroup := envCfg.Backend.ResourceGroup
-	region := envCfg.Backend.Region
-	if region == "" {
-		region = envEntry.Region
-	}
-
-	switch bType {
-	case "aws", "s3", "":
-		if bucket == "" {
-			if envEntry.Region == "" {
-				return backendDetails{}, fmt.Errorf("environment %q region is required for backend naming", envName)
-			}
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "gcp", "google", "gcs":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "azure", "azurerm":
-		if bucket == "" {
-			return backendDetails{}, fmt.Errorf("backend.bucket (storage account name) is required for azure backend")
-		}
-		if container == "" {
-			container = "tfstate"
-		}
-		if resourceGroup == "" {
-			resourceGroup = fmt.Sprintf("%s-tfstate-rg", envCfg.Metadata.Name)
-		}
-	default:
-		return backendDetails{}, fmt.Errorf("unsupported backend type %q", bType)
-	}
-
 	return backendDetails{
-		typeName:      bType,
-		bucket:        bucket,
-		container:     container,
-		resourceGroup: resourceGroup,
-		region:        region,
+		typeName:      bk.BackendType,
+		bucket:        bk.Bucket,
+		container:     bk.Container,
+		resourceGroup: bk.ResourceGroup,
+		region:        bk.Region,
 	}, nil
 }
 
@@ -365,7 +331,7 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 				return "", fmt.Errorf("environment %q not found in Environment; available: %s", candidate, strings.Join(sortedKeys(envCfg.Environments), ","))
 			}
 			if _, ok := svcCfg.Metadata.EnvRef[candidate]; !ok {
-				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeysEnvRef(svcCfg.Metadata.EnvRef), ","))
+				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeys(svcCfg.Metadata.EnvRef), ","))
 			}
 			return candidate, nil
 		}
@@ -396,15 +362,6 @@ func sortedKeys[T any](m map[string]T) []string {
 	return keys
 }
 
-func sortedKeysEnvRef(m map[string]config.ServiceEnvRefEntry) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 type profileConfig struct {
 	ModulesRoot string `yaml:"modules_root"`
 	DefaultEnv  string `yaml:"default_env"`
@@ -425,17 +382,21 @@ func loadProfile() *profileConfig {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			// No profile is fine.
+			if !os.IsNotExist(err) {
+				profileErr = err // File exists but is unreadable
+			}
 			return
 		}
 		var cfg profileConfig
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			profileErr = err
+			profileErr = fmt.Errorf("failed to parse profile %s: %w", path, err)
 			return
 		}
 		profileData = &cfg
 	})
 	if profileErr != nil {
+		// A corrupt profile is a non-fatal warning, not a hard error.
+		fmt.Fprintf(os.Stderr, "warn: unable to load profile: %v\n", profileErr)
 		return nil
 	}
 	return profileData

@@ -490,105 +490,97 @@ func (g *Generator) writeOutputsFile(mods []config.Module) error {
 }
 
 func (g *Generator) processInput(modBody *hclwrite.Body, m config.Module, inSpec config.InputSpec) error {
-	var (
-		val interface{}
-		has bool
-	)
-
-	// 1. Direct input from YAML
-	if raw, ok := m.Inputs[inSpec.Name]; ok {
-		val = raw
-		has = true
-	} else {
-		// 2. Auto-fill platform fields
-		switch inSpec.Name {
-		case "env_name":
-			val = g.envName
-			has = true
-		case "layer_name":
-			layer := g.envName
-			if g.isService {
-				layer = g.svcCfg.Metadata.Name
-			}
-			val = layer
-			has = true
-		case "module_name":
-			val = m.ID
-			has = true
-		}
-	}
-
-	// 3. Auto-wire from another module's output
-	if !has {
-		if providers, ok := g.outputProviders[inSpec.Name]; ok {
-			// Filter out the current module from the list of providers
-			var candidates []string
-			for _, p := range providers {
-				if p != m.ID {
-					candidates = append(candidates, p)
-				}
-			}
-
-			if g.isService {
-				serviceProviders, envProviders := g.splitByScope(candidates)
-				if len(serviceProviders) > 1 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple service modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, serviceProviders,
-					)
-				}
-				if len(envProviders) > 1 && len(serviceProviders) == 0 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple environment modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, envProviders,
-					)
-				}
-
-				switch {
-				case len(serviceProviders) == 1:
-					g.addDep(m.ID, serviceProviders[0])
-					setAttrModuleOutputRef(modBody, inSpec.Name, serviceProviders[0], inSpec.Name)
-					return nil
-				case len(envProviders) == 1:
-					setParentOutputRef(modBody, inSpec.Name, envProviders[0], inSpec.Name)
-					return nil
-				}
-			} else {
-				if len(candidates) > 1 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, candidates,
-					)
-				}
-				if len(candidates) == 1 {
-					g.addDep(m.ID, candidates[0])
-					setAttrModuleOutputRef(modBody, inSpec.Name, candidates[0], inSpec.Name)
-					return nil
-				}
-			}
-		}
-	}
-
-	// 3b. Wire from merged locals/vars if available
-	if !has {
-		if _, ok := g.mergedVars[inSpec.Name]; ok {
-			return g.setVarReference(modBody, inSpec.Name, inSpec.Name)
-		}
-	}
-
-	// 4. Handle required/default logic
-	if !has {
-		if inSpec.Required && inSpec.Default == nil {
-			return fmt.Errorf("module %q (type=%s) missing required input %q", m.ID, m.Type, inSpec.Name)
-		}
-		if inSpec.Default == nil {
-			return nil // Skip if no value and no default
-		}
-		val = inSpec.Default
+	val, err := g.resolveInput(modBody, m, inSpec)
+	if err != nil {
+		return err
 	}
 
 	g.collectDepsFromValue(m.ID, val)
 	return g.setAttribute(modBody, inSpec.Name, val)
+}
+
+func (g *Generator) resolveInput(modBody *hclwrite.Body, m config.Module, inSpec config.InputSpec) (interface{}, error) {
+	// 1. Direct input from YAML
+	if raw, ok := m.Inputs[inSpec.Name]; ok {
+		return raw, nil
+	}
+
+	// 2. Auto-fill platform fields
+	switch inSpec.Name {
+	case "env_name":
+		return g.envName, nil
+	case "layer_name":
+		layer := g.envName
+		if g.isService {
+			layer = g.svcCfg.Metadata.Name
+		}
+		return layer, nil
+	case "module_name":
+		return m.ID, nil
+	}
+
+	// 3. Auto-wire from another module's output
+	if providers, ok := g.outputProviders[inSpec.Name]; ok {
+		// Filter out the current module from the list of providers
+		var candidates []string
+		for _, p := range providers {
+			if p != m.ID {
+				candidates = append(candidates, p)
+			}
+		}
+
+		if g.isService {
+			serviceProviders, envProviders := g.splitByScope(candidates)
+			if len(serviceProviders) > 1 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple service modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, serviceProviders,
+				)
+			}
+			if len(envProviders) > 1 && len(serviceProviders) == 0 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple environment modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, envProviders,
+				)
+			}
+
+			switch {
+			case len(serviceProviders) == 1:
+				g.addDep(m.ID, serviceProviders[0])
+				setAttrModuleOutputRef(modBody, inSpec.Name, serviceProviders[0], inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			case len(envProviders) == 1:
+				setAttrParentOutputRef(modBody, inSpec.Name, inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			}
+		} else {
+			if len(candidates) > 1 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, candidates,
+				)
+			}
+			if len(candidates) == 1 {
+				g.addDep(m.ID, candidates[0])
+				setAttrModuleOutputRef(modBody, inSpec.Name, candidates[0], inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			}
+		}
+	}
+
+	// 4. Wire from merged locals/vars if available
+	if _, ok := g.mergedVars[inSpec.Name]; ok {
+		return nil, g.setVarReference(modBody, inSpec.Name, inSpec.Name)
+	}
+
+	// 5. Handle required/default logic
+	if inSpec.Required && inSpec.Default == nil {
+		return nil, fmt.Errorf("module %q (type=%s) missing required input %q", m.ID, m.Type, inSpec.Name)
+	}
+	if inSpec.Default == nil {
+		return nil, nil // Skip if no value and no default
+	}
+	return inSpec.Default, nil
 }
 
 func (g *Generator) setAttribute(body *hclwrite.Body, name string, value interface{}) error {
@@ -1056,17 +1048,21 @@ func (g *Generator) findModulesByType(moduleType string) map[string]struct{} {
 }
 
 func (g *Generator) findModulesByTypes(moduleTypes []string) map[string]struct{} {
-	out := map[string]struct{}{}
-	set := map[string]struct{}{}
+	typeSet := make(map[string]struct{}, len(moduleTypes))
 	for _, t := range moduleTypes {
-		set[t] = struct{}{}
+		if t == "" {
+			continue
+		}
+		typeSet[t] = struct{}{}
 	}
+
+	matches := map[string]struct{}{}
 	for _, m := range g.allModules {
-		if _, ok := set[m.Type]; ok {
-			out[m.ID] = struct{}{}
+		if _, ok := typeSet[m.Type]; ok {
+			matches[m.ID] = struct{}{}
 		}
 	}
-	return out
+	return matches
 }
 
 func (g *Generator) findFirstModuleByType(moduleType string) string {
@@ -1076,65 +1072,6 @@ func (g *Generator) findFirstModuleByType(moduleType string) string {
 		}
 	}
 	return ""
-}
-
-type backendDetails struct {
-	bucket        string
-	container     string
-	resourceGroup string
-	region        string
-	backendType   string
-	profile       string
-}
-
-func backendConfig(provider string, envCfg *config.EnvironmentConfig, envEntry config.EnvironmentEntry) (backendDetails, error) {
-	bType := envCfg.Backend.Type
-	if strings.TrimSpace(bType) == "" {
-		bType = provider
-	}
-	bType = strings.ToLower(bType)
-
-	// Defaults
-	bucket := envCfg.Backend.Bucket
-	container := envCfg.Backend.Container
-	resourceGroup := envCfg.Backend.ResourceGroup
-	bRegion := envCfg.Backend.Region
-	if bRegion == "" {
-		bRegion = envEntry.Region
-	}
-	bProfile := envCfg.Backend.Profile
-
-	switch bType {
-	case "aws", "s3", "":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "gcp", "google", "gcs":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "azure", "azurerm":
-		if bucket == "" {
-			return backendDetails{}, fmt.Errorf("backend.bucket (storage account name) is required for azure backend")
-		}
-		if container == "" {
-			container = "tfstate"
-		}
-		if resourceGroup == "" {
-			resourceGroup = fmt.Sprintf("%s-tfstate-rg", envCfg.Metadata.Name)
-		}
-	default:
-		return backendDetails{}, fmt.Errorf("unsupported backend type %q", bType)
-	}
-
-	return backendDetails{
-		bucket:        bucket,
-		container:     container,
-		resourceGroup: resourceGroup,
-		region:        bRegion,
-		backendType:   bType,
-		profile:       bProfile,
-	}, nil
 }
 
 func (g *Generator) writeBaseFiles() error {
@@ -1150,11 +1087,11 @@ func (g *Generator) writeBaseFiles() error {
 	secretNames := g.getSecretNames()
 
 	var backendKey string
-	backendCfg, err := backendConfig(provider, g.envCfg, g.envEntry)
+	backendCfg, err := ResolveBackendConfig(provider, g.envCfg, g.envEntry)
 	if err != nil {
 		return err
 	}
-	bucket := backendCfg.bucket
+	bucket := backendCfg.Bucket
 	if g.isService {
 		backendKey = fmt.Sprintf("service/%s/%s/terraform.tfstate", g.svcCfg.Metadata.Name, g.envKey)
 	} else {
@@ -1165,7 +1102,7 @@ func (g *Generator) writeBaseFiles() error {
 		return fmt.Errorf("backend bucket is not specified in the configuration")
 	}
 
-	if err := writeVersionsTF(g.outDir, bucket, backendKey, backendCfg.region, provider, backendCfg.backendType, locals, needsK8s, needsHelm, backendCfg.container, backendCfg.resourceGroup, backendCfg.profile); err != nil {
+	if err := writeVersionsTF(g.outDir, bucket, backendKey, backendCfg.Region, provider, backendCfg.BackendType, locals, needsK8s, needsHelm, backendCfg.Container, backendCfg.ResourceGroup, backendCfg.Profile); err != nil {
 		return fmt.Errorf("failed to write versions.tf: %w", err)
 	}
 
@@ -1180,7 +1117,7 @@ func (g *Generator) writeBaseFiles() error {
 	// For services, write remote state to access env outputs
 	if g.isService {
 		envStateKey := fmt.Sprintf("env/%s/%s/terraform.tfstate", g.envCfg.Metadata.Name, g.envKey)
-		if err := writeRemoteStateTF(g.outDir, backendCfg.backendType, backendCfg.bucket, envStateKey, backendCfg.region, backendCfg.container, backendCfg.resourceGroup, backendCfg.profile); err != nil {
+		if err := writeRemoteStateTF(g.outDir, backendCfg.BackendType, backendCfg.Bucket, envStateKey, backendCfg.Region, backendCfg.Container, backendCfg.ResourceGroup, backendCfg.Profile); err != nil {
 			return fmt.Errorf("failed to write service state.tf: %w", err)
 		}
 	}

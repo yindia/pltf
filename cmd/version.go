@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"pltf/modules"
-	"pltf/pkg/generate"
+	"pltf/pkg/provider"
 	"pltf/pkg/version"
 )
 
@@ -81,11 +81,11 @@ func terraformVersions() (string, map[string]string, error) {
 	out, err := runCmdOutput(".", "terraform", "version", "-json")
 	if err != nil {
 		// Still return defaults if terraform is missing
-		return generate.RequiredTfVersion, providerDefaults(), err
+		return provider.RequiredTfVersion, providerDefaults(), err
 	}
 	var parsed tfVersionJSON
 	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
-		return generate.RequiredTfVersion, providerDefaults(), err
+		return provider.RequiredTfVersion, providerDefaults(), err
 	}
 
 	// Start with defaults.
@@ -108,9 +108,9 @@ func terraformVersions() (string, map[string]string, error) {
 
 func providerDefaults() map[string]string {
 	return map[string]string{
-		"registry.terraform.io/hashicorp/aws":     generate.AWSProviderVersion,
-		"registry.terraform.io/hashicorp/google":  generate.GCPProviderVersion,
-		"registry.terraform.io/hashicorp/azurerm": generate.AzureProviderVersion,
+		"registry.terraform.io/hashicorp/aws":     provider.AWSProviderVersion,
+		"registry.terraform.io/hashicorp/google":  provider.GCPProviderVersion,
+		"registry.terraform.io/hashicorp/azurerm": provider.AzureProviderVersion,
 	}
 }
 

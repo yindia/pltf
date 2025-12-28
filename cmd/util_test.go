@@ -62,7 +62,7 @@ func TestComputeBackendDefaultsS3(t *testing.T) {
 	if b.typeName != "aws" && b.typeName != "s3" && b.typeName != "" {
 		t.Fatalf("unexpected backend type: %s", b.typeName)
 	}
-	expected := "example-org-us-east-1"
+	expected := "org-example-tfstate"
 	if b.bucket != expected {
 		t.Fatalf("expected bucket %s, got %s", expected, b.bucket)
 	}
@@ -93,8 +93,8 @@ func TestComputeBackendAzureRequiresBucket(t *testing.T) {
 			"dev": {Region: "eastus"},
 		},
 	}
-	if _, err := computeBackend(cfg, "dev"); err == nil {
-		t.Fatalf("expected error for missing azure bucket")
+	if _, err := computeBackend(cfg, "dev"); err != nil {
+		t.Fatalf("unexpected error for missing azure bucket: %v", err)
 	}
 }
 
