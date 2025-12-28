@@ -218,8 +218,16 @@ func NewGenerator(
 		Provider:    envCfg.Metadata.Provider,
 		EnvName:     envName,
 		ServiceName: serviceName,
+		IsService:   g.isService,
 		Modules:     g.allModules,
 		Vars:        g.mergedVars,
+		ModuleScopes: func() map[string]string {
+			out := make(map[string]string, len(g.moduleScopes))
+			for id, scope := range g.moduleScopes {
+				out[id] = string(scope)
+			}
+			return out
+		}(),
 	})
 
 	return g, nil
@@ -315,7 +323,13 @@ func (g *Generator) writeModuleFile(m config.Module, meta *config.ModuleMetadata
 	}
 
 	if deps := g.sortedDeps(m.ID); len(deps) > 0 {
-		modBody.SetAttributeRaw("depends_on", g.dependsTokens(deps))
+		if g.isService {
+			serviceDeps, _ := g.splitByScope(deps)
+			deps = serviceDeps
+		}
+		if len(deps) > 0 {
+			modBody.SetAttributeRaw("depends_on", g.dependsTokens(deps))
+		}
 	}
 
 	modPath := filepath.Join(g.outDir, fmt.Sprintf("%s.tf", m.ID))
