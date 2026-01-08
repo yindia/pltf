@@ -628,19 +628,18 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>pltf auto-detects whether a spec is an <strong>Environment</strong> or <strong>Service</strong> based on <code>kind</code>. Most commands accept <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, and <code>--var/-v key=value</code>. Profiles (<code>~/.pltf/profile.yaml</code> or <code>PLTF_PROFILE</code>) can set defaults for <code>modules_root</code> and <code>default_env</code>.</p>
+    <p>pltf auto-detects whether a spec is an <strong>Environment</strong>, <strong>Service</strong>, or <strong>Stack</strong> based on <code>kind</code>. Most commands accept <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, and <code>--var/-v key=value</code>.</p>
 <h2 id="command-catalog">Command catalog</h2>
 <ul>
-<li><code>pltf validate</code> — validate + lint specs.</li>
+<li><code>pltf validate</code> — validate specs.</li>
 <li><code>pltf generate</code> — render Terraform only.</li>
 <li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
 <li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform with standard TF flags.</li>
 <li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
-<li><code>pltf lint</code> — lint only (also run implicitly by validate).</li>
 </ul>
 <h3 id="validate">validate</h3>
 <ul>
-<li><strong>What:</strong> Validate Environment or Service specs; auto-detects kind; runs lint suggestions (labels, unused vars).</li>
+<li><strong>What:</strong> Validate Environment, Service, or Stack specs; auto-detects kind.</li>
 <li><strong>Flags:</strong></li>
 <li><code>--file/-f</code> — Path to the spec (default <code>env.yaml</code>).</li>
 <li><code>--env/-e</code> — Environment key (dev/prod/etc.).</li>
@@ -727,8 +726,8 @@
 <li><strong>Flags:</strong> <code>--path</code> (module dir), <code>--name</code>, <code>--type</code>, <code>--description</code>, <code>--out</code>, <code>--force</code> (overwrite)</li>
 <li><strong>Example:</strong> <code>pltf module init --path ./modules/aws_eks --force</code></li>
 </ul>
-<h2 id="validate-lint">Validate + Lint</h2>
-<p>Structural validation plus lint suggestions (labels, unused vars).
+<h2 id="validate_1">Validate</h2>
+<p>Structural validation for Environment, Service, and Stack specs.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev
 </span></code></pre></div></p>
@@ -741,7 +740,7 @@
 Flags:
 - <code>--modules/-m</code> custom modules root. Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
 - <code>--out/-o</code> output dir (defaults <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>).
-- <code>--var/-v</code> merges vars (env vars → service envRef vars → CLI vars).</p>
+- <code>--var/-v</code> merges vars (spec variables → CLI vars).</p>
 <h2 id="terraform-helpers">Terraform helpers</h2>
 <p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">    </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)</span>
@@ -854,12 +853,6 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
                         <a class="text-2xl font-medium" href="../cli/pltf_generate/">
                             
                             generate
-                            
-                        </a>
-                        
-                        <a class="text-2xl font-medium" href="../cli/pltf_lint/">
-                            
-                            lint
                             
                         </a>
                         
@@ -1051,10 +1044,10 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
         
 
         
-        <a href="#validate-lint"
+        <a href="#validate_1"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Validate + Lint
+            Validate
         </a>
         
 

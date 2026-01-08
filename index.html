@@ -654,8 +654,9 @@
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
     <p>The next generation of Infrastructure-as-Code. Describe high-level constructs; ship Terraform you can own.</p>
-<p>pltf turns concise YAML into ready-to-run Terraform for AWS, GCP, and Azure. You model two things:</p>
+<p>pltf turns concise YAML into ready-to-run Terraform for AWS, GCP, and Azure. You model three things:</p>
 <ul>
+<li><strong>Stack</strong>: reusable module bundles (EKS + nodegroups + observability).</li>
 <li><strong>Environment</strong>: cloud, account/project, region, shared modules (VPC, DNS, EKS/GKE/AKS, IAM).</li>
 <li><strong>Service</strong>: an app’s resources (databases, queues, buckets, roles, charts) wired into an Environment.</li>
 </ul>
@@ -669,17 +670,18 @@
 <li><strong>Cloud agnostic outputs</strong>: state backends <code>s3|gcs|azurerm</code>, provider wiring, and locals are emitted for you.</li>
 <li><strong>Module catalog + custom modules</strong>: ship with AWS modules and accept your own <code>module.yaml</code> definitions.</li>
 <li><strong>Safe automation</strong>: <code>pltf terraform plan/apply/destroy/output/graph</code> re-renders code every run to keep drift in check.</li>
-<li><strong>Validation &amp; lint</strong>: structural checks catch missing refs, bad wiring, and secrets placement early.</li>
+<li><strong>Validation</strong>: structural checks catch missing refs, bad wiring, and secrets placement early.</li>
 </ul>
 <h2 id="grounded-example">Grounded example</h2>
 <p>Use the repo samples as a blueprint:</p>
 <ul>
-<li><code>example/env.yaml</code> defines an AWS environment (<code>example-aws</code>) with prod account/region, base domain, EKS, nodegroups, VPC/DNS.</li>
-<li><code>example/service.yaml</code> defines a service (<code>payments-api</code>) that binds to that environment, adds Postgres, S3, SNS/SQS, and IAM roles, and shows how to pass variables/secrets and link modules.</li>
+<li><code>example/stack.yaml</code> (and <code>example/stacks/*</code>) define reusable cluster building blocks.</li>
+<li><code>example/env.yaml</code> defines an AWS environment (<code>example-aws</code>) and references stacks for EKS and observability.</li>
+<li><code>example/service.yaml</code> defines a service (<code>payments-api</code>) that binds to the environment and shows how to pass variables/secrets and link modules.</li>
 </ul>
 <h2 id="typical-workflow">Typical workflow</h2>
 <ol>
-<li>Create or edit your environment and service specs.</li>
+<li>Create or edit your stack, environment, and service specs.</li>
 <li>Validate and preview wiring:</li>
 <li><code>pltf validate -f example/env.yaml</code></li>
 <li><code>pltf preview -f example/service.yaml --env prod</code></li>
@@ -795,12 +797,6 @@
                         <a class="text-2xl font-medium" href="cli/pltf_generate/">
                             
                             generate
-                            
-                        </a>
-                        
-                        <a class="text-2xl font-medium" href="cli/pltf_lint/">
-                            
-                            lint
                             
                         </a>
                         

@@ -9,15 +9,20 @@ Keep sensitive values out of specs and source control.
 
 ## Example (service)
 ```yaml
-spec:
-  secrets:
-    db_password: {}   # value supplied via env/CI
-  modules:
-    - type: aws_k8s_service
-      name: app
-      env_vars:
-        - name: DB_PASSWORD
-          value: "${var.db_password}"
+apiVersion: platform.io/v1
+kind: Service
+metadata:
+  name: payments-api
+  ref: ./env.yaml
+  envRef:
+    prod:
+      secrets:
+        db_password: {}   # value supplied via env/CI
+modules:
+  - id: app
+    type: aws_k8s_service
+    inputs:
+      db_password: "${var.db_password}"
 ```
 Runtime:
 ```bash

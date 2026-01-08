@@ -17,4 +17,4 @@ public_url: "${parent.domain}/hello"   # in a service spec
 
 ## Notes
 - Services can reference parent env outputs via `${parent.*}`.
-- Variables precedence: env vars → service envRef vars → CLI `--var`.
+- Variables precedence: stack variables → spec variables → CLI `--var`.

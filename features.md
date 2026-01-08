@@ -4,7 +4,7 @@ pltf focuses on faster, safer Terraform generation with predictable wiring. Deep
 
 ## Map of features
 - [Profiles & Defaults](features/profiles.md): org/user defaults (`modules_root`, `default_env`, telemetry).
-- [Validation & Lint](features/validation.md): structural checks before render/apply.
+- [Validation](features/validation.md): structural checks before render/apply.
 - [Backends](features/backends.md): `s3|gcs|azurerm` state backends, independent of target cloud.
 - [Custom Modules](features/custom-modules.md): bring-your-own `module.yaml` catalog.
 - [Placeholders & Wiring](features/placeholders.md): `${env_name}`, `${layer_name}`, `${module.<id>.<output>}`, `${parent.<output>}`, `${var.<name>}`.
@@ -36,6 +36,6 @@ pltf terraform plan -f example/service.yaml --env prod
 - Run `pltf module init --path <module_dir>` to scaffold `module.yaml`.
 - Reference with `source: custom` and point `--modules` or profile `modules_root` to your catalog.
 
-## Validation and lint
-- `pltf validate` runs structural checks before generation.
-- Terraform `plan/apply` via `pltf terraform ...` always regenerates to reduce drift and catches wiring issues early.
+## Validation
+- `pltf validate` runs structural checks before generation (Environment, Service, Stack).
+- `pltf terraform ...` always regenerates to reduce drift and catches wiring issues early.

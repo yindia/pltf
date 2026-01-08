@@ -2,12 +2,12 @@
 
 Use this page as a practical guide to the most common flows in pltf.
 
-## Validate + Lint
+## Validate
 ```bash
 pltf validate -f env.yaml -e prod
 pltf validate -f service.yaml -e dev
 ```
-- Runs structural validation and lint suggestions (labels, unused vars).
+- Runs structural validation before render/apply.
 - Picks environment from `--env`, `PLTF_DEFAULT_ENV`, or profile `default_env`.
 
 ## Preview
@@ -24,7 +24,7 @@ pltf generate -f service.yaml -e dev --var cluster_name=my-dev
 ```
 - `--modules/-m` custom root; modules with `source: custom` resolve here first.
 - `--out/-o` defaults to `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`.
-- `--var/-v` merges over env vars → service envRef vars → CLI vars.
+- `--var/-v` merges over spec variables → CLI vars.
 - File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.
 
 ## Terraform commands

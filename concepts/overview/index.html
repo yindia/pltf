@@ -772,13 +772,14 @@
     <p>pltf raises the abstraction for Infrastructure-as-Code. You describe high-level constructs in YAML and let the CLI render the Terraform (providers, backends, locals, remote state) needed to stand them up. You keep the output and can run <code>terraform plan/apply</code> yourself or let pltf drive Terraform for you.</p>
 <h2 id="core-specs">Core specs</h2>
 <ul>
+<li><strong>Stack</strong>: Reusable module bundle (EKS + nodegroups + observability, etc.).</li>
 <li><strong>Environment</strong>: The shared foundation—cloud/account/region plus base modules like VPC, DNS, EKS/GKE/AKS, IAM. Often one per prod/stage/QA, or per engineer/PR sandbox.</li>
 <li><strong>Service</strong> (Layer): A workload’s resources—databases, queues, buckets, roles, charts—wired into an Environment.</li>
 </ul>
-<p>Services point at Environments via <code>metadata.ref</code> (path to env file) and <code>envRef</code> (per-environment overrides). Module links let services consume environment outputs without hand-written interpolation.</p>
+<p>Services point at Environments via <code>metadata.ref</code> (path to env file). Module links let services consume environment outputs without hand-written interpolation.</p>
 <h2 id="loop">Loop</h2>
 <ol>
-<li>Author/update YAML specs (Environment + Service).</li>
+<li>Author/update YAML specs (Stack + Environment + Service).</li>
 <li><code>pltf validate | preview | terraform plan/apply</code> (regenerates Terraform each run).</li>
 <li>Inspect outputs/graphs; iterate.</li>
 </ol>
@@ -889,12 +890,6 @@
                         <a class="text-2xl font-medium" href="../../cli/pltf_generate/">
                             
                             generate
-                            
-                        </a>
-                        
-                        <a class="text-2xl font-medium" href="../../cli/pltf_lint/">
-                            
-                            lint
                             
                         </a>
                         

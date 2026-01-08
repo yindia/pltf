@@ -629,11 +629,11 @@
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
     <p>Use this page as a practical guide to the most common flows in pltf.</p>
-<h2 id="validate-lint">Validate + Lint</h2>
+<h2 id="validate">Validate</h2>
 <p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev
 </span></code></pre></div>
-- Runs structural validation and lint suggestions (labels, unused vars).
+- Runs structural validation before render/apply.
 - Picks environment from <code>--env</code>, <code>PLTF_DEFAULT_ENV</code>, or profile <code>default_env</code>.</p>
 <h2 id="preview">Preview</h2>
 <p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>preview<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
@@ -646,7 +646,7 @@
 </span></code></pre></div>
 - <code>--modules/-m</code> custom root; modules with <code>source: custom</code> resolve here first.
 - <code>--out/-o</code> defaults to <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>.
-- <code>--var/-v</code> merges over env vars → service envRef vars → CLI vars.
+- <code>--var/-v</code> merges over spec variables → CLI vars.
 - File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.</p>
 <h2 id="terraform-commands">Terraform commands</h2>
 <p><div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">    </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># supports --target, --parallelism, --detailed-exitcode, --plan-file</span>
@@ -854,12 +854,6 @@
                             
                         </a>
                         
-                        <a class="text-2xl font-medium" href="../cli/pltf_lint/">
-                            
-                            lint
-                            
-                        </a>
-                        
                         <a class="text-2xl font-medium" href="../cli/pltf_validate/">
                             
                             validate
@@ -966,10 +960,10 @@
         
         
         
-        <a href="#validate-lint"
+        <a href="#validate"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Validate + Lint
+            Validate
         </a>
         
 

@@ -12,9 +12,11 @@ variables:
   min_nodes: "2"
   max_nodes: "5"
 modules:
-  - type: aws_eks
-    min_nodes: "${var.min_nodes}"
-    max_nodes: "${var.max_nodes}"
+  - id: eks
+    type: aws_eks
+    inputs:
+      min_nodes: "${var.min_nodes}"
+      max_nodes: "${var.max_nodes}"
 ```
 
 ## Override at runtime
@@ -25,19 +27,9 @@ pltf terraform apply -f env.yaml -e prod --var min_nodes=3 --var max_nodes=6
 PLTF_VAR_min_nodes=3 PLTF_VAR_max_nodes=6 pltf generate -f env.yaml -e prod
 ```
 
-## Environment-scoped variables
-Service specs can declare per-environment variables under `envRef`:
-```yaml
-envRef:
-  name: prod
-  path: ./env.yaml
-  variables:
-    containers: 5
-modules:
-  - type: aws_k8s_service
-    min_containers: 1
-    max_containers: "${var.containers}"
-```
+## Scope rules
+- Stack variables provide shared defaults and are auto‑applied.
+- Environment/Service `variables` are for custom logic only and must not reuse stack variable names.
 
 ## Parent outputs
 Services can use environment outputs via `${parent.<output>}`:
@@ -53,5 +45,5 @@ public_uri: "${parent.domain}/hello"
 
 ## Notes
 - Required variables without defaults must be provided via `--var` or env.
-- Precedence: env vars → service envRef vars → CLI `--var`.
+- Precedence: stack variables → spec variables → CLI `--var`.
 - Values stay in Terraform variables (not locals) to avoid leaking secrets.

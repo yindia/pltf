@@ -36,11 +36,11 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Validation & Lint - PLTF CLI Documentation</title>
+    <title>Validation - PLTF CLI Documentation</title>
     
 
 
-<title>Validation & Lint</title>
+<title>Validation</title>
 
 
 
@@ -55,7 +55,7 @@
 
 <!-- Open Graph (Facebook, LinkedIn) -->
 
-<meta property="og:title" content="Validation & Lint">
+<meta property="og:title" content="Validation">
 
 
 
@@ -70,7 +70,7 @@
 
 <!-- Twitter Card -->
 
-<meta name="twitter:title" content="Validation & Lint">
+<meta name="twitter:title" content="Validation">
 
 
 
@@ -562,25 +562,6 @@
                 
                 <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
-        data-size="default" href="/pltf/cli/pltf_lint/"
-        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
-
-        
-        lint
-        
-
-        
-
-        
-
-        
-    </a>
-</li>
-                
-                
-                
-                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
-    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
         data-size="default" href="/pltf/cli/pltf_validate/"
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
 
@@ -621,6 +602,8 @@
     </div>
     
 
+    
+    
     
     
     <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
@@ -883,7 +866,7 @@
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
 
         
-        Validation & Lint
+        Validation
         
 
         
@@ -1018,7 +1001,7 @@
         <h1
           class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl"
         >
-          Validation & Lint
+          Validation
         </h1>
 
         <div class="flex items-center gap-2 pt-1.5">
@@ -1095,9 +1078,8 @@
     <p>Catch spec issues early before generation or apply.</p>
 <h2 id="what-it-does">What it does</h2>
 <ul>
-<li><code>pltf validate</code> runs structural validation for Environment and Service specs.</li>
-<li>Built-in lint suggests labels and flags unused variables.</li>
-<li>Auto-detects <code>kind</code> (env/service) and applies the right checks.</li>
+<li><code>pltf validate</code> runs structural validation for Environment, Service, and Stack specs.</li>
+<li>Auto-detects <code>kind</code> and applies the right checks.</li>
 </ul>
 <h2 id="example">Example</h2>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
@@ -1105,7 +1087,6 @@
 </span></code></pre></div>
 <h2 id="notes">Notes</h2>
 <ul>
-<li>Lint also runs implicitly during validate.</li>
 <li>Combine with <code>pltf preview</code> to sanity check providers/backends/modules.</li>
 </ul>
   </div>
@@ -1215,12 +1196,6 @@
                         <a class="text-2xl font-medium" href="../../cli/pltf_generate/">
                             
                             generate
-                            
-                        </a>
-                        
-                        <a class="text-2xl font-medium" href="../../cli/pltf_lint/">
-                            
-                            lint
                             
                         </a>
                         

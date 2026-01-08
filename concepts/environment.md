@@ -18,13 +18,14 @@ metadata:
   labels:
     team: platform
     cost_center: shared
+  stacks:
+    - ./stack.yaml
+variables:
+  base_domain: prod.pltf.internal
 environments:
   prod:
     account: "556169302489"
     region: ap-northeast-1
-    variables:
-      base_domain: prod.pltf.internal
-      cluster_name: pltf-data
 modules:
   - id: base
     type: aws_base
@@ -50,7 +51,7 @@ modules:
 ## Key points
 
 - **Metadata**: name/org/provider; labels become tags.
-- **environments**: per-env account/region/vars/secrets; select with `--env prod`.
+- **environments**: per-env account/region/secrets; select with `--env prod`.
 - **modules**: shared building blocks. Use the embedded catalog or `source: custom` with your module root.
 - **Backends**: choose `s3|gcs|azurerm` independently of provider; use profiles for cross-account S3 (set in profiles or flags).
 

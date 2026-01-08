@@ -1,17 +1,16 @@
 # CLI Usage
 
-pltf auto-detects whether a spec is an **Environment** or **Service** based on `kind`. Most commands accept `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, and `--var/-v key=value`. Profiles (`~/.pltf/profile.yaml` or `PLTF_PROFILE`) can set defaults for `modules_root` and `default_env`.
+pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack** based on `kind`. Most commands accept `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, and `--var/-v key=value`.
 
 ## Command catalog
-- `pltf validate` — validate + lint specs.
+- `pltf validate` — validate specs.
 - `pltf generate` — render Terraform only.
 - `pltf preview` — summarize provider/backend/labels/modules.
 - `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform with standard TF flags.
 - `pltf module list|get|init` — module inventory and metadata generation.
-- `pltf lint` — lint only (also run implicitly by validate).
 
 ### validate
-- **What:** Validate Environment or Service specs; auto-detects kind; runs lint suggestions (labels, unused vars).
+- **What:** Validate Environment, Service, or Stack specs; auto-detects kind.
 - **Flags:**
   - `--file/-f` — Path to the spec (default `env.yaml`).
   - `--env/-e` — Environment key (dev/prod/etc.).
@@ -87,8 +86,8 @@ pltf auto-detects whether a spec is an **Environment** or **Service** based on `
 - **Flags:** `--path` (module dir), `--name`, `--type`, `--description`, `--out`, `--force` (overwrite)
 - **Example:** `pltf module init --path ./modules/aws_eks --force`
 
-## Validate + Lint
-Structural validation plus lint suggestions (labels, unused vars).
+## Validate
+Structural validation for Environment, Service, and Stack specs.
 ```bash
 pltf validate -f env.yaml -e prod
 pltf validate -f service.yaml -e dev
@@ -104,7 +103,7 @@ pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
 Flags:
 - `--modules/-m` custom modules root. Modules with `source: custom` are resolved only from the custom root; others fall back to embedded modules.
 - `--out/-o` output dir (defaults `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`).
-- `--var/-v` merges vars (env vars → service envRef vars → CLI vars).
+- `--var/-v` merges vars (spec variables → CLI vars).
 
 ## Terraform helpers
 Terraform commands live under `pltf terraform ...` and auto-generate before running TF.

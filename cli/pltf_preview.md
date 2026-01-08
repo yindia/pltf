@@ -4,7 +4,7 @@ Preview a spec: provider, backend, modules, labels (no Terraform run)
 
 ### Synopsis
 
-Parse a spec (Environment or Service) and show a concise summary: provider, backend type, environment, labels, and modules to be rendered.
+Parse a spec (Environment, Service, or Stack) and show a concise summary: provider, backend type, environment, labels, stacks, and modules to be rendered.
 
 ```
 pltf preview [flags]
@@ -14,7 +14,7 @@ pltf preview [flags]
 
 ```
   -e, --env string    Environment key to use for preview
-  -f, --file string   Path to the Environment or Service YAML file (default "env.yaml")
+  -f, --file string   Path to the Environment, Service, or Stack YAML file (default "env.yaml")
   -h, --help          help for preview
 ```
 

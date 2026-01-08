@@ -1,12 +1,12 @@
 ## pltf validate
 
-Validate an Environment or Service spec (auto-detects kind)
+Validate an Environment, Service, or Stack spec (auto-detects kind)
 
 ### Synopsis
 
-Parse a YAML spec, detect Environment vs Service, and run structural validation.
+Parse a YAML spec, detect Environment/Service/Stack, and run structural validation.
 Optionally assert that a specific environment key exists in both the environment file
-and the service envRef (for services). Lint suggestions are run alongside validation.
+and the service envRef (for services).
 
 ```
 pltf validate [flags]
@@ -23,7 +23,7 @@ pltf validate [flags]
 
 ```
   -e, --env string    Environment key to assert exists (dev, prod, etc.)
-  -f, --file string   Path to the Environment or Service YAML file (default "env.yaml")
+  -f, --file string   Path to the Environment, Service, or Stack YAML file (default "env.yaml")
   -h, --help          help for validate
 ```
 
