@@ -1,12 +1,18 @@
 ## pltf terraform graph
 
-Generate a DOT graph for a spec (terraform graph or spec dependency graph)
+Generate a graph for a spec (terraform, spec, or terravision)
 
 ### Synopsis
 
-Render Terraform (if needed) and produce a DOT graph. By default runs 'terraform graph'
+Render Terraform (if needed) and produce a graph. By default runs 'terraform graph'
 against the generated stack. With --mode=spec, emits a dependency graph from the env/service
-YAML (links and module references) without invoking Terraform.
+YAML (links and module references) without invoking Terraform. With --terravision, runs
+terravision against the generated Terraform directory.
+
+Notes:
+- `--terravision` always adds `--show`.
+- Only `--format` and `--outfile` are configurable; other terravision flags are not exposed.
+- Install terravision: https://github.com/patrickchugh/terravision/blob/main/README.md
 
 ```
 pltf terraform graph [flags]
@@ -17,6 +23,7 @@ pltf terraform graph [flags]
 ```
   pltf terraform graph -f env.yaml -e dev > graph.dot
   pltf terraform graph -f service.yaml -e dev --mode=spec --out-file=spec.dot
+  pltf terraform graph -f env.yaml -e dev --terravision --format=png --outfile=architecture
 ```
 
 ### Options
@@ -30,6 +37,11 @@ pltf terraform graph [flags]
   -o, --out string         Output directory for generated Terraform (for terraform mode)
       --out-file string    Write DOT output to a file instead of stdout
   -P, --plan-file string   Use an existing plan file for terraform graph (passed as -plan=...)
+      --terravision        Use terravision to generate a diagram from the generated Terraform
+      --format string
+                           Terravision output format (png, svg, pdf, bmp)
+      --outfile string
+                           Terravision output filename without extension (default: architecture)
   -v, --var stringArray    Override variable as key=value; merges over vars and supports bool/int/JSON/list parsing. Used for terraform mode generation.
 ```
 

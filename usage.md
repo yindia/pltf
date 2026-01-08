@@ -68,8 +68,8 @@ pltf auto-detects whether a spec is an **Environment** or **Service** based on `
 - **Example:** `pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345`
 
 ### terraform graph
-- **What:** Emit DOT graph. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only.
-- **Flags:** `--mode terraform|spec` (default terraform), `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
+- **What:** Emit DOT graph or run terravision. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only; `--terravision` runs terravision against generated Terraform.
+- **Flags:** `--mode terraform|spec` (default terraform), `--terravision`, `--format`, `--outfile`, `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
 - **Example:** `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
 
 ### module list

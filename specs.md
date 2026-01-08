@@ -1,6 +1,35 @@
 # Spec Guide
 
-pltf reads YAML specs with `kind: Environment` or `kind: Service`. The CLI validates structure and wires modules based on names and templated references.
+pltf reads YAML specs with `kind: Environment`, `kind: Service`, or `kind: Stack`. The CLI validates structure and wires modules based on names and templated references.
+
+## Stack spec (kind: Stack)
+Minimal shape:
+```yaml
+apiVersion: platform.io/v1
+kind: Stack
+metadata:
+  name: eks-observability
+  labels:
+    team: platform
+variables:
+  cluster_name: ""
+  base_domain: ""
+modules:
+  - id: eks
+    type: aws_eks
+    inputs:
+      cluster_name: var.cluster_name
+  - id: sec
+    type: aws_security_baseline
+  - id: obs
+    type: aws_observability
+```
+Notes:
+- Stack specs define reusable module templates.
+- Reference stacks from Environment or Service with `metadata.stacks`.
+- Modules defined in the spec cannot override stack modules with the same `id`.
+- Stack variables provide default inputs and are auto-applied at runtime.
+- Environment and Service specs can define top-level `variables` for custom logic only; they must not use stack variable names.
 
 ## Environment spec (kind: Environment)
 Minimal shape:
@@ -13,6 +42,8 @@ metadata:
   provider: aws
   labels:
     team: platform
+  stacks:
+    - ./stacks/eks-observability.yaml
 backend:
   type: s3
   bucket: example-tfstate   # optional; auto-named if omitted
@@ -21,8 +52,6 @@ environments:
   dev:
     account: "111111111111"
     region: us-east-1
-    variables:
-      base_domain: dev.example.com
     secrets:
       db_password: {}
 modules:
@@ -34,7 +63,7 @@ modules:
       domain: var.base_domain
 ```
 Notes:
-- `environments` map holds per-env accounts/regions/vars/secrets.
+- `environments` map holds per-env accounts/regions/secrets (no per-env variables).
 - `modules` list holds shared modules; `id`/`type` required; `inputs` optional; `links` supported.
 - Backend: `backend.type` can be `s3|gcs|azurerm` (independent of provider). `backend.profile` supports cross-account S3; `container/resource_group` for azurerm.
 - Modules can set `source: custom` to force resolution from your custom modules root (`--modules` or profile `modules_root`); others fall back to the embedded catalog.
@@ -47,10 +76,10 @@ kind: Service
 metadata:
   name: payments-api
   ref: ./env.yaml       # path to Environment spec
+  stacks:
+    - ./stacks/eks-observability.yaml
   envRef:
-    dev:
-      variables:
-        cluster_name: dev-cluster
+    dev: {}
 modules:
   - id: app
     type: aws_k8s_service
@@ -66,13 +95,15 @@ modules:
 ```
 Notes:
 - `metadata.ref` points to the Environment file (relative paths allowed).
-- `envRef` holds per-env variables/secrets merged after environment variables.
+- `metadata.envRef` holds per-env secrets (no per-env variables).
 - Modules can reference environment outputs via `${parent.<output>}`.
+- Git refs are supported for `metadata.ref` and `metadata.stacks` using the format `https://host/org/repo.git//path/to/spec.yaml?ref=main`.
 
 ## Variable precedence
-1) Environment variables  
-2) Service envRef variables (service only)  
-3) CLI `--var key=value`
+1) Stack variables  
+2) Environment `variables`  
+3) Service `variables`  
+4) CLI `--var key=value`
 
 ## Secrets vs locals
 - Secrets remain as Terraform variables (`var.<name>`).

@@ -705,8 +705,8 @@
 </ul>
 <h3 id="terraform-graph">terraform graph</h3>
 <ul>
-<li><strong>What:</strong> Emit DOT graph. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only.</li>
-<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>What:</strong> Emit DOT graph or run terravision. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only; <code>--terravision</code> runs terravision against generated Terraform.</li>
+<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--terravision</code>, <code>--format</code>, <code>--outfile</code>, <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
 <li><strong>Example:</strong> <code>pltf terraform graph -f env.yaml -e dev | dot -Tpng &gt; graph.png</code></li>
 </ul>
 <h3 id="module-list">module list</h3>
