@@ -15,6 +15,10 @@ apiVersion: platform.io/v1
 kind: Stack
 metadata:
   name: k8s-cluster
+providers:
+  kubernetes: true
+  helm: true
+  kustomize: false
 variables:
   cluster_name: "pltf-app-${env_name}"
   enable_metrics: "true"
@@ -48,6 +52,7 @@ metadata:
 - Stack module IDs cannot be overridden by env/service modules.
 - Stack variables are auto-applied at runtime.
 - Env/service `variables` can be used for custom logic only; names must not collide with stack variables.
+- `providers` declares required providers (kubernetes/helm/kustomize) and controls provider block generation.
 
 ## Auto-wiring
 After merge, module inputs are auto-wired by matching output names across **all**

@@ -11,6 +11,11 @@ metadata:
   name: eks-observability
   labels:
     team: platform
+providers:
+  kubernetes: true
+  helm: true
+  kustomize: false
+  kustomize: false
 variables:
   cluster_name: ""
   base_domain: ""
@@ -30,6 +35,7 @@ Notes:
 - Modules defined in the spec cannot override stack modules with the same `id`.
 - Stack variables provide default inputs and are auto-applied at runtime.
 - Environment and Service specs can define top-level `variables` for custom logic only; they must not use stack variable names.
+- `providers` declares required providers (`kubernetes`, `helm`, `kustomize`) without relying on module types.
 
 ## Environment spec (kind: Environment)
 Minimal shape:
@@ -44,6 +50,10 @@ metadata:
     team: platform
   stacks:
     - ./stacks/eks-observability.yaml
+providers:
+  kubernetes: true
+  helm: true
+  kustomize: false
 backend:
   type: s3
   bucket: example-tfstate   # optional; auto-named if omitted
@@ -80,6 +90,9 @@ metadata:
     - ./stacks/eks-observability.yaml
   envRef:
     dev: {}
+providers:
+  kubernetes: true
+  helm: true
 modules:
   - id: app
     type: aws_k8s_service
