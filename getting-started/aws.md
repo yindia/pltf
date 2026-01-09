@@ -76,12 +76,12 @@ metadata:
   name: payments-api
   ref: ./env.yaml
   envRef:
-    prod:
-      variables:
-        db_name: "testing"
-      secrets:
-        api_key: 
-          key: api_key
+    prod: {}
+variables:
+  db_name: "testing"
+secrets:
+  api_key:
+    key: api_key
 modules:
   - id: postgres
     type: aws_postgres

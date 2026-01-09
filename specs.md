@@ -15,7 +15,6 @@ providers:
   kubernetes: true
   helm: true
   kustomize: false
-  kustomize: false
 variables:
   cluster_name: ""
   base_domain: ""
@@ -54,6 +53,8 @@ providers:
   kubernetes: true
   helm: true
   kustomize: false
+secrets:
+  db_password: {}
 backend:
   type: s3
   bucket: example-tfstate   # optional; auto-named if omitted
@@ -62,8 +63,6 @@ environments:
   dev:
     account: "111111111111"
     region: us-east-1
-    secrets:
-      db_password: {}
 modules:
   - id: base
     type: aws_base
@@ -73,7 +72,7 @@ modules:
       domain: var.base_domain
 ```
 Notes:
-- `environments` map holds per-env accounts/regions/secrets (no per-env variables).
+- `environments` map holds per-env accounts/regions (no per-env variables or secrets).
 - `modules` list holds shared modules; `id`/`type` required; `inputs` optional; `links` supported.
 - Backend: `backend.type` can be `s3|gcs|azurerm` (independent of provider). `backend.profile` supports cross-account S3; `container/resource_group` for azurerm.
 - Modules can set `source: custom` to force resolution from your custom modules root (`--modules` or profile `modules_root`); others fall back to the embedded catalog.
@@ -93,6 +92,8 @@ metadata:
 providers:
   kubernetes: true
   helm: true
+secrets:
+  api_key: {}
 modules:
   - id: app
     type: aws_k8s_service
@@ -108,7 +109,7 @@ modules:
 ```
 Notes:
 - `metadata.ref` points to the Environment file (relative paths allowed).
-- `metadata.envRef` holds per-env secrets (no per-env variables).
+- `metadata.envRef` selects envs only (no per-env variables or secrets).
 - Modules can reference environment outputs via `${parent.<output>}`.
 - Git refs are supported for `metadata.ref` and `metadata.stacks` using the format `https://host/org/repo.git//path/to/spec.yaml?ref=main`.
 

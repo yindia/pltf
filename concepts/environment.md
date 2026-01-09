@@ -22,6 +22,8 @@ metadata:
     - ./stack.yaml
 variables:
   base_domain: prod.pltf.internal
+secrets:
+  api_key: {}
 environments:
   prod:
     account: "556169302489"
@@ -51,7 +53,7 @@ modules:
 ## Key points
 
 - **Metadata**: name/org/provider; labels become tags.
-- **environments**: per-env account/region/secrets; select with `--env prod`.
+- **environments**: per-env account/region (no per-env secrets); select with `--env prod`.
 - **modules**: shared building blocks. Use the embedded catalog or `source: custom` with your module root.
 - **Backends**: choose `s3|gcs|azurerm` independently of provider; use profiles for cross-account S3 (set in profiles or flags).
 

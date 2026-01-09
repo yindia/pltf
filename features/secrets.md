@@ -15,9 +15,9 @@ metadata:
   name: payments-api
   ref: ./env.yaml
   envRef:
-    prod:
-      secrets:
-        db_password: {}   # value supplied via env/CI
+    prod: {}
+secrets:
+  db_password: {}   # value supplied via env/CI
 modules:
   - id: app
     type: aws_k8s_service

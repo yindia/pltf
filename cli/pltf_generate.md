@@ -1,11 +1,11 @@
 ## pltf generate
 
-Generate Terraform from an Environment or Service spec (auto-detects kind)
+Generate workspace-ready Terraform from an Environment or Service spec
 
 ### Synopsis
 
-Read a YAML spec, detect Environment vs Service, and render Terraform with the proper
-remote state, providers, locals, secrets, and module wiring. Uses embedded modules by
+Read a YAML spec, detect Environment vs Service, and render a workspace-ready Terraform
+root with variables.tf, secrets.tf, and a single <env>.tfvars file. Uses embedded modules by
 default; can override modules root and output directory.
 
 ```
@@ -16,7 +16,7 @@ pltf generate [flags]
 
 ```
   pltf generate -f env.yaml -e dev
-  pltf generate -f service.yaml -e prod -m ./modules -o .pltf/my-env/my-svc/env/prod
+  pltf generate -f service.yaml -e prod -m ./modules -o .pltf/my-env/my-svc/workspace
 ```
 
 ### Options
@@ -26,7 +26,7 @@ pltf generate [flags]
   -f, --file string       Path to the Environment or Service YAML file (default "env.yaml")
   -h, --help              help for generate
   -m, --modules string    Root directory containing module type folders with module.yaml metadata; defaults to embedded modules bundle
-  -o, --out string        Output directory for generated Terraform (defaults based on kind: .pltf/<env_name>/env/<env> or .pltf/<env_name>/<service>/env/<env>)
+  -o, --out string        Output directory for generated Terraform (defaults to .pltf/<env_name>/workspace or .pltf/<env_name>/<service>/workspace)
   -v, --var stringArray   Override variable as key=value; merges over vars and supports bool/int/JSON/list parsing. Can be repeated for multiple overrides.
 ```
 

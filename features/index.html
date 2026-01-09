@@ -1091,11 +1091,11 @@
 <ul>
 <li>Render-only: <code>pltf generate -f &lt;spec&gt; --env &lt;name&gt; -o &lt;dir&gt;</code> (no cloud creds required).</li>
 <li>Generate + run Terraform: <code>pltf terraform plan|apply|destroy|output|graph</code> regenerates code every time before invoking Terraform.</li>
-<li>Outputs land under <code>.pltf/&lt;env&gt;/&lt;layer&gt;/...</code> with providers, backends, modules, and outputs files.</li>
+<li>Outputs land under <code>.pltf/&lt;env_name&gt;/workspace</code> (or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>) with providers, backends, modules, and outputs files.</li>
 </ul>
 <p>Examples:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>example/env.yaml<span class="w"> </span>--env<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/env/prod
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w"> </span>-f<span class="w"> </span>example/service.yaml<span class="w"> </span>--env<span class="w"> </span>prod
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="w">    </span>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>example/env.yaml<span class="w"> </span>--env<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/workspace
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w"> </span>-f<span class="w"> </span>example/service.yaml<span class="w"> </span>--env<span class="w"> </span>prod
 </span></code></pre></div></p>
 <h2 id="variables-placeholders-links">Variables, placeholders, links</h2>
 <ul>
@@ -1105,7 +1105,7 @@
 </ul>
 <h2 id="secrets">Secrets</h2>
 <ul>
-<li>Declare secret keys under <code>envRef.&lt;name&gt;.secrets</code>; supply values via environment/CI secrets.</li>
+<li>Declare secret keys under top-level <code>secrets</code>; supply values via environment/CI secrets.</li>
 <li>Rendered as Terraform variables to avoid embedding values in generated code.</li>
 </ul>
 <h2 id="custom-modules">Custom modules</h2>

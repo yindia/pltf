@@ -4,9 +4,9 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 
 ## Command catalog
 - `pltf validate` — validate specs.
-- `pltf generate` — render Terraform only.
+- `pltf generate` — render a workspace-style Terraform root (single env with `--env`, all envs if omitted).
 - `pltf preview` — summarize provider/backend/labels/modules.
-- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform with standard TF flags.
+- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform/OpenTofu with standard TF flags (use `--engine tofu` for OpenTofu).
 - `pltf module list|get|init` — module inventory and metadata generation.
 
 ### validate
@@ -17,14 +17,14 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - **Example:** `pltf validate -f service.yaml -e dev`
 
 ### generate
-- **What:** Render Terraform only; no init/apply.
+- **What:** Render workspace-ready Terraform only; no init/apply.
 - **Flags:**
   - `--file/-f` — Path to the spec.
   - `--env/-e` — Environment key.
-  - `--modules/-m` — Custom modules root; `source: custom` resolves here first.
-  - `--out/-o` — Output dir (defaults to `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`).
+  - `--modules/-m` — Custom modules root (local path or git ref); `source: custom` resolves here first.
+  - `--out/-o` — Output dir (defaults to `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`).
   - `--var/-v` — CLI var override `key=value`.
-- **Example:** `pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod`
+- **Example:** `pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace`
 
 ### preview
 - **What:** Show provider, backend, labels, modules without running Terraform.
@@ -32,7 +32,7 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - **Example:** `pltf preview -f env.yaml -e prod`
 
 ### terraform plan
-- **What:** Generate + run `terraform plan` with standard flags.
+- **What:** Generate + run `terraform plan` with standard flags (or `tofu` via `--engine tofu`).
 - **Plan flags:**
   - `--target/-t` — Target address (repeatable).
   - `--parallelism/-p` — Max parallel operations.
@@ -43,32 +43,32 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
   - `--refresh/-r` — Refresh state before plan (default true).
   - `--detailed-exitcode/-d` — Enable TF detailed exit codes.
   - `--plan-file/-P` — Write plan to a file.
-- **Shared flags:** `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`
+- **Shared flags:** `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`, `--engine`
 - **Example:** `pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`
 
 ### terraform apply
-- **What:** Generate + run `terraform apply -auto-approve`.
-- **Flags:** Shared flags (`--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`).
+- **What:** Generate + run `terraform apply -auto-approve` (or `tofu` via `--engine tofu`).
+- **Flags:** Shared flags (`--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`, `--engine`).
 - **Example:** `pltf terraform apply -f env.yaml -e prod`
 
 ### terraform destroy
-- **What:** Generate (if needed) + run `terraform destroy -auto-approve`.
+- **What:** Generate (if needed) + run `terraform destroy -auto-approve` (or `tofu` via `--engine tofu`).
 - **Flags:** Same as apply.
 - **Example:** `pltf terraform destroy -f env.yaml -e prod`
 
 ### terraform output
 - **What:** Show outputs (optionally JSON).
-- **Flags:** `--json/-j` (JSON output), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
+- **Flags:** `--json/-j` (JSON output), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
 - **Example:** `pltf terraform output -f service.yaml -e dev --json`
 
 ### terraform force-unlock
 - **What:** Force unlock state.
-- **Flags:** `--lock-id` (required), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
+- **Flags:** `--lock-id` (required), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
 - **Example:** `pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345`
 
 ### terraform graph
-- **What:** Emit DOT graph or run terravision. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only; `--terravision` runs terravision against generated Terraform.
-- **Flags:** `--mode terraform|spec` (default terraform), `--terravision`, `--format`, `--outfile`, `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`
+- **What:** Emit DOT graph. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only. Use `--engine tofu` to run `tofu graph`.
+- **Flags:** `--mode terraform|spec` (default terraform), `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
 - **Example:** `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
 
 ### module list
@@ -97,16 +97,17 @@ pltf validate -f service.yaml -e dev
 Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.
 ```bash
 pltf generate -f env.yaml -e dev
-pltf generate -f service.yaml -e prod -o .pltf/service/prod
+pltf generate -f service.yaml -e prod -o .pltf/example/payments/workspace
 pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
 ```
 Flags:
-- `--modules/-m` custom modules root. Modules with `source: custom` are resolved only from the custom root; others fall back to embedded modules.
-- `--out/-o` output dir (defaults `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`).
+- `--modules/-m` custom modules root (local path or git ref). Modules with `source: custom` are resolved only from the custom root; others fall back to embedded modules.
+- `--out/-o` output dir (defaults `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`).
 - `--var/-v` merges vars (spec variables → CLI vars).
 
 ## Terraform helpers
-Terraform commands live under `pltf terraform ...` and auto-generate before running TF.
+Terraform commands live under `pltf terraform ...` and auto-generate before running TF. Use `--engine tofu` to run OpenTofu.
+These commands now use a workspace-style root and pass `-var-file=<env>.tfvars` for the selected env; secrets remain in env/CI.
 ```bash
 pltf terraform plan    -f service.yaml -e dev    # plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)
 pltf terraform apply   -f env.yaml    -e prod    # apply

@@ -632,9 +632,9 @@
 <h2 id="command-catalog">Command catalog</h2>
 <ul>
 <li><code>pltf validate</code> — validate specs.</li>
-<li><code>pltf generate</code> — render Terraform only.</li>
+<li><code>pltf generate</code> — render a workspace-style Terraform root (single env with <code>--env</code>, all envs if omitted).</li>
 <li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
-<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform with standard TF flags.</li>
+<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform/OpenTofu with standard TF flags (use <code>--engine tofu</code> for OpenTofu).</li>
 <li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
 </ul>
 <h3 id="validate">validate</h3>
@@ -647,14 +647,14 @@
 </ul>
 <h3 id="generate">generate</h3>
 <ul>
-<li><strong>What:</strong> Render Terraform only; no init/apply.</li>
+<li><strong>What:</strong> Render workspace-ready Terraform only; no init/apply.</li>
 <li><strong>Flags:</strong></li>
 <li><code>--file/-f</code> — Path to the spec.</li>
 <li><code>--env/-e</code> — Environment key.</li>
-<li><code>--modules/-m</code> — Custom modules root; <code>source: custom</code> resolves here first.</li>
-<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>).</li>
+<li><code>--modules/-m</code> — Custom modules root (local path or git ref); <code>source: custom</code> resolves here first.</li>
+<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/&lt;env_name&gt;/workspace</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>).</li>
 <li><code>--var/-v</code> — CLI var override <code>key=value</code>.</li>
-<li><strong>Example:</strong> <code>pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod</code></li>
+<li><strong>Example:</strong> <code>pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace</code></li>
 </ul>
 <h3 id="preview">preview</h3>
 <ul>
@@ -664,7 +664,7 @@
 </ul>
 <h3 id="terraform-plan">terraform plan</h3>
 <ul>
-<li><strong>What:</strong> Generate + run <code>terraform plan</code> with standard flags.</li>
+<li><strong>What:</strong> Generate + run <code>terraform plan</code> with standard flags (or <code>tofu</code> via <code>--engine tofu</code>).</li>
 <li><strong>Plan flags:</strong></li>
 <li><code>--target/-t</code> — Target address (repeatable).</li>
 <li><code>--parallelism/-p</code> — Max parallel operations.</li>
@@ -675,37 +675,37 @@
 <li><code>--refresh/-r</code> — Refresh state before plan (default true).</li>
 <li><code>--detailed-exitcode/-d</code> — Enable TF detailed exit codes.</li>
 <li><code>--plan-file/-P</code> — Write plan to a file.</li>
-<li><strong>Shared flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code></li>
+<li><strong>Shared flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>, <code>--engine</code></li>
 <li><strong>Example:</strong> <code>pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan</code></li>
 </ul>
 <h3 id="terraform-apply">terraform apply</h3>
 <ul>
-<li><strong>What:</strong> Generate + run <code>terraform apply -auto-approve</code>.</li>
-<li><strong>Flags:</strong> Shared flags (<code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>).</li>
+<li><strong>What:</strong> Generate + run <code>terraform apply -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
+<li><strong>Flags:</strong> Shared flags (<code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>, <code>--engine</code>).</li>
 <li><strong>Example:</strong> <code>pltf terraform apply -f env.yaml -e prod</code></li>
 </ul>
 <h3 id="terraform-destroy">terraform destroy</h3>
 <ul>
-<li><strong>What:</strong> Generate (if needed) + run <code>terraform destroy -auto-approve</code>.</li>
+<li><strong>What:</strong> Generate (if needed) + run <code>terraform destroy -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
 <li><strong>Flags:</strong> Same as apply.</li>
 <li><strong>Example:</strong> <code>pltf terraform destroy -f env.yaml -e prod</code></li>
 </ul>
 <h3 id="terraform-output">terraform output</h3>
 <ul>
 <li><strong>What:</strong> Show outputs (optionally JSON).</li>
-<li><strong>Flags:</strong> <code>--json/-j</code> (JSON output), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>Flags:</strong> <code>--json/-j</code> (JSON output), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
 <li><strong>Example:</strong> <code>pltf terraform output -f service.yaml -e dev --json</code></li>
 </ul>
 <h3 id="terraform-force-unlock">terraform force-unlock</h3>
 <ul>
 <li><strong>What:</strong> Force unlock state.</li>
-<li><strong>Flags:</strong> <code>--lock-id</code> (required), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>Flags:</strong> <code>--lock-id</code> (required), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
 <li><strong>Example:</strong> <code>pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345</code></li>
 </ul>
 <h3 id="terraform-graph">terraform graph</h3>
 <ul>
-<li><strong>What:</strong> Emit DOT graph or run terravision. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only; <code>--terravision</code> runs terravision against generated Terraform.</li>
-<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--terravision</code>, <code>--format</code>, <code>--outfile</code>, <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code></li>
+<li><strong>What:</strong> Emit DOT graph. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only. Use <code>--engine tofu</code> to run <code>tofu graph</code>.</li>
+<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
 <li><strong>Example:</strong> <code>pltf terraform graph -f env.yaml -e dev | dot -Tpng &gt; graph.png</code></li>
 </ul>
 <h3 id="module-list">module list</h3>
@@ -734,15 +734,16 @@
 <h2 id="generate_1">Generate</h2>
 <p>Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>dev
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/service/prod
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/payments/workspace
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w"> </span>-m<span class="w"> </span>./custom-mods<span class="w"> </span>--var<span class="w"> </span><span class="nv">cluster_name</span><span class="o">=</span>my-dev
 </span></code></pre></div>
 Flags:
-- <code>--modules/-m</code> custom modules root. Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
-- <code>--out/-o</code> output dir (defaults <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>).
+- <code>--modules/-m</code> custom modules root (local path or git ref). Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
+- <code>--out/-o</code> output dir (defaults <code>.pltf/&lt;env_name&gt;/workspace</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>).
 - <code>--var/-v</code> merges vars (spec variables → CLI vars).</p>
 <h2 id="terraform-helpers">Terraform helpers</h2>
-<p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF.
+<p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF. Use <code>--engine tofu</code> to run OpenTofu.
+These commands now use a workspace-style root and pass <code>-var-file=&lt;env&gt;.tfvars</code> for the selected env; secrets remain in env/CI.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">    </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>apply<span class="w">   </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># apply</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>destroy<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># destroy</span>

@@ -34,6 +34,7 @@ pltf terraform force-unlock [flags]
 ### Options inherited from parent commands
 
 ```
+      --engine string   Terraform engine to use (terraform or tofu)
       --telemetry   Enable anonymous telemetry (usage metrics). Currently a stub/no-op unless enabled.
   -V, --verbose     Enable verbose logging
 ```

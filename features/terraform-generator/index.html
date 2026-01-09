@@ -630,28 +630,33 @@
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
     <p>Render Terraform from your specs without applying. Ideal for reviews, CI, or migrating to raw Terraform.</p>
 <h2 id="overview">Overview</h2>
-<p><code>pltf generate</code> reads Environment or Service specs, auto-detects kind, and writes a self-contained Terraform directory (providers, backend, modules, outputs, versions). No cloud credentials are required to render.</p>
+<p><code>pltf generate</code> reads Environment or Service specs, auto-detects kind, and writes a workspace-ready Terraform directory (providers, backend, modules, outputs, versions, variables). No cloud credentials are required to render.</p>
 <h2 id="generate-terraform">Generate Terraform</h2>
 <p>Environment:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/env/prod
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/workspace
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1"># produces:</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># .pltf/env/prod/</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># .pltf/example/workspace/</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># ├─ modules/               # copied/embedded module code used by this stack</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># ├─ providers.tf           # provider blocks + required versions</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># ├─ backend.tf             # state backend (s3|gcs|azurerm)</span>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># ├─ locals.tf              # computed locals/labels</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># ├─ locals.tf              # locals wired to variables for workspaces</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># ├─ modules-*.tf           # module instantiations</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># ├─ outputs.tf             # outputs</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># └─ versions.tf            # provider/Terraform constraints</span>
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="c1"># ├─ variables.tf           # input variables for workspace runs</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># ├─ prod.tfvars            # tfvars for the selected environment</span>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># └─ versions.tf            # provider/Terraform constraints</span>
+</span></code></pre></div>
+All environments (single workspace root + multiple tfvars):
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-o<span class="w"> </span>.pltf/example/workspace
 </span></code></pre></div>
 Service:
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/service/payments/prod
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/payments/workspace
 </span></code></pre></div></p>
 <h2 id="migrate-to-terraform">Migrate to Terraform</h2>
 <ul>
-<li>Run <code>pltf generate</code> (or <code>pltf terraform plan</code> to generate+init) for each env/service stack.</li>
+<li>Run <code>pltf generate</code> (or <code>pltf terraform plan</code> to generate+init) for each env/service workspace.</li>
 <li>Commit the generated directory to VCS if you want to manage TF directly.</li>
-<li>Backends follow your spec; use <code>backend.type</code> (<code>s3|gcs|azurerm</code>) to point at your state bucket/container.</li>
+<li>Backends follow your spec; use <code>backend.type</code> (<code>s3|gcs|azurerm</code>) to point at your state bucket/container. Workspace mode uses <code>workspace_key_prefix</code> (S3/Azure) or <code>prefix</code> (GCS).</li>
 </ul>
 <h2 id="notes">Notes</h2>
 <ul>

@@ -15,12 +15,12 @@ pltf focuses on faster, safer Terraform generation with predictable wiring. Deep
 ## Terraform generation and execution
 - Render-only: `pltf generate -f <spec> --env <name> -o <dir>` (no cloud creds required).
 - Generate + run Terraform: `pltf terraform plan|apply|destroy|output|graph` regenerates code every time before invoking Terraform.
-- Outputs land under `.pltf/<env>/<layer>/...` with providers, backends, modules, and outputs files.
+- Outputs land under `.pltf/<env_name>/workspace` (or `.pltf/<env_name>/<service>/workspace`) with providers, backends, modules, and outputs files.
 
 Examples:
 ```bash
-pltf generate -f example/env.yaml --env prod -o .pltf/example/env/prod
-pltf terraform plan -f example/service.yaml --env prod
+	pltf generate -f example/env.yaml --env prod -o .pltf/example/workspace
+	pltf terraform plan -f example/service.yaml --env prod
 ```
 
 ## Variables, placeholders, links
@@ -29,7 +29,7 @@ pltf terraform plan -f example/service.yaml --env prod
 - CLI overrides: `--var key=value` augment or replace spec variables.
 
 ## Secrets
-- Declare secret keys under `envRef.<name>.secrets`; supply values via environment/CI secrets.
+- Declare secret keys under top-level `secrets`; supply values via environment/CI secrets.
 - Rendered as Terraform variables to avoid embedding values in generated code.
 
 ## Custom modules

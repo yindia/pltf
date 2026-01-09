@@ -1081,7 +1081,9 @@
 <p>Scan a Terraform module directory, read variables/outputs, and write a module.yaml
 descriptor. If module.yaml already exists at the destination it will be replaced.
 Use flags to override metadata such as name, type, description, or output path.
-Provider defaults to aws and version to 1.0.0.</p>
+Provider defaults to aws and version to 1.0.0. If the module outputs match the
+cluster contract (k8s_endpoint, k8s_ca_data, k8s_cluster_name, plt_cluster_type),
+<code>cluster: true</code> is added automatically.</p>
 <div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf module init [flags]
 </span></code></pre></div>
 <h3 id="examples">Examples</h3>

@@ -18,10 +18,10 @@ metadata:
   name: payments-api
   ref: ./env.yaml
   envRef:
-    prod:
-      secrets:
-        api_key: 
-          key: api_key
+    prod: {}
+secrets:
+  api_key:
+    key: api_key
 variables:
   db_name: "testing"
 modules:
@@ -79,7 +79,7 @@ modules:
 
 - `${layer_name}` comes from the service name; `${env_name}` is the selected environment key.
 - `links` let modules consume other module outputs (e.g., queue ARNs, IAM roles) without manual interpolation.
-- `envRef` is for secrets only; variables live at the top level.
+- `envRef` selects envs only; variables and secrets live at the top level.
 
 ## When to use Services
 - Isolate app stacks (DB + queues + roles) from the shared environment.

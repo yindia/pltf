@@ -683,7 +683,7 @@ It’s under active development. Pin a release, review generated Terraform, and 
 <p><strong>Which clouds are supported?</strong><br />
 Terraform output is portable; module coverage today is focused on AWS. GCP/Azure are on the roadmap and can be added via custom modules.</p>
 <p><strong>How do Environment and Service specs relate?</strong><br />
-<code>Service.metadata.ref</code> points to an Environment file. <code>envRef</code> selects the environment entry (e.g., <code>prod</code>) and lets you override variables/secrets for that service.</p>
+<code>Service.metadata.ref</code> points to an Environment file. <code>envRef</code> selects the environment entry (e.g., <code>prod</code>) and lets you override variables for that service.</p>
 <p><strong>Can I bring my own modules?</strong><br />
 Yes. Add a <code>module.yaml</code> with inputs/outputs/schema and set <code>source: custom</code> (or point <code>modules_root</code> to your catalog). pltf will wire variables/links and emit Terraform.</p>
 <p><strong>Do I have to run Terraform with pltf?</strong><br />
@@ -691,7 +691,7 @@ No. You can just generate Terraform and run <code>terraform plan/apply</code> yo
 <p><strong>Which state backends can I use?</strong><br />
 <code>s3</code>, <code>gcs</code>, or <code>azurerm</code> regardless of target cloud. Configure credentials via profiles or env vars just like plain Terraform.</p>
 <p><strong>How are secrets handled?</strong><br />
-Put secrets under <code>envRef.&lt;name&gt;.secrets</code>. They are rendered as Terraform variables and should be sourced from your secret manager or CI env, not hardcoded.</p>
+Define secrets at the top level (<code>secrets:</code>) in Environment or Service specs. They are rendered as Terraform variables and should be sourced from your secret manager or CI env, not hardcoded.</p>
 <p><strong>How do module links work?</strong><br />
 Use <code>links</code> to reference other module outputs (e.g., an IAM role ARN for a Helm chart). The generator wires those into Terraform expressions; no manual interpolation needed.</p>
 <p><strong>Where do I start?</strong><br />

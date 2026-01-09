@@ -641,11 +641,11 @@
 - Shows provider, backend type, labels, and modules without running Terraform.</p>
 <h2 id="generate-terraform-only">Generate (Terraform only)</h2>
 <p><div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>dev
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-m<span class="w"> </span>./modules<span class="w"> </span>--out<span class="w"> </span>.pltf/service/prod
+</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-m<span class="w"> </span>./modules<span class="w"> </span>--out<span class="w"> </span>.pltf/example/payments/workspace
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w"> </span>--var<span class="w"> </span><span class="nv">cluster_name</span><span class="o">=</span>my-dev
 </span></code></pre></div>
-- <code>--modules/-m</code> custom root; modules with <code>source: custom</code> resolve here first.
-- <code>--out/-o</code> defaults to <code>.pltf/&lt;env_name&gt;/env/&lt;env&gt;</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/&lt;env&gt;</code>.
+- <code>--modules/-m</code> custom root (local path or git ref); modules with <code>source: custom</code> resolve here first.
+- <code>--out/-o</code> defaults to <code>.pltf/&lt;env_name&gt;/workspace</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>.
 - <code>--var/-v</code> merges over spec variables → CLI vars.
 - File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.</p>
 <h2 id="terraform-commands">Terraform commands</h2>
@@ -662,7 +662,7 @@
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pltf<span class="w"> </span>module<span class="w"> </span>get<span class="w"> </span>aws_eks<span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>./modules<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>table<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>pltf<span class="w"> </span>module<span class="w"> </span>init<span class="w"> </span>--path<span class="w"> </span>./modules/aws_eks<span class="w"> </span><span class="o">[</span>--force<span class="o">]</span>
 </span></code></pre></div>
-- Use <code>source: custom</code> in specs to force lookup from your custom root (<code>--modules</code> or profile <code>modules_root</code>); embedded modules remain available.</p>
+- Use <code>source: custom</code> in specs to force lookup from your custom root (<code>--modules</code> or profile <code>modules_root</code>, local or git); embedded modules remain available.</p>
 <h2 id="profiles-defaults">Profiles &amp; Defaults</h2>
 <ul>
 <li><code>~/.pltf/profile.yaml</code> (or <code>PLTF_PROFILE</code>) can set <code>modules_root</code>, <code>default_env</code>, <code>default_out</code>, <code>telemetry</code>.</li>

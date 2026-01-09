@@ -773,6 +773,18 @@
 <h2 id="what-is-a-module">What is a Module?</h2>
 <p>pltf includes an embedded library of modules you can connect to build your stack. Each module is a high-level construct that provisions the resources needed to achieve its goal (e.g., EKS cluster, S3 bucket, Postgres).</p>
 <p>Modules are described by <code>module.yaml</code> (type/provider/version/inputs/outputs) and referenced in your Environment or Service spec.</p>
+<h2 id="cluster-modules-kuberneteshelmkustomize">Cluster modules (Kubernetes/Helm/Kustomize)</h2>
+<p>Modules that provide a Kubernetes cluster must declare <code>cluster: true</code> in <code>module.yaml</code> and expose these outputs:
+- <code>k8s_endpoint</code>
+- <code>k8s_ca_data</code>
+- <code>k8s_cluster_name</code>
+- <code>plt_cluster_type</code> (bool)</p>
+<p>Only one module marked <code>cluster: true</code> can exist across the env+service stack (including referenced stacks). The CLI wires Kubernetes/Helm/Kustomize providers against this module.</p>
+<h2 id="iam-module-contract">IAM module contract</h2>
+<p>To enable IAM auto-wiring and trust policy augmentation, IAM modules must declare the following:
+- <code>iam.role</code> providers: inputs <code>iam_policy</code>, <code>kubernetes_trusts</code>, output <code>role_arn</code>
+- <code>iam.user</code> providers: input <code>iam_policy</code>, output <code>user_arn</code>
+- <code>iam.policy</code> providers: output <code>policy_arn</code></p>
 <h2 id="definition">Definition</h2>
 <p>Modules have:
 - a <strong>type</strong> (e.g., <code>aws_eks</code>, <code>aws_s3</code>)
@@ -1048,6 +1060,22 @@
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
             What is a Module?
+        </a>
+        
+
+        
+        <a href="#cluster-modules-kuberneteshelmkustomize"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Cluster modules (Kubernetes/Helm/Kustomize)
+        </a>
+        
+
+        
+        <a href="#iam-module-contract"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            IAM module contract
         </a>
         
 

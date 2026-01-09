@@ -7,7 +7,9 @@ Generate a module.yaml from an existing Terraform module
 Scan a Terraform module directory, read variables/outputs, and write a module.yaml
 descriptor. If module.yaml already exists at the destination it will be replaced.
 Use flags to override metadata such as name, type, description, or output path.
-Provider defaults to aws and version to 1.0.0.
+Provider defaults to aws and version to 1.0.0. If the module outputs match the
+cluster contract (k8s_endpoint, k8s_ca_data, k8s_cluster_name, plt_cluster_type),
+`cluster: true` is added automatically.
 
 ```
 pltf module init [flags]

@@ -7,6 +7,21 @@ pltf includes an embedded library of modules you can connect to build your stack
 
 Modules are described by `module.yaml` (type/provider/version/inputs/outputs) and referenced in your Environment or Service spec.
 
+## Cluster modules (Kubernetes/Helm/Kustomize)
+Modules that provide a Kubernetes cluster must declare `cluster: true` in `module.yaml` and expose these outputs:
+- `k8s_endpoint`
+- `k8s_ca_data`
+- `k8s_cluster_name`
+- `plt_cluster_type` (bool)
+
+Only one module marked `cluster: true` can exist across the env+service stack (including referenced stacks). The CLI wires Kubernetes/Helm/Kustomize providers against this module.
+
+## IAM module contract
+To enable IAM auto-wiring and trust policy augmentation, IAM modules must declare the following:
+- `iam.role` providers: inputs `iam_policy`, `kubernetes_trusts`, output `role_arn`
+- `iam.user` providers: input `iam_policy`, output `user_arn`
+- `iam.policy` providers: output `policy_arn`
+
 ## Definition
 Modules have:
 - a **type** (e.g., `aws_eks`, `aws_s3`)

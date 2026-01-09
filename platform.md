@@ -19,11 +19,11 @@ pltf preview -f env.yaml -e prod
 ## Generate (Terraform only)
 ```bash
 pltf generate -f env.yaml -e dev
-pltf generate -f service.yaml -e prod -m ./modules --out .pltf/service/prod
+pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace
 pltf generate -f service.yaml -e dev --var cluster_name=my-dev
 ```
-- `--modules/-m` custom root; modules with `source: custom` resolve here first.
-- `--out/-o` defaults to `.pltf/<env_name>/env/<env>` or `.pltf/<env_name>/<service>/<env>`.
+- `--modules/-m` custom root (local path or git ref); modules with `source: custom` resolve here first.
+- `--out/-o` defaults to `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`.
 - `--var/-v` merges over spec variables → CLI vars.
 - File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.
 
@@ -44,7 +44,7 @@ pltf module list [-m ./modules] [-o table|json|yaml]
 pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
 pltf module init --path ./modules/aws_eks [--force]
 ```
-- Use `source: custom` in specs to force lookup from your custom root (`--modules` or profile `modules_root`); embedded modules remain available.
+- Use `source: custom` in specs to force lookup from your custom root (`--modules` or profile `modules_root`, local or git); embedded modules remain available.
 
 ## Profiles & Defaults
 - `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) can set `modules_root`, `default_env`, `default_out`, `telemetry`.

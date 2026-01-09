@@ -5,7 +5,8 @@ Terraform helpers (generate+init+tf commands)
 ### Options
 
 ```
-  -h, --help   help for terraform
+      --engine string   Terraform engine to use (terraform or tofu)
+  -h, --help            help for terraform
 ```
 
 ### Options inherited from parent commands
