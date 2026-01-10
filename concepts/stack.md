@@ -40,12 +40,25 @@ metadata:
     - ./stacks/k8s-cluster.yaml
 ```
 
+Embedded stacks can be referenced by name (no path or git URL required):
+```yaml
+metadata:
+  stacks:
+    - example-aws-stack
+    - example-eks-stack
+```
+
 Git refs are supported:
 ```yaml
 metadata:
   stacks:
     - https://gitlab.com/org/repo.git//stacks/k8s-cluster.yaml?ref=main
 ```
+
+## Embedded stacks
+These stacks ship with the CLI and can be referenced by name:
+- `example-aws-stack`
+- `example-eks-stack`
 
 ## Merge behavior
 - Stack modules are added first, then env/service modules are appended.
