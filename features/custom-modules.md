@@ -21,3 +21,4 @@ modules:
 ## Notes
 - Custom and embedded modules can coexist in the same spec.
 - Module metadata (`module.yaml`) drives inputs/outputs and wiring; keep it committed.
+- See `docs/features/custom-terraform.md` for bringing existing Terraform roots and per‑env workspace copies.

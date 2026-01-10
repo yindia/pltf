@@ -55,6 +55,19 @@ providers:
   kustomize: false
 secrets:
   db_password: {}
+images:
+  - name: platform-tools
+    context: ./images/tools
+    dockerfile: Dockerfile
+    include:
+      - "**/*"
+    exclude:
+      - "**/.git/**"
+      - "**/node_modules/**"
+    tags:
+      - ghcr.io/example/platform-tools:${env_name}
+    buildArgs:
+      ENV: ${env_name}
 backend:
   type: s3
   bucket: example-tfstate   # optional; auto-named if omitted
@@ -76,6 +89,7 @@ Notes:
 - `modules` list holds shared modules; `id`/`type` required; `inputs` optional; `links` supported.
 - Backend: `backend.type` can be `s3|gcs|azurerm` (independent of provider). `backend.profile` supports cross-account S3; `container/resource_group` for azurerm.
 - Modules can set `source: custom` to force resolution from your custom modules root (`--modules` or profile `modules_root`); others fall back to the embedded catalog.
+- `images` defines Docker build configs; tags are optional.
 
 ## Service spec (kind: Service)
 Minimal shape:
@@ -94,6 +108,19 @@ providers:
   helm: true
 secrets:
   api_key: {}
+images:
+  - name: payments-api
+    context: ./services/payments
+    include:
+      - "**/*"
+    exclude:
+      - "**/.git/**"
+      - "**/node_modules/**"
+    tags:
+      - ghcr.io/acme/payments:${env_name}
+    buildArgs:
+      SERVICE: payments
+      ENV: ${env_name}
 modules:
   - id: app
     type: aws_k8s_service
@@ -112,6 +139,25 @@ Notes:
 - `metadata.envRef` selects envs only (no per-env variables or secrets).
 - Modules can reference environment outputs via `${parent.<output>}`.
 - Git refs are supported for `metadata.ref` and `metadata.stacks` using the format `https://host/org/repo.git//path/to/spec.yaml?ref=main`.
+- `images` can also be defined in Service specs for app images.
+
+### Image config
+```yaml
+images:
+  - name: app
+    context: ./services/app
+    dockerfile: Dockerfile
+    tags:
+      - ghcr.io/acme/app:${env_name}
+    buildArgs:
+      ENV: ${env_name}
+```
+Notes:
+- `tags` are optional; when pushing images, at least one tag is required.
+- Authenticate to registries outside of pltf (e.g., `docker login`) before running `pltf image build` or `pltf terraform apply`.
+- `pltf terraform plan` builds images; `pltf terraform apply` builds + pushes them.
+- Use `include`/`exclude` to filter the build context sent to Dagger.
+- For Dockerfile build secrets, set `PLTF_IMG_SECRET_<NAME>` or `PLTF_IMG_SECRET_FILE_<NAME>` and use `RUN --mount=type=secret,id=<NAME>` in the Dockerfile.
 
 ## Variable precedence
 1) Stack variables  

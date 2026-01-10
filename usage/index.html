@@ -634,8 +634,9 @@
 <li><code>pltf validate</code> — validate specs.</li>
 <li><code>pltf generate</code> — render a workspace-style Terraform root (single env with <code>--env</code>, all envs if omitted).</li>
 <li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
-<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform/OpenTofu with standard TF flags (use <code>--engine tofu</code> for OpenTofu).</li>
+<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform/OpenTofu inside Dagger (use <code>--engine tofu</code> for OpenTofu).</li>
 <li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
+<li><code>pltf image build</code> — build/push Docker images defined in Environment or Service specs.</li>
 </ul>
 <h3 id="validate">validate</h3>
 <ul>
@@ -664,7 +665,7 @@
 </ul>
 <h3 id="terraform-plan">terraform plan</h3>
 <ul>
-<li><strong>What:</strong> Generate + run <code>terraform plan</code> with standard flags (or <code>tofu</code> via <code>--engine tofu</code>).</li>
+<li><strong>What:</strong> Build images (if configured), generate, then run <code>terraform plan</code> with standard flags (or <code>tofu</code> via <code>--engine tofu</code>).</li>
 <li><strong>Plan flags:</strong></li>
 <li><code>--target/-t</code> — Target address (repeatable).</li>
 <li><code>--parallelism/-p</code> — Max parallel operations.</li>
@@ -680,7 +681,7 @@
 </ul>
 <h3 id="terraform-apply">terraform apply</h3>
 <ul>
-<li><strong>What:</strong> Generate + run <code>terraform apply -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
+<li><strong>What:</strong> Build + push images (if configured), generate, then run <code>terraform apply -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
 <li><strong>Flags:</strong> Shared flags (<code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>, <code>--engine</code>).</li>
 <li><strong>Example:</strong> <code>pltf terraform apply -f env.yaml -e prod</code></li>
 </ul>
@@ -726,6 +727,15 @@
 <li><strong>Flags:</strong> <code>--path</code> (module dir), <code>--name</code>, <code>--type</code>, <code>--description</code>, <code>--out</code>, <code>--force</code> (overwrite)</li>
 <li><strong>Example:</strong> <code>pltf module init --path ./modules/aws_eks --force</code></li>
 </ul>
+<h3 id="image-build">image build</h3>
+<ul>
+<li><strong>What:</strong> Build (and optionally push) images declared in the spec using Dagger.</li>
+<li><strong>Flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--push</code>, <code>--image</code> (repeatable filter)</li>
+<li><strong>Example:</strong> <code>pltf image build -f service.yaml -e dev --push</code>
+Notes:</li>
+<li>To connect to a remote Dagger engine, set <code>DAGGER_HOST</code> before running the command.</li>
+<li>All images in the spec are built in a single Dagger session and run concurrently.</li>
+</ul>
 <h2 id="validate_1">Validate</h2>
 <p>Structural validation for Environment, Service, and Stack specs.
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
@@ -744,6 +754,22 @@ Flags:
 <h2 id="terraform-helpers">Terraform helpers</h2>
 <p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF. Use <code>--engine tofu</code> to run OpenTofu.
 These commands now use a workspace-style root and pass <code>-var-file=&lt;env&gt;.tfvars</code> for the selected env; secrets remain in env/CI.
+Terraform/OpenTofu runs are executed inside Dagger; set <code>DAGGER_HOST</code> to target a remote engine.
+Credential injection for Dagger runs:
+- All host environment variables are passed into the Terraform container.
+- <code>PLTF_TF_FILE_&lt;NAME&gt;=/path/to/file</code> mounts the file and sets <code>&lt;NAME&gt;</code> to the mounted path (if not already set).
+  This always overrides the env var inside the container.
+- <code>PLTF_TF_SECRET_&lt;NAME&gt;=&lt;value&gt;</code> injects <code>&lt;NAME&gt;</code> as a Dagger secret env var (masked in logs/cache).
+- <code>PLTF_TF_SECRET_FILE_&lt;NAME&gt;=/path/to/file</code> mounts the file as a Dagger secret at <code>/run/secrets/&lt;NAME&gt;</code> and sets <code>&lt;NAME&gt;</code> to that path.
+Example (GCP JSON key):
+<code>PLTF_TF_FILE_GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/key.json</code>
+Provider version overrides (env vars):
+- <code>PLTF_PROVIDER_AWS_VERSION</code>
+- <code>PLTF_PROVIDER_GCP_VERSION</code>
+- <code>PLTF_PROVIDER_AZURE_VERSION</code>
+- <code>PLTF_PROVIDER_K8S_VERSION</code>
+- <code>PLTF_PROVIDER_HELM_VERSION</code>
+- <code>PLTF_PROVIDER_KUSTOMIZE_VERSION</code>
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">    </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>apply<span class="w">   </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># apply</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>destroy<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># destroy</span>
@@ -1040,6 +1066,12 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="3">
             module init
+        </a>
+        
+        <a href="#image-build"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            image build
         </a>
         
         

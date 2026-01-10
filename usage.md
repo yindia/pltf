@@ -6,8 +6,9 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - `pltf validate` — validate specs.
 - `pltf generate` — render a workspace-style Terraform root (single env with `--env`, all envs if omitted).
 - `pltf preview` — summarize provider/backend/labels/modules.
-- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform/OpenTofu with standard TF flags (use `--engine tofu` for OpenTofu).
+- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform/OpenTofu inside Dagger (use `--engine tofu` for OpenTofu).
 - `pltf module list|get|init` — module inventory and metadata generation.
+- `pltf image build` — build/push Docker images defined in Environment or Service specs.
 
 ### validate
 - **What:** Validate Environment, Service, or Stack specs; auto-detects kind.
@@ -32,7 +33,7 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - **Example:** `pltf preview -f env.yaml -e prod`
 
 ### terraform plan
-- **What:** Generate + run `terraform plan` with standard flags (or `tofu` via `--engine tofu`).
+- **What:** Build images (if configured), generate, then run `terraform plan` with standard flags (or `tofu` via `--engine tofu`).
 - **Plan flags:**
   - `--target/-t` — Target address (repeatable).
   - `--parallelism/-p` — Max parallel operations.
@@ -47,7 +48,7 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - **Example:** `pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`
 
 ### terraform apply
-- **What:** Generate + run `terraform apply -auto-approve` (or `tofu` via `--engine tofu`).
+- **What:** Build + push images (if configured), generate, then run `terraform apply -auto-approve` (or `tofu` via `--engine tofu`).
 - **Flags:** Shared flags (`--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`, `--engine`).
 - **Example:** `pltf terraform apply -f env.yaml -e prod`
 
@@ -86,6 +87,14 @@ pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack*
 - **Flags:** `--path` (module dir), `--name`, `--type`, `--description`, `--out`, `--force` (overwrite)
 - **Example:** `pltf module init --path ./modules/aws_eks --force`
 
+### image build
+- **What:** Build (and optionally push) images declared in the spec using Dagger.
+- **Flags:** `--file/-f`, `--env/-e`, `--push`, `--image` (repeatable filter)
+- **Example:** `pltf image build -f service.yaml -e dev --push`
+Notes:
+- To connect to a remote Dagger engine, set `DAGGER_HOST` before running the command.
+- All images in the spec are built in a single Dagger session and run concurrently.
+
 ## Validate
 Structural validation for Environment, Service, and Stack specs.
 ```bash
@@ -108,6 +117,22 @@ Flags:
 ## Terraform helpers
 Terraform commands live under `pltf terraform ...` and auto-generate before running TF. Use `--engine tofu` to run OpenTofu.
 These commands now use a workspace-style root and pass `-var-file=<env>.tfvars` for the selected env; secrets remain in env/CI.
+Terraform/OpenTofu runs are executed inside Dagger; set `DAGGER_HOST` to target a remote engine.
+Credential injection for Dagger runs:
+- All host environment variables are passed into the Terraform container.
+- `PLTF_TF_FILE_<NAME>=/path/to/file` mounts the file and sets `<NAME>` to the mounted path (if not already set).
+  This always overrides the env var inside the container.
+- `PLTF_TF_SECRET_<NAME>=<value>` injects `<NAME>` as a Dagger secret env var (masked in logs/cache).
+- `PLTF_TF_SECRET_FILE_<NAME>=/path/to/file` mounts the file as a Dagger secret at `/run/secrets/<NAME>` and sets `<NAME>` to that path.
+Example (GCP JSON key):
+`PLTF_TF_FILE_GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/key.json`
+Provider version overrides (env vars):
+- `PLTF_PROVIDER_AWS_VERSION`
+- `PLTF_PROVIDER_GCP_VERSION`
+- `PLTF_PROVIDER_AZURE_VERSION`
+- `PLTF_PROVIDER_K8S_VERSION`
+- `PLTF_PROVIDER_HELM_VERSION`
+- `PLTF_PROVIDER_KUSTOMIZE_VERSION`
 ```bash
 pltf terraform plan    -f service.yaml -e dev    # plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)
 pltf terraform apply   -f env.yaml    -e prod    # apply
