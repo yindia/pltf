@@ -1,0 +1,48 @@
+name: Terraform Plan (example/env.yaml)
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.8.5
+
+      - name: Install pltf (from source)
+        run: |
+          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
+          echo "$HOME/go/bin" >> "$GITHUB_PATH"
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        # See https://github.com/infracost/actions/tree/master/setup for other inputs
+        # If you can't use this action, use Docker image infracost/infracost:ci-0.10
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+      - name: Terraform Plan (example/env.yaml)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_KEY }}
+          AWS_DEFAULT_REGION: ap-northeast-1
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          INFRACOST_API_KEY: ${{ secrets.INFRACOST_API_KEY }}
+        run: |
+          set -x
+          pltf terraform plan -f example/e2e.yaml --env dev --scan --cost

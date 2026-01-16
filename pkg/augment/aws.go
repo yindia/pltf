@@ -8,19 +8,19 @@ import (
 )
 
 func init() {
-	RegisterBuilder(buildAWS)
+	RegisterProviderBuilder("aws", buildAWS)
 }
 
 // buildAWS generates IAM augmentations (policies, trusts) for AWS modules.
 func buildAWS(ctx Context) map[string]Augmentation {
 	result := map[string]Augmentation{}
 
-	targetModules := findModulesByTypes(ctx.Modules, []string{"aws_iam_role", "aws_iam_user"})
+	targetModules := findModulesByCapabilities(ctx, "iam.role", "iam.user")
 	if len(targetModules) == 0 {
 		return result
 	}
 
-	eksID := findFirstModuleByType(ctx.Modules, "aws_eks")
+	eksID := findFirstClusterModule(ctx)
 	roleIndex := indexModulesByID(ctx.Modules)
 
 	for roleID := range targetModules {
@@ -29,14 +29,14 @@ func buildAWS(ctx Context) map[string]Augmentation {
 			continue
 		}
 
-		policy := buildIamPolicy(bindings)
+		policy := buildIamPolicy(ctx, bindings)
 		var trusts []map[string]interface{}
 
 		mod := roleIndex[roleID]
-		if mod.Type == "aws_iam_role" && eksID != "" {
+		if isRoleModule(ctx, roleID) && eksID != "" {
 			ns := stringVar(ctx.Vars, "irsa_namespace", "default")
 			sa := stringVar(ctx.Vars, "irsa_service_account", "default")
-			trusts = buildTrusts(eksID, ns, sa, mod)
+			trusts = buildTrusts(ctx, eksID, ns, sa, mod)
 		}
 
 		result[roleID] = Augmentation{
@@ -77,10 +77,10 @@ func collectBindings(mods []config.Module, roleID string) []iamBinding {
 	return bindings
 }
 
-func buildIamPolicy(bindings []iamBinding) map[string]interface{} {
+func buildIamPolicy(ctx Context, bindings []iamBinding) map[string]interface{} {
 	var statements []map[string]interface{}
 	for _, b := range bindings {
-		actions, resources := awsActionsAndResources(b)
+		actions, resources := awsActionsAndResources(ctx, b)
 		if len(actions) == 0 || len(resources) == 0 {
 			continue
 		}
@@ -99,13 +99,13 @@ func buildIamPolicy(bindings []iamBinding) map[string]interface{} {
 	}
 }
 
-func buildTrusts(eksID, ns, sa string, role config.Module) []map[string]interface{} {
+func buildTrusts(ctx Context, eksID, ns, sa string, role config.Module) []map[string]interface{} {
 	var trusts []map[string]interface{}
 
 	if eksID != "" {
 		trusts = append(trusts, map[string]interface{}{
-			"open_id_url":  fmt.Sprintf("module.%s.k8s_openid_provider_url", eksID),
-			"open_id_arn":  fmt.Sprintf("module.%s.k8s_openid_provider_arn", eksID),
+			"open_id_url":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_url"),
+			"open_id_arn":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_arn"),
 			"service_name": sa,
 			"namespace":    ns,
 		})
@@ -115,8 +115,8 @@ func buildTrusts(eksID, ns, sa string, role config.Module) []map[string]interfac
 	if len(allowed) == 0 && eksID != "" {
 		trusts = []map[string]interface{}{
 			{
-				"open_id_url":  fmt.Sprintf("module.%s.k8s_openid_provider_url", eksID),
-				"open_id_arn":  fmt.Sprintf("module.%s.k8s_openid_provider_arn", eksID),
+				"open_id_url":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_url"),
+				"open_id_arn":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_arn"),
 				"service_name": "*",
 				"namespace":    "*",
 			},
@@ -129,8 +129,8 @@ func buildTrusts(eksID, ns, sa string, role config.Module) []map[string]interfac
 			}
 			svcNS, svcName := parseServiceRef(ns, sa, svc)
 			trusts = append(trusts, map[string]interface{}{
-				"open_id_url":  fmt.Sprintf("module.%s.k8s_openid_provider_url", eksID),
-				"open_id_arn":  fmt.Sprintf("module.%s.k8s_openid_provider_arn", eksID),
+				"open_id_url":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_url"),
+				"open_id_arn":  refForModuleOutput(ctx, eksID, "k8s_openid_provider_arn"),
 				"service_name": svcName,
 				"namespace":    svcNS,
 			})
@@ -140,33 +140,44 @@ func buildTrusts(eksID, ns, sa string, role config.Module) []map[string]interfac
 	return trusts
 }
 
-func awsActionsAndResources(b iamBinding) ([]interface{}, []interface{}) {
+func awsActionsAndResources(ctx Context, b iamBinding) ([]interface{}, []interface{}) {
 	switch b.moduleType {
 	case "aws_s3":
 		return s3Actions(b.accessLevel), []interface{}{
-			fmt.Sprintf("${module.%s.bucket_arn}", b.moduleID),
-			fmt.Sprintf("${module.%s.bucket_arn}/*", b.moduleID),
+			refForModuleOutputInterpolated(ctx, b.moduleID, "bucket_arn"),
+			fmt.Sprintf("%s/*", refForModuleOutputInterpolated(ctx, b.moduleID, "bucket_arn")),
 		}
 	case "aws_sqs":
 		return sqsActions(b.accessLevel), []interface{}{
-			fmt.Sprintf("${module.%s.queue_arn}", b.moduleID),
+			refForModuleOutputInterpolated(ctx, b.moduleID, "queue_arn"),
 		}
 	case "aws_sns":
 		return snsActions(b.accessLevel), []interface{}{
-			fmt.Sprintf("${module.%s.topic_arn}", b.moduleID),
+			refForModuleOutputInterpolated(ctx, b.moduleID, "topic_arn"),
 		}
 	case "aws_dynamodb":
 		return dynamoActions(b.accessLevel), []interface{}{
-			fmt.Sprintf("${module.%s.table_arn}", b.moduleID),
-			fmt.Sprintf("${module.%s.table_arn}/index/*", b.moduleID),
+			refForModuleOutputInterpolated(ctx, b.moduleID, "table_arn"),
+			fmt.Sprintf("%s/index/*", refForModuleOutputInterpolated(ctx, b.moduleID, "table_arn")),
 		}
 	case "aws_ses":
 		return sesActions(b.accessLevel), []interface{}{
-			fmt.Sprintf("${module.%s.identity_arn}", b.moduleID),
+			refForModuleOutputInterpolated(ctx, b.moduleID, "identity_arn"),
 		}
 	default:
 		return nil, nil
 	}
+}
+
+func refForModuleOutput(ctx Context, moduleID, output string) string {
+	if ctx.IsService && ctx.ModuleScopes != nil && ctx.ModuleScopes[moduleID] == "env" {
+		return fmt.Sprintf("parent.%s", output)
+	}
+	return fmt.Sprintf("module.%s.%s", moduleID, output)
+}
+
+func refForModuleOutputInterpolated(ctx Context, moduleID, output string) string {
+	return fmt.Sprintf("${%s}", refForModuleOutput(ctx, moduleID, output))
 }
 
 func s3Actions(access string) []interface{} {
@@ -243,27 +254,54 @@ func sesActions(access string) []interface{} {
 	}
 }
 
-func findModulesByTypes(mods []config.Module, moduleTypes []string) map[string]struct{} {
+func findModulesByCapabilities(ctx Context, caps ...string) map[string]struct{} {
 	out := map[string]struct{}{}
-	set := map[string]struct{}{}
-	for _, t := range moduleTypes {
-		set[t] = struct{}{}
+	if ctx.ModuleMetas == nil {
+		return out
 	}
-	for _, m := range mods {
-		if _, ok := set[m.Type]; ok {
-			out[m.ID] = struct{}{}
+	capSet := map[string]struct{}{}
+	for _, c := range caps {
+		capSet[c] = struct{}{}
+	}
+	for _, m := range ctx.Modules {
+		meta := ctx.ModuleMetas[m.ID]
+		if meta == nil {
+			continue
+		}
+		for _, cap := range meta.Capabilities.Provides {
+			if _, ok := capSet[cap]; ok {
+				out[m.ID] = struct{}{}
+				break
+			}
 		}
 	}
 	return out
 }
 
-func findFirstModuleByType(mods []config.Module, moduleType string) string {
-	for _, m := range mods {
-		if m.Type == moduleType {
+func findFirstClusterModule(ctx Context) string {
+	if ctx.ModuleMetas == nil {
+		return ""
+	}
+	for _, m := range ctx.Modules {
+		meta := ctx.ModuleMetas[m.ID]
+		if meta != nil && meta.Cluster {
 			return m.ID
 		}
 	}
 	return ""
+}
+
+func isRoleModule(ctx Context, moduleID string) bool {
+	meta := ctx.ModuleMetas[moduleID]
+	if meta == nil {
+		return false
+	}
+	for _, cap := range meta.Capabilities.Provides {
+		if cap == "iam.role" {
+			return true
+		}
+	}
+	return false
 }
 
 func indexModulesByID(mods []config.Module) map[string]config.Module {

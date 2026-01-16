@@ -2,6 +2,18 @@ name: aws_nodegroup
 type: aws_nodegroup
 provider: aws
 version: 1.0.0
+resources:
+    - aws_autoscaling_group_tag.node_group
+    - aws_eks_node_group.node_group
+    - aws_iam_role.node_group
+    - aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly
+    - aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy
+    - aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
+    - random_id.key_suffix
+data:
+    - data.aws_eks_cluster.main
+    - data.aws_iam_policy_document.node_group
+    - data.aws_region.current
 inputs:
     - default: AL2023_x86_64_STANDARD
       name: ami_type
@@ -11,10 +23,11 @@ inputs:
       name: autoscaling_tags
       required: false
       type: map(string)
-    - name: k8s_cluster_name
-      required: true
     - description: Env name
       name: env_name
+      required: true
+      type: string
+    - name: k8s_cluster_name
       required: true
       type: string
     - default: {}

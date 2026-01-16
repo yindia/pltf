@@ -12,6 +12,19 @@ variable "layer_name" {
   type        = string
 }
 
+variable "cluster_name" {
+  description = "Cluster name used for Kubernetes tagging"
+  type        = string
+  default     = null
+}
+
+variable "enable_karpenter" {
+  description = "Whether to tag subnets for Karpenter discovery"
+  type        = bool
+  default     = false
+}
+
+# tflint-ignore: terraform_unused_declarations
 variable "module_name" {
   description = "Module name"
   type        = string
@@ -46,6 +59,12 @@ variable "public_ipv4_cidr_blocks" {
     "10.0.8.0/21",
     "10.0.16.0/21"
   ]
+}
+
+variable "public_subnet_map_public_ip_on_launch" {
+  description = "Whether instances launched in public subnets receive a public IP by default."
+  type        = bool
+  default     = false
 }
 
 variable "vpc_id" {

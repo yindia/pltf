@@ -1,0 +1,17 @@
+apiVersion: platform.io/v1
+kind: Stack
+metadata:
+  name: example-eks-stack
+variables:
+  cluster_name: "pltf-data-${env_name}"
+modules:
+  - id: base
+    type: aws_base
+  - id: eks
+    type: aws_eks
+    inputs:
+      cluster_name: "pltf-app-${env_name}"
+      kms_account_key_arn: module.base.kms_account_key_arn
+      k8s_version: 1.33
+      enable_metrics: false
+      max_nodes: 15

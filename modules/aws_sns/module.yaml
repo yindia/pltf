@@ -2,6 +2,15 @@ name: aws_sns
 type: aws_sns
 provider: aws
 version: 1.0.0
+resources:
+    - aws_kms_key.key
+    - aws_sns_topic.topic
+    - aws_sns_topic_policy.default
+    - aws_sns_topic_subscription.user_updates_sqs_target
+data:
+    - data.aws_caller_identity.current
+    - data.aws_iam_policy_document.kms_policy
+    - data.aws_iam_policy_document.sns_topic_policy
 inputs:
     - default: false
       name: content_based_deduplication

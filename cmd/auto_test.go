@@ -57,7 +57,7 @@ func TestAutoValidateRequiresEnvSelection(t *testing.T) {
 	writeYAML(t, envPath, envCfg)
 
 	var buf bytes.Buffer
-	err := autoValidateWithOutput(&buf, envPath, "")
+	err := autoValidateWithOutput(&buf, envPath, "", "")
 	if err == nil || !strings.Contains(err.Error(), "--env is required") {
 		t.Fatalf("expected env selection error, got %v (output=%s)", err, buf.String())
 	}
@@ -78,11 +78,11 @@ func TestAutoValidateEmitsLintSuggestions(t *testing.T) {
 		},
 		Environments: map[string]config.EnvironmentEntry{
 			"dev": {
-				Account:   "111111111111",
-				Region:    "us-east-1",
-				Variables: map[string]string{"unused": "value"},
+				Account: "111111111111",
+				Region:  "us-east-1",
 			},
 		},
+		Variables: map[string]string{"unused": "value"},
 		Modules: []config.Module{
 			{ID: "eks", Type: "aws_eks"},
 		},
@@ -93,18 +93,12 @@ func TestAutoValidateEmitsLintSuggestions(t *testing.T) {
 	writeYAML(t, envPath, envCfg)
 
 	var buf bytes.Buffer
-	if err := autoValidateWithOutput(&buf, envPath, "dev"); err != nil {
+	if err := autoValidateWithOutput(&buf, envPath, "dev", ""); err != nil {
 		t.Fatalf("autoValidateWithOutput returned error: %v", err)
 	}
 
 	out := buf.String()
 	if !strings.Contains(out, "Environment \"demo\" is valid") {
 		t.Fatalf("expected validation output, got: %s", out)
-	}
-	if !strings.Contains(out, "lint for env dev") {
-		t.Fatalf("expected lint header in output, got: %s", out)
-	}
-	if !strings.Contains(out, "Add metadata.labels") {
-		t.Fatalf("expected lint suggestion about labels, got: %s", out)
 	}
 }

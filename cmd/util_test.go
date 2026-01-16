@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"pltf/pkg/backend"
 	"pltf/pkg/config"
 )
 
@@ -48,44 +49,46 @@ func TestResolveModulesRootCustom(t *testing.T) {
 	}
 }
 
-func TestComputeBackendDefaultsS3(t *testing.T) {
+func TestBackendResolveDefaultsS3(t *testing.T) {
 	cfg := &config.EnvironmentConfig{
 		Metadata: config.EnvironmentMetadata{Name: "example", Org: "org", Provider: "aws"},
 		Environments: map[string]config.EnvironmentEntry{
 			"dev": {Region: "us-east-1"},
 		},
 	}
-	b, err := computeBackend(cfg, "dev")
+	envEntry := cfg.Environments["dev"]
+	b, err := backend.Resolve(cfg.Metadata.Provider, cfg, envEntry)
 	if err != nil {
-		t.Fatalf("computeBackend error: %v", err)
+		t.Fatalf("backend.Resolve error: %v", err)
 	}
-	if b.typeName != "aws" && b.typeName != "s3" && b.typeName != "" {
-		t.Fatalf("unexpected backend type: %s", b.typeName)
+	if b.Type != "s3" {
+		t.Fatalf("unexpected backend type: %s", b.Type)
 	}
-	expected := "example-org-us-east-1"
-	if b.bucket != expected {
-		t.Fatalf("expected bucket %s, got %s", expected, b.bucket)
+	expected := "org-example-tfstate"
+	if b.Bucket != expected {
+		t.Fatalf("expected bucket %s, got %s", expected, b.Bucket)
 	}
 }
 
-func TestComputeBackendCrossCloud(t *testing.T) {
+func TestBackendResolveCrossCloud(t *testing.T) {
 	cfg := &config.EnvironmentConfig{
-		Metadata: config.EnvironmentMetadata{Name: "example", Org: "org", Provider: "gcp"},
+		Metadata: config.EnvironmentMetadata{Name: "example", Org: "org", Provider: "aws"},
 		Backend:  config.Backend{Type: "s3", Bucket: "custom-bkt", Region: "eu-west-1"},
 		Environments: map[string]config.EnvironmentEntry{
 			"prod": {Region: "us-central1"},
 		},
 	}
-	b, err := computeBackend(cfg, "prod")
+	envEntry := cfg.Environments["prod"]
+	b, err := backend.Resolve(cfg.Metadata.Provider, cfg, envEntry)
 	if err != nil {
-		t.Fatalf("computeBackend error: %v", err)
+		t.Fatalf("backend.Resolve error: %v", err)
 	}
-	if b.bucket != "custom-bkt" || b.region != "eu-west-1" || b.typeName != "s3" {
+	if b.Bucket != "custom-bkt" || b.Region != "eu-west-1" || b.Type != "s3" {
 		t.Fatalf("unexpected backend %+v", b)
 	}
 }
 
-func TestComputeBackendAzureRequiresBucket(t *testing.T) {
+func TestBackendResolveAzureDefaults(t *testing.T) {
 	cfg := &config.EnvironmentConfig{
 		Metadata: config.EnvironmentMetadata{Name: "example", Org: "org", Provider: "azure"},
 		Backend:  config.Backend{Type: "azurerm"},
@@ -93,29 +96,12 @@ func TestComputeBackendAzureRequiresBucket(t *testing.T) {
 			"dev": {Region: "eastus"},
 		},
 	}
-	if _, err := computeBackend(cfg, "dev"); err == nil {
-		t.Fatalf("expected error for missing azure bucket")
+	envEntry := cfg.Environments["dev"]
+	b, err := backend.Resolve(cfg.Metadata.Provider, cfg, envEntry)
+	if err != nil {
+		t.Fatalf("unexpected error for azure defaults: %v", err)
 	}
-}
-
-func TestIsS3BackendSupportsCrossProvider(t *testing.T) {
-	cases := []struct {
-		name string
-		b    backendDetails
-		want bool
-	}{
-		{"empty defaults to s3", backendDetails{typeName: ""}, true},
-		{"aws explicit", backendDetails{typeName: "aws"}, true},
-		{"s3 explicit", backendDetails{typeName: "s3"}, true},
-		{"gcs", backendDetails{typeName: "gcs"}, false},
-		{"azure", backendDetails{typeName: "azurerm"}, false},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := isS3Backend(tc.b); got != tc.want {
-				t.Fatalf("isS3Backend(%+v) = %v, want %v", tc.b, got, tc.want)
-			}
-		})
+	if b.Bucket == "" || b.Type != "azurerm" {
+		t.Fatalf("unexpected backend %+v", b)
 	}
 }

@@ -2,6 +2,19 @@ name: aws_ses
 type: aws_ses
 provider: aws
 version: 1.0.0
+resources:
+    - aws_iam_policy.sender
+    - aws_route53_record.amazonses_dkim_record
+    - aws_route53_record.amazonses_verification_record
+    - aws_route53_record.ses_domain_mail_from_mx
+    - aws_route53_record.ses_domain_mail_from_txt
+    - aws_ses_domain_dkim.dkim
+    - aws_ses_domain_identity.email
+    - aws_ses_domain_identity_verification.example_verification
+    - aws_ses_domain_mail_from.email
+data:
+    - data.aws_iam_policy_document.sender
+    - data.aws_region.current
 inputs:
     - name: domain
       required: true

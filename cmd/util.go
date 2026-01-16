@@ -1,10 +1,9 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
+	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -13,12 +12,9 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	awscfg "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-
 	"pltf/modules"
 	"pltf/pkg/config"
+	"pltf/pkg/runner"
 )
 
 func parseVarFlags(pairs []string) (map[string]string, error) {
@@ -37,6 +33,40 @@ func parseVarFlags(pairs []string) (map[string]string, error) {
 		out[key] = value
 	}
 	return out, nil
+}
+
+func parseVarEnv() map[string]string {
+	out := make(map[string]string)
+	for _, entry := range os.Environ() {
+		parts := strings.SplitN(entry, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := parts[0]
+		value := parts[1]
+		if strings.HasPrefix(key, "PLTF_VAR_") {
+			name := strings.TrimPrefix(key, "PLTF_VAR_")
+			if strings.TrimSpace(name) == "" {
+				continue
+			}
+			out[name] = value
+		}
+	}
+	return out
+}
+
+func mergeVarMaps(base, override map[string]string) map[string]string {
+	if len(base) == 0 && len(override) == 0 {
+		return nil
+	}
+	merged := make(map[string]string, len(base)+len(override))
+	for k, v := range base {
+		merged[k] = v
+	}
+	for k, v := range override {
+		merged[k] = v
+	}
+	return merged
 }
 
 func defaultString(value, fallback string) string {
@@ -119,16 +149,12 @@ var (
 // Otherwise, embedded modules are materialized to a temp dir and used as default.
 func resolveModulesRoot(userPath string) (string, error) {
 	if strings.TrimSpace(userPath) != "" {
-		userPath = filepath.Clean(userPath)
-		if err := ensureDir(userPath, "modules root"); err != nil {
-			return "", err
-		}
-		return userPath, nil
+		return resolveModulesRootFromRef(userPath)
 	}
 
 	if prof := loadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
-		root := filepath.Clean(prof.ModulesRoot)
-		if err := ensureDir(root, "modules root"); err == nil {
+		root, err := resolveModulesRootFromRef(prof.ModulesRoot)
+		if err == nil {
 			return root, nil
 		}
 	}
@@ -140,6 +166,27 @@ func resolveModulesRoot(userPath string) (string, error) {
 		return "", embeddedModulesErr
 	}
 	return embeddedModulesPath, nil
+}
+
+// resolveModulesRootWithLabel returns the modules root and a human-friendly label.
+func resolveModulesRootWithLabel(userPath string) (string, string, error) {
+	if strings.TrimSpace(userPath) != "" {
+		root, err := resolveModulesRootFromRef(userPath)
+		return root, userPath, err
+	}
+
+	if prof := loadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
+		root, err := resolveModulesRootFromRef(prof.ModulesRoot)
+		if err == nil {
+			return root, prof.ModulesRoot, nil
+		}
+	}
+
+	root, err := resolveModulesRoot("")
+	if err != nil {
+		return "", "", err
+	}
+	return root, "embedded modules", nil
 }
 
 // resolveModuleRoots returns embedded root plus optional custom root.
@@ -155,20 +202,117 @@ func resolveModuleRoots(userPath string) (embedded string, custom string, err er
 		}
 	}
 	if strings.TrimSpace(userPath) != "" {
-		custom = filepath.Clean(userPath)
-		if err := ensureDir(custom, "modules root"); err != nil {
+		custom, err = resolveModulesRootFromRef(userPath)
+		if err != nil {
 			return "", "", err
 		}
 	}
 	return embedded, custom, nil
 }
 
-func runCmd(dir, name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Dir = dir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+func resolveModulesRootFromRef(ref string) (string, error) {
+	ref = strings.TrimSpace(ref)
+	if ref == "" {
+		return "", nil
+	}
+	resolved := ref
+	if strings.Contains(ref, "://") {
+		baseDir, _ := os.Getwd()
+		path, err := config.ResolveGitRef(ref, baseDir)
+		if err != nil {
+			return "", err
+		}
+		resolved = path
+	}
+	resolved = filepath.Clean(resolved)
+	if err := ensureDir(resolved, "modules root"); err != nil {
+		return "", err
+	}
+	return resolved, nil
+}
+
+func selectModuleMeta(module config.Module, embeddedMetas, customMetas map[string]*config.ModuleMetadata, embeddedRoot string) (*config.ModuleMetadata, error) {
+	if strings.EqualFold(module.Source, "custom") {
+		if len(customMetas) == 0 {
+			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but no custom modules root provided", module.ID, module.Type)
+		}
+		meta, ok := customMetas[module.Type]
+		if !ok {
+			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but metadata not found", module.ID, module.Type)
+		}
+		return meta, nil
+	}
+
+	meta, ok := embeddedMetas[module.Type]
+	if !ok {
+		if len(customMetas) > 0 {
+			if alt, ok := customMetas[module.Type]; ok {
+				return alt, nil
+			}
+		}
+		return nil, fmt.Errorf("module %q type %q not found in embedded modules (%s); use source: custom with --modules", module.ID, module.Type, embeddedRoot)
+	}
+	return meta, nil
+}
+
+func runCmdOutputWithIO(dir, name string, stderr io.Writer, args ...string) (string, error) {
+	return runner.Default.RunOutput(runner.Cmd{
+		Name:   name,
+		Args:   args,
+		Dir:    dir,
+		Stderr: stderr,
+	})
+}
+
+func runWithRetry(attempts int, baseDelay time.Duration, fn func() error) error {
+	if attempts < 1 {
+		attempts = 1
+	}
+	var lastErr error
+	delay := baseDelay
+	for i := 0; i < attempts; i++ {
+		if err := fn(); err != nil {
+			lastErr = err
+			if i < attempts-1 {
+				time.Sleep(delay)
+				delay *= 2
+			}
+			continue
+		}
+		return nil
+	}
+	return lastErr
+}
+
+func isTransientInitError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	transient := []string{
+		"timeout",
+		"timed out",
+		"connection reset",
+		"connection refused",
+		"temporary",
+		"temporarily unavailable",
+		"i/o timeout",
+		"eof",
+		"tls handshake timeout",
+		"network",
+		"dial tcp",
+		"lookup",
+	}
+	for _, s := range transient {
+		if strings.Contains(msg, s) {
+			return true
+		}
+	}
+	return false
+}
+
+func runCmdOutput(dir, name string, args ...string) (string, error) {
+	return runCmdOutputWithIO(dir, name, os.Stderr, args...)
 }
 
 func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
@@ -193,112 +337,17 @@ func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
 	if opts.refresh != nil {
 		args = append(args, fmt.Sprintf("-refresh=%t", *opts.refresh))
 	}
+	if opts.autoApprove {
+		args = append(args, "-auto-approve")
+	}
 	return args
 }
 
-type backendDetails struct {
-	typeName      string
-	bucket        string
-	container     string
-	resourceGroup string
-	region        string
-}
-
-func isS3Backend(b backendDetails) bool {
-	switch b.typeName {
-	case "", "aws", "s3":
-		return true
-	default:
-		return false
+func daggerLogOutput(stderr io.Writer) io.Writer {
+	if stderr == nil {
+		return os.Stderr
 	}
-}
-
-func computeBackend(envCfg *config.EnvironmentConfig, envName string) (backendDetails, error) {
-	envEntry, ok := envCfg.Environments[envName]
-	if !ok {
-		return backendDetails{}, fmt.Errorf("environment %q not found", envName)
-	}
-	bType := strings.ToLower(strings.TrimSpace(envCfg.Backend.Type))
-	if bType == "" {
-		bType = strings.ToLower(envCfg.Metadata.Provider)
-	}
-
-	bucket := envCfg.Backend.Bucket
-	container := envCfg.Backend.Container
-	resourceGroup := envCfg.Backend.ResourceGroup
-	region := envCfg.Backend.Region
-	if region == "" {
-		region = envEntry.Region
-	}
-
-	switch bType {
-	case "aws", "s3", "":
-		if bucket == "" {
-			if envEntry.Region == "" {
-				return backendDetails{}, fmt.Errorf("environment %q region is required for backend naming", envName)
-			}
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "gcp", "google", "gcs":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "azure", "azurerm":
-		if bucket == "" {
-			return backendDetails{}, fmt.Errorf("backend.bucket (storage account name) is required for azure backend")
-		}
-		if container == "" {
-			container = "tfstate"
-		}
-		if resourceGroup == "" {
-			resourceGroup = fmt.Sprintf("%s-tfstate-rg", envCfg.Metadata.Name)
-		}
-	default:
-		return backendDetails{}, fmt.Errorf("unsupported backend type %q", bType)
-	}
-
-	return backendDetails{
-		typeName:      bType,
-		bucket:        bucket,
-		container:     container,
-		resourceGroup: resourceGroup,
-		region:        region,
-	}, nil
-}
-
-func ensureS3Bucket(bucket, region string) error {
-	if bucket == "" {
-		return fmt.Errorf("backend bucket is empty")
-	}
-
-	ctx := context.Background()
-	cfg, err := awscfg.LoadDefaultConfig(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		if region != "" {
-			o.Region = region
-		}
-	})
-
-	// Head bucket
-	_, err = client.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: &bucket})
-	if err == nil {
-		return nil
-	}
-
-	createInput := &s3.CreateBucketInput{Bucket: &bucket}
-	if region != "" && region != "us-east-1" {
-		createInput.CreateBucketConfiguration = &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(region),
-		}
-	}
-
-	if _, err := client.CreateBucket(ctx, createInput); err != nil {
-		return fmt.Errorf("failed to create bucket %s: %w", bucket, err)
-	}
-	return nil
+	return stderr
 }
 
 // selectEnvName chooses an environment name from input, env var, or config context.
@@ -337,7 +386,7 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 				return "", fmt.Errorf("environment %q not found in Environment; available: %s", candidate, strings.Join(sortedKeys(envCfg.Environments), ","))
 			}
 			if _, ok := svcCfg.Metadata.EnvRef[candidate]; !ok {
-				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeysEnvRef(svcCfg.Metadata.EnvRef), ","))
+				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeys(svcCfg.Metadata.EnvRef), ","))
 			}
 			return candidate, nil
 		}
@@ -368,15 +417,6 @@ func sortedKeys[T any](m map[string]T) []string {
 	return keys
 }
 
-func sortedKeysEnvRef(m map[string]config.ServiceEnvRefEntry) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 type profileConfig struct {
 	ModulesRoot string `yaml:"modules_root"`
 	DefaultEnv  string `yaml:"default_env"`
@@ -397,17 +437,21 @@ func loadProfile() *profileConfig {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			// No profile is fine.
+			if !os.IsNotExist(err) {
+				profileErr = err // File exists but is unreadable
+			}
 			return
 		}
 		var cfg profileConfig
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
-			profileErr = err
+			profileErr = fmt.Errorf("failed to parse profile %s: %w", path, err)
 			return
 		}
 		profileData = &cfg
 	})
 	if profileErr != nil {
+		// A corrupt profile is a non-fatal warning, not a hard error.
+		fmt.Fprintf(os.Stderr, "warn: unable to load profile: %v\n", profileErr)
 		return nil
 	}
 	return profileData

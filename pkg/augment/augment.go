@@ -1,15 +1,22 @@
 package augment
 
-import "pltf/pkg/config"
+import (
+	"strings"
+
+	"pltf/pkg/config"
+)
 
 // Context captures the data needed by augmentation plugins to generate extra
 // inputs (IAM policies, trusts, etc.) for modules in a stack.
 type Context struct {
-	Provider    string
-	EnvName     string
-	ServiceName string
-	Modules     []config.Module
-	Vars        map[string]interface{}
+	Provider     string
+	EnvName      string
+	ServiceName  string
+	IsService    bool
+	Modules      []config.Module
+	Vars         map[string]interface{}
+	ModuleScopes map[string]string
+	ModuleMetas  map[string]*config.ModuleMetadata
 }
 
 // Augmentation describes extra inputs to apply to a module.
@@ -27,14 +34,24 @@ type Builder func(Context) map[string]Augmentation
 type Applicator func(config.Module, Augmentation) config.Module
 
 var (
-	builders    []Builder
-	applicators = map[string]Applicator{}
+	buildersByProvider = map[string][]Builder{}
+	applicators        = map[string]Applicator{}
 )
 
 // RegisterBuilder adds an augmentation builder. Typically called from a
 // module plugin init() function.
 func RegisterBuilder(b Builder) {
-	builders = append(builders, b)
+	RegisterProviderBuilder("*", b)
+}
+
+// RegisterProviderBuilder adds an augmentation builder for a specific provider.
+// Use "*" to register a builder for all providers.
+func RegisterProviderBuilder(provider string, b Builder) {
+	provider = strings.ToLower(strings.TrimSpace(provider))
+	if provider == "" {
+		provider = "*"
+	}
+	buildersByProvider[provider] = append(buildersByProvider[provider], b)
 }
 
 // RegisterApplicator associates a module type with an applicator that knows
@@ -47,7 +64,12 @@ func RegisterApplicator(moduleType string, a Applicator) {
 // results keyed by module ID.
 func Build(ctx Context) map[string]Augmentation {
 	result := map[string]Augmentation{}
-	for _, b := range builders {
+	provider := strings.ToLower(strings.TrimSpace(ctx.Provider))
+	candidates := append([]Builder{}, buildersByProvider["*"]...)
+	if provider != "" {
+		candidates = append(candidates, buildersByProvider[provider]...)
+	}
+	for _, b := range candidates {
 		if b == nil {
 			continue
 		}
@@ -103,4 +125,3 @@ func mergePolicies(base, extra map[string]interface{}) map[string]interface{} {
 	}
 	return base
 }
-

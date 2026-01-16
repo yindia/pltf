@@ -51,7 +51,7 @@ var moduleGetCmd = &cobra.Command{
 	Short: "Show details for a module (inputs/outputs)",
 	Long:  "Display module metadata from module.yaml including provider, version, inputs, and outputs.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, err := resolveModulesRoot(moduleListRoot)
+		root, label, err := resolveModulesRootWithLabel(moduleListRoot)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,11 @@ var moduleGetCmd = &cobra.Command{
 		}
 		mod, ok := metas[args[0]]
 		if !ok {
-			return fmt.Errorf("module %q not found under %s", args[0], root)
+			suggestions := suggestModuleTypes(args[0], metas)
+			if len(suggestions) > 0 {
+				return fmt.Errorf("module %q not found in %s (did you mean: %s)", args[0], label, strings.Join(suggestions, ", "))
+			}
+			return fmt.Errorf("module %q not found in %s (run \"pltf module list\" to see available modules)", args[0], label)
 		}
 		return printModuleDetail(mod, moduleListOut)
 	},
@@ -124,7 +128,10 @@ type moduleMetadataYAML struct {
 	Provider     string              `yaml:"provider"`
 	Version      string              `yaml:"version"`
 	Description  string              `yaml:"description,omitempty"`
+	Cluster      bool                `yaml:"cluster,omitempty"`
 	Capabilities config.Capabilities `yaml:"capabilities,omitempty"`
+	Resources    []string            `yaml:"resources,omitempty"`
+	DataSources  []string            `yaml:"data,omitempty"`
 	Inputs       []inputSpecYAML     `yaml:"inputs,omitempty"`
 	Outputs      []config.OutputSpec `yaml:"outputs,omitempty"`
 }
@@ -198,6 +205,11 @@ func buildModuleMetadata(abs string, tfMod *tfconfig.Module) *config.ModuleMetad
 
 	inputs, accepts := buildInputs(tfMod)
 	outputs, provides := buildOutputs(tfMod)
+	iamProvides := detectIamProvides(outputs)
+	iamAccepts := detectIamAccepts(inputs)
+	provides = dedupeStrings(append(provides, iamProvides...))
+	accepts = dedupeStrings(append(accepts, iamAccepts...))
+	resources, dataSources := buildResourceLists(tfMod)
 
 	return &config.ModuleMetadata{
 		Name:        name,
@@ -205,12 +217,15 @@ func buildModuleMetadata(abs string, tfMod *tfconfig.Module) *config.ModuleMetad
 		Provider:    defaultModuleProvider,
 		Version:     defaultModuleVersion,
 		Description: moduleInitDesc,
+		Cluster:     hasClusterOutputs(outputs),
 		Capabilities: config.Capabilities{
 			Provides: provides,
 			Accepts:  accepts,
 		},
-		Inputs:  inputs,
-		Outputs: outputs,
+		Resources:   resources,
+		DataSources: dataSources,
+		Inputs:      inputs,
+		Outputs:     outputs,
 	}
 }
 
@@ -270,6 +285,59 @@ func buildOutputs(tfMod *tfconfig.Module) ([]config.OutputSpec, []string) {
 	return result, dedupeStrings(provides)
 }
 
+func buildResourceLists(tfMod *tfconfig.Module) ([]string, []string) {
+	resources := map[string]struct{}{}
+	for _, res := range tfMod.ManagedResources {
+		resources[res.MapKey()] = struct{}{}
+	}
+	dataSources := map[string]struct{}{}
+	for _, res := range tfMod.DataResources {
+		dataSources[res.MapKey()] = struct{}{}
+	}
+
+	resList := make([]string, 0, len(resources))
+	for name := range resources {
+		resList = append(resList, name)
+	}
+	sort.Strings(resList)
+
+	dataList := make([]string, 0, len(dataSources))
+	for name := range dataSources {
+		dataList = append(dataList, name)
+	}
+	sort.Strings(dataList)
+
+	return resList, dataList
+}
+
+func detectIamProvides(outputs []config.OutputSpec) []string {
+	var caps []string
+	for _, out := range outputs {
+		switch out.Name {
+		case "role_arn":
+			caps = append(caps, "iam.role")
+		case "user_arn":
+			caps = append(caps, "iam.user")
+		case "policy_arn":
+			caps = append(caps, "iam.policy")
+		}
+	}
+	return dedupeStrings(caps)
+}
+
+func detectIamAccepts(inputs []config.InputSpec) []string {
+	var caps []string
+	for _, in := range inputs {
+		switch in.Name {
+		case "iam_policy", "policy_arns":
+			caps = append(caps, "iam.policy")
+		case "kubernetes_trusts":
+			caps = append(caps, "iam.trusts")
+		}
+	}
+	return dedupeStrings(caps)
+}
+
 func buildModuleMetadataYAML(meta *config.ModuleMetadata, tfMod *tfconfig.Module) moduleMetadataYAML {
 	inputs := []inputSpecYAML{}
 
@@ -293,7 +361,10 @@ func buildModuleMetadataYAML(meta *config.ModuleMetadata, tfMod *tfconfig.Module
 		Provider:     meta.Provider,
 		Version:      meta.Version,
 		Description:  meta.Description,
+		Cluster:      meta.Cluster,
 		Capabilities: meta.Capabilities,
+		Resources:    meta.Resources,
+		DataSources:  meta.DataSources,
 		Inputs:       inputs,
 		Outputs:      meta.Outputs,
 	}
@@ -328,6 +399,41 @@ func dedupeStrings(in []string) []string {
 		out = append(out, s)
 	}
 	return out
+}
+
+func suggestModuleTypes(query string, metas map[string]*config.ModuleMetadata) []string {
+	query = strings.ToLower(query)
+	var startsWith []string
+	var contains []string
+	for name := range metas {
+		lower := strings.ToLower(name)
+		switch {
+		case strings.HasPrefix(lower, query):
+			startsWith = append(startsWith, name)
+		case strings.Contains(lower, query):
+			contains = append(contains, name)
+		}
+	}
+	sort.Strings(startsWith)
+	sort.Strings(contains)
+	out := append(startsWith, contains...)
+	if len(out) > 5 {
+		return out[:5]
+	}
+	return out
+}
+
+func hasClusterOutputs(outputs []config.OutputSpec) bool {
+	required := map[string]struct{}{
+		"k8s_endpoint":     {},
+		"k8s_ca_data":      {},
+		"k8s_cluster_name": {},
+		"plt_cluster_type": {},
+	}
+	for _, out := range outputs {
+		delete(required, out.Name)
+	}
+	return len(required) == 0
 }
 
 // -------------------------------------------------------

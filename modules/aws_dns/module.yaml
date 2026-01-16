@@ -2,6 +2,16 @@ name: aws_dns
 type: aws_dns
 provider: aws
 version: 1.0.0
+resources:
+    - aws_acm_certificate.certificate
+    - aws_acm_certificate.imported_certificate
+    - aws_acm_certificate_validation.example_com
+    - aws_route53_record.validation_record
+    - aws_route53_zone.public
+data:
+    - data.aws_ssm_parameter.certificate_body
+    - data.aws_ssm_parameter.certificate_chain
+    - data.aws_ssm_parameter.private_key
 inputs:
     - default: false
       name: cert_chain_included

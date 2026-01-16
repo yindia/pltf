@@ -4,13 +4,15 @@ resource "aws_subnet" "private_subnets" {
   availability_zone_id = data.aws_availability_zones.current.zone_ids[count.index]
   vpc_id               = local.vpc_id
 
-  tags = {
-    Name                                           = "pltf-${var.layer_name}-private-${data.aws_availability_zones.current.zone_ids[count.index]}"
-    "kubernetes.io/cluster/pltf-${var.layer_name}" = "shared"
-    type                                           = "private"
-    terraform                                      = "true"
-    "kubernetes.io/role/internal-elb"              = "1"
-  }
+  tags = merge(
+    {
+      Name                              = "pltf-${var.layer_name}-private-${data.aws_availability_zones.current.zone_ids[count.index]}"
+      type                              = "private"
+      terraform                         = "true"
+      "kubernetes.io/role/internal-elb" = "1"
+    },
+    local.cluster_tags
+  )
 }
 
 resource "aws_route_table" "private_route_tables" {

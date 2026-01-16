@@ -1,17 +1,18 @@
 package cmd
 
 import (
-	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
 
+	"pltf/pkg/backend"
 	"pltf/pkg/config"
+	"pltf/pkg/daggerx"
 )
 
 func runGraph(mode, file, env, modules, out string, vars []string, outFile string, planFile string) error {
@@ -30,48 +31,54 @@ func runGraph(mode, file, env, modules, out string, vars []string, outFile strin
 	}
 }
 
-func runTerraformGraph(file, env, modules, out string, vars []string, outFile string, planFile string) error {
+func runTerraformGraph(file, env, modules, out string, vars []string, outFile string, planFile string) (retErr error) {
 	if err := autoGenerateQuiet(file, env, modules, out, vars); err != nil {
 		return err
 	}
 
-	ctx, err := prepareStackContext(file, env, out)
+	ctx, err := prepareWorkspaceContext(file, env, out)
 	if err != nil {
 		return err
 	}
 
-	bk, err := computeBackend(ctx.envCfg, ctx.env)
+	_, finishRun := startLocalRun("graph", file, ctx.env, ctx.outDir)
+	defer func() {
+		finishRun(retErr)
+	}()
+
+	envEntry := ctx.envCfg.Environments[ctx.env]
+	bk, err := backend.Resolve(ctx.envCfg.Metadata.Provider, ctx.envCfg, envEntry)
 	if err != nil {
 		return err
 	}
-	if isS3Backend(bk) {
-		if err := ensureS3Bucket(bk.bucket, bk.region); err != nil {
-			return fmt.Errorf("failed to ensure backend bucket: %w", err)
-		}
+	if err := backend.Ensure(context.Background(), bk); err != nil {
+		return fmt.Errorf("failed to ensure backend: %w", err)
 	}
 
-	initCmd := exec.Command("terraform", "init")
-	initCmd.Dir = ctx.outDir
-	initCmd.Stdout = io.Discard
-	initCmd.Stderr = os.Stderr
-	if err := initCmd.Run(); err != nil {
+	session, err := daggerx.NewSession(daggerLogOutput(os.Stderr))
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+	tfPluginCache := session.Client.CacheVolume("pltf-terraform-plugin-cache")
+	tfRunner := newTfDaggerRunner(session, ctx.outDir, io.Discard, os.Stderr, tfPluginCache)
+
+	if err := runTerraformInitWithRetryDagger(tfRunner); err != nil {
 		return fmt.Errorf("terraform init failed: %w", err)
 	}
 
-	args := []string{"graph"}
+	args := []string{tfRunner.engineCmd(), "graph"}
+	tfvarsName := fmt.Sprintf("%s.tfvars", ctx.env)
+	args = append(args, "-var-file="+tfvarsName)
 	if strings.TrimSpace(planFile) != "" {
 		args = append(args, "-plan="+planFile)
 	}
 
-	cmd := exec.Command("terraform", args...)
-	cmd.Dir = ctx.outDir
-	var buf bytes.Buffer
-	cmd.Stdout = &buf
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	output, _, err := tfRunner.exec(args, false)
+	if err != nil {
 		return fmt.Errorf("terraform graph failed: %w", err)
 	}
-	return writeGraphOutput(buf.Bytes(), outFile)
+	return writeGraphOutput([]byte(output), outFile)
 }
 
 func writeGraphOutput(data []byte, outFile string) error {
@@ -119,6 +126,8 @@ func buildSpecGraphFromFile(file, env string) (string, error) {
 		mods := append([]config.Module{}, envCfg.Modules...)
 		mods = append(mods, svcCfg.Modules...)
 		return buildSpecGraph(mods), nil
+	case "Stack":
+		return "", fmt.Errorf("stack specs cannot be graphed directly; reference them from Environment or Service specs")
 	default:
 		return "", fmt.Errorf("unknown kind %q", kind)
 	}

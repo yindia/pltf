@@ -23,9 +23,3 @@ data "aws_route_table" "private_subnet_routes" {
   subnet_id = each.value.id
   vpc_id    = var.vpc_id
 }
-
-data "aws_route" "private_nat_routes" {
-  for_each               = data.aws_route_table.private_subnet_routes
-  route_table_id         = each.value.id
-  destination_cidr_block = "0.0.0.0/0"
-}

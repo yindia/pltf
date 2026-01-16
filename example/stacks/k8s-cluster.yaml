@@ -1,0 +1,25 @@
+apiVersion: platform.io/v1
+kind: Stack
+metadata:
+  name: k8s-cluster
+variables:
+  cluster_name: "pltf-app"
+  enable_metrics: "true"
+  gpu_instance_type: "g4dn.xlarge"
+modules:
+  - id: base
+    type: aws_base
+    inputs:
+      cluster_name: var.cluster_name
+  - id: eks
+    type: aws_eks
+    inputs:
+      cluster_name: var.cluster_name
+      enable_metrics: var.enable_metrics
+  - id: nodegroup_cpu
+    type: aws_nodegroup
+  - id: nodegroup_gpu
+    type: aws_nodegroup
+    inputs:
+      node_instance_type: var.gpu_instance_type
+      use_gpu: true

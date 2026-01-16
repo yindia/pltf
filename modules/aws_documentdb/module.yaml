@@ -2,15 +2,23 @@ name: aws_documentdb
 type: aws_documentdb
 provider: aws
 version: 1.0.0
+capabilities:
+    provides:
+        - secret
+resources:
+    - aws_docdb_cluster.cluster
+    - aws_docdb_cluster_instance.cluster_instances
+    - random_password.documentdb_auth
+    - random_string.db_name_hash
+data:
+    - data.aws_kms_key.main
+    - data.aws_security_group.security_group
 inputs:
     - default: false
       description: A value that indicates whether the DB cluster has deletion protection enabled. The database can't be deleted when deletion protection is enabled.
       name: deletion_protection
       required: false
       type: bool
-    - name: kms_key_alias
-      required: true
-      type: string
     - name: documentdb_aws_security_group
       required: true
       type: string
@@ -34,6 +42,9 @@ inputs:
     - name: kms_account_key_arn
       required: true
       type: string
+    - name: kms_key_alias
+      required: true
+      type: string
     - description: Layer name
       name: layer_name
       required: true
@@ -53,5 +64,6 @@ outputs:
       type: string
     - name: db_password
       type: string
+      capability: secret
     - name: db_user
       type: string

@@ -1,6 +1,9 @@
 package generate
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/hcl/v2/hclwrite"
@@ -19,18 +22,25 @@ type authData struct {
 	attrs     map[string]hcl.Traversal
 }
 
-func (g *Generator) clusterRefs() *clusterRef {
-	eksID := g.findFirstModuleByType("aws_eks")
-	if eksID != "" {
+func (g *Generator) clusterRefs() (*clusterRef, error) {
+	id, err := g.findClusterModule()
+	if err != nil {
+		return nil, err
+	}
+	if id == "" {
+		return nil, nil
+	}
+
+	if g.envCfg != nil && strings.EqualFold(g.envCfg.Metadata.Provider, "aws") {
 		return &clusterRef{
 			host: hcl.Traversal{
 				hcl.TraverseRoot{Name: "module"},
-				hcl.TraverseAttr{Name: eksID},
+				hcl.TraverseAttr{Name: id},
 				hcl.TraverseAttr{Name: "k8s_endpoint"},
 			},
 			caData: hcl.Traversal{
 				hcl.TraverseRoot{Name: "module"},
-				hcl.TraverseAttr{Name: eksID},
+				hcl.TraverseAttr{Name: id},
 				hcl.TraverseAttr{Name: "k8s_ca_data"},
 			},
 			token: hcl.Traversal{
@@ -45,42 +55,41 @@ func (g *Generator) clusterRefs() *clusterRef {
 				attrs: map[string]hcl.Traversal{
 					"name": {
 						hcl.TraverseRoot{Name: "module"},
-						hcl.TraverseAttr{Name: eksID},
+						hcl.TraverseAttr{Name: id},
 						hcl.TraverseAttr{Name: "k8s_cluster_name"},
 					},
 				},
 			},
-		}
+		}, nil
 	}
 
-	gkeID := g.findFirstModuleByType("gcp_gke")
-	if gkeID != "" {
+	if g.envCfg != nil && strings.EqualFold(g.envCfg.Metadata.Provider, "gcp") {
 		return &clusterRef{
 			host: hcl.Traversal{
 				hcl.TraverseRoot{Name: "module"},
-				hcl.TraverseAttr{Name: gkeID},
-				hcl.TraverseAttr{Name: "endpoint"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "k8s_endpoint"},
 			},
 			caData: hcl.Traversal{
 				hcl.TraverseRoot{Name: "module"},
-				hcl.TraverseAttr{Name: gkeID},
-				hcl.TraverseAttr{Name: "cluster_ca_certificate"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "k8s_ca_data"},
 			},
 			token: hcl.Traversal{
 				hcl.TraverseRoot{Name: "data"},
 				hcl.TraverseAttr{Name: "google_client_config"},
-				hcl.TraverseAttr{Name: "default"},
+				hcl.TraverseAttr{Name: "this"},
 				hcl.TraverseAttr{Name: "access_token"},
 			},
 			auth: &authData{
 				blockType: "google_client_config",
-				name:      "default",
+				name:      "this",
 				attrs:     map[string]hcl.Traversal{},
 			},
-		}
+		}, nil
 	}
 
-	return nil
+	return nil, nil
 }
 
 func base64DecodeTokens(inner hcl.Traversal) hclwrite.Tokens {
@@ -136,4 +145,25 @@ func (g *Generator) hasModuleType(t string) bool {
 		}
 	}
 	return false
+}
+
+func (g *Generator) findClusterModule() (string, error) {
+	var candidate string
+	for _, m := range g.allModules {
+		meta, ok := g.moduleMetas[m.ID]
+		if !ok {
+			continue
+		}
+		if !meta.Cluster {
+			continue
+		}
+		if candidate != "" && candidate != m.ID {
+			return "", fmt.Errorf("multiple modules are marked cluster providers: %s, %s", candidate, m.ID)
+		}
+		candidate = m.ID
+	}
+	if candidate == "" {
+		return "", nil
+	}
+	return candidate, nil
 }

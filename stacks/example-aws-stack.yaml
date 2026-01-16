@@ -1,0 +1,14 @@
+apiVersion: platform.io/v1
+kind: Stack
+metadata:
+  name: example-aws-stack
+variables:
+  base_domain: "${env_name}.pltf.internal"
+modules:
+  - id: base
+    type: aws_base
+  - id: dns
+    type: aws_dns
+    inputs:
+      domain: "${var.base_domain}"
+      delegated: false
