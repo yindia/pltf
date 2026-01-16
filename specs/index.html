@@ -912,12 +912,16 @@ Notes:
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ghcr.io/acme/app:${env_name}</span>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">    </span><span class="nt">buildArgs</span><span class="p">:</span>
 </span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">      </span><span class="nt">ENV</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">${env_name}</span>
+</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">    </span><span class="nt">platforms</span><span class="p">:</span>
+</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">linux/amd64</span>
+</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">linux/arm64</span>
 </span></code></pre></div>
 Notes:
 - <code>tags</code> are optional; when pushing images, at least one tag is required.
 - Authenticate to registries outside of pltf (e.g., <code>docker login</code>) before running <code>pltf image build</code> or <code>pltf terraform apply</code>.
 - <code>pltf terraform plan</code> builds images; <code>pltf terraform apply</code> builds + pushes them.
 - Use <code>include</code>/<code>exclude</code> to filter the build context sent to Dagger.
+- Use <code>platforms</code> to declare the target OS/ARCH combos (<code>linux/amd64</code>, <code>linux/arm64</code>, etc.); when absent, the host OS/ARCH is used.
 - For Dockerfile build secrets, set <code>PLTF_IMG_SECRET_&lt;NAME&gt;</code> or <code>PLTF_IMG_SECRET_FILE_&lt;NAME&gt;</code> and use <code>RUN --mount=type=secret,id=&lt;NAME&gt;</code> in the Dockerfile.</p>
 <h2 id="variable-precedence">Variable precedence</h2>
 <p>1) Stack variables<br />
@@ -999,6 +1003,18 @@ Notes:
                     <a class="text-2xl font-medium" href="../faq/">
                         
                         FAQ
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../workflows/">
+                        
+                        Terraform Workflows
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../caching/">
+                        
+                        Image & Plugin Caching
                         
                     </a>
                     

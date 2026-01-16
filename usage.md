@@ -1,172 +1,86 @@
 # CLI Usage
 
-pltf auto-detects whether a spec is an **Environment**, **Service**, or **Stack** based on `kind`. Most commands accept `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, and `--var/-v key=value`.
+`pltf` detects the spec kind (Environment, Service, or Stack) and merges stack/env/service layers before leaning on Terraform. Every command supports the shared flags `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, and `--var/-v key=value` unless noted.
 
-## Command catalog
-- `pltf validate` — validate specs.
-- `pltf generate` — render a workspace-style Terraform root (single env with `--env`, all envs if omitted).
-- `pltf preview` — summarize provider/backend/labels/modules.
-- `pltf terraform plan|apply|destroy|output|force-unlock|graph` — generate + run Terraform/OpenTofu inside Dagger (use `--engine tofu` for OpenTofu).
-- `pltf module list|get|init` — module inventory and metadata generation.
-- `pltf image build` — build/push Docker images defined in Environment or Service specs.
+## Covered commands
 
-### validate
-- **What:** Validate Environment, Service, or Stack specs; auto-detects kind.
-- **Flags:**
-  - `--file/-f` — Path to the spec (default `env.yaml`).
-  - `--env/-e` — Environment key (dev/prod/etc.).
-- **Example:** `pltf validate -f service.yaml -e dev`
+| Command                             | What it does                                                           |
+|------------------------------------|------------------------------------------------------------------------|
+| `pltf validate`                     | Structural validation for specs and wiring                              |
+| `pltf preview`                      | Summarizes providers, backend, variables, and module wiring             |
+| `pltf generate`                     | Renders Terraform workspaces without running Terraform                  |
+| `pltf terraform plan/apply/destroy` | Builds images, generates, and executes Terraform via Dagger              |
+| `pltf terraform graph`             | Terraform/spec DOT graphs (supports `--mode`)                          |
+| `pltf terraform output`            | Shows outputs (JSON support)                                            |
+| `pltf terraform force-unlock`      | Removes stale Terraform locks (`--lock-id` required)                   |
+| `pltf module list|get|init`         | Inspect modules from embedded/custom roots                              |
+| `pltf image build`                 | Build/push Docker images defined in the spec via Dagger                 |
 
-### generate
-- **What:** Render workspace-ready Terraform only; no init/apply.
-- **Flags:**
-  - `--file/-f` — Path to the spec.
-  - `--env/-e` — Environment key.
-  - `--modules/-m` — Custom modules root (local path or git ref); `source: custom` resolves here first.
-  - `--out/-o` — Output dir (defaults to `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`).
-  - `--var/-v` — CLI var override `key=value`.
-- **Example:** `pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace`
+## Shared flags
 
-### preview
-- **What:** Show provider, backend, labels, modules without running Terraform.
-- **Flags:** `--file/-f`, `--env/-e`
-- **Example:** `pltf preview -f env.yaml -e prod`
-
-### terraform plan
-- **What:** Build images (if configured), generate, then run `terraform plan` with standard flags (or `tofu` via `--engine tofu`).
-- **Plan flags:**
-  - `--target/-t` — Target address (repeatable).
-  - `--parallelism/-p` — Max parallel operations.
-  - `--lock/-l` — Lock state (default true).
-  - `--lock-timeout/-T` — Lock timeout (e.g., 30s).
-  - `--no-color/-C` — Disable color output.
-  - `--input/-i` — Prompt for input (default false).
-  - `--refresh/-r` — Refresh state before plan (default true).
-  - `--detailed-exitcode/-d` — Enable TF detailed exit codes.
-  - `--plan-file/-P` — Write plan to a file.
-- **Shared flags:** `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`, `--engine`
-- **Example:** `pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`
-
-### terraform apply
-- **What:** Build + push images (if configured), generate, then run `terraform apply -auto-approve` (or `tofu` via `--engine tofu`).
-- **Flags:** Shared flags (`--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--var/-v`, `--engine`).
-- **Example:** `pltf terraform apply -f env.yaml -e prod`
-
-### terraform destroy
-- **What:** Generate (if needed) + run `terraform destroy -auto-approve` (or `tofu` via `--engine tofu`).
-- **Flags:** Same as apply.
-- **Example:** `pltf terraform destroy -f env.yaml -e prod`
-
-### terraform output
-- **What:** Show outputs (optionally JSON).
-- **Flags:** `--json/-j` (JSON output), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
-- **Example:** `pltf terraform output -f service.yaml -e dev --json`
-
-### terraform force-unlock
-- **What:** Force unlock state.
-- **Flags:** `--lock-id` (required), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
-- **Example:** `pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345`
-
-### terraform graph
-- **What:** Emit DOT graph. Default runs `terraform graph`; `--mode spec` renders a dependency graph from the YAML only. Use `--engine tofu` to run `tofu graph`.
-- **Flags:** `--mode terraform|spec` (default terraform), `--plan-file/-P` (passed to terraform graph), plus shared `--file/-f`, `--env/-e`, `--modules/-m`, `--out/-o`, `--engine`
-- **Example:** `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
-
-### module list
-- **What:** List module inventory from embedded/custom roots.
-- **Flags:** `--modules/-m` (modules root), `--output/-o` (`table|json|yaml`)
-- **Example:** `pltf module list -m ./modules -o json`
-
-### module get
-- **What:** Show module details (inputs/outputs).
-- **Flags:** Same as module list.
-- **Example:** `pltf module get aws_eks -m ./modules`
-
-### module init
-- **What:** Generate `module.yaml` from an existing Terraform module dir.
-- **Flags:** `--path` (module dir), `--name`, `--type`, `--description`, `--out`, `--force` (overwrite)
-- **Example:** `pltf module init --path ./modules/aws_eks --force`
-
-### image build
-- **What:** Build (and optionally push) images declared in the spec using Dagger.
-- **Flags:** `--file/-f`, `--env/-e`, `--push`, `--image` (repeatable filter)
-- **Example:** `pltf image build -f service.yaml -e dev --push`
-Notes:
-- To connect to a remote Dagger engine, set `DAGGER_HOST` before running the command.
-- All images in the spec are built in a single Dagger session and run concurrently.
-
-## Validate
-Structural validation for Environment, Service, and Stack specs.
-```bash
-pltf validate -f env.yaml -e prod
-pltf validate -f service.yaml -e dev
-```
-
-## Generate
-Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.
-```bash
-pltf generate -f env.yaml -e dev
-pltf generate -f service.yaml -e prod -o .pltf/example/payments/workspace
-pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
-```
-Flags:
-- `--modules/-m` custom modules root (local path or git ref). Modules with `source: custom` are resolved only from the custom root; others fall back to embedded modules.
-- `--out/-o` output dir (defaults `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`).
-- `--var/-v` merges vars (spec variables → CLI vars).
+- `--file/-f`: Path to the spec (defaults to `env.yaml`).
+- `--env/-e`: Environment key (falls back to `PLTF_DEFAULT_ENV` or profile defaults).
+- `--modules/-m`: Custom modules root (local path or git ref). Modules with `source: custom` are resolved here before embedded ones.
+- `--out/-o`: Output directory (default `.pltf/<env>/workspace` or `.pltf/<env>/<service>/workspace`).
+- `--var/-v key=value`: CLI vars merge over spec variables and support strings, numbers, JSON, and lists.
+- `--target`, `--parallelism`, `--lock`, `--lock-timeout`, `--no-color`, `--input`, `--refresh`, `--plan-file`, `--detailed-exitcode`, `--json` (passed to Terraform).
+- Set `DAGGER_HOST` to target a remote Dagger engine; `PLTF_DAGGER_LOG`, `PLTF_DEBUG`, or `PLTF_VERBOSE` enable verbose Dagger logging.
 
 ## Terraform helpers
-Terraform commands live under `pltf terraform ...` and auto-generate before running TF. Use `--engine tofu` to run OpenTofu.
-These commands now use a workspace-style root and pass `-var-file=<env>.tfvars` for the selected env; secrets remain in env/CI.
-Terraform/OpenTofu runs are executed inside Dagger; set `DAGGER_HOST` to target a remote engine.
-Credential injection for Dagger runs:
-- All host environment variables are passed into the Terraform container.
-- `PLTF_TF_FILE_<NAME>=/path/to/file` mounts the file and sets `<NAME>` to the mounted path (if not already set).
-  This always overrides the env var inside the container.
-- `PLTF_TF_SECRET_<NAME>=<value>` injects `<NAME>` as a Dagger secret env var (masked in logs/cache).
-- `PLTF_TF_SECRET_FILE_<NAME>=/path/to/file` mounts the file as a Dagger secret at `/run/secrets/<NAME>` and sets `<NAME>` to that path.
-Example (GCP JSON key):
-`PLTF_TF_FILE_GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/key.json`
-Provider version overrides (env vars):
-- `PLTF_PROVIDER_AWS_VERSION`
-- `PLTF_PROVIDER_GCP_VERSION`
-- `PLTF_PROVIDER_AZURE_VERSION`
-- `PLTF_PROVIDER_K8S_VERSION`
-- `PLTF_PROVIDER_HELM_VERSION`
-- `PLTF_PROVIDER_KUSTOMIZE_VERSION`
-```bash
-pltf terraform plan    -f service.yaml -e dev    # plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)
-pltf terraform apply   -f env.yaml    -e prod    # apply
-pltf terraform destroy -f env.yaml    -e prod    # destroy
-pltf terraform output  -f service.yaml -e dev    # outputs (--json supported)
-pltf terraform force-unlock -f env.yaml -e prod --lock-id=<id>
-```
-Common flags: `--target/-t`, `--parallelism/-p`, `--lock/-l`, `--lock-timeout/-T`, `--no-color/-C`, `--input/-i`, `--refresh/-r`, `--plan-file/-P`, `--detailed-exitcode/-d`, `--json/-j`.
 
-## Preview
-Quick summary (provider, backend, labels, modules) without TF.
-```bash
-pltf preview -f env.yaml -e prod
-```
+### `pltf terraform plan`
 
-## Module inventory
-```bash
-pltf module list [-m ./modules] [-o table|json|yaml]
-pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
-pltf module init --path ./modules/aws_eks [--force]
-```
+- Builds images defined in the spec (no push), generates the workspace, and runs `terraform plan`.
+- Supports `--scan`, `--cost`, `--rover`, `--detailed-exitcode`, `--plan-file`, and the shared flags above.
+- Produces `.pltf-plan.tfplan`, optional plan JSON, tfsec/cost summaries, and reruns `terraform show -json` for Rover.
+- Example: `pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`
 
-## Custom backends
-In env spec `backend.type` can be `s3|gcs|azurerm` regardless of provider. Optional `region`, `container`, `resource_group`, `profile` (S3) supported.
+### `pltf terraform apply`
 
-## Custom modules
-- Mark a module with `source: custom` to force lookup in your custom modules root.
-- Provide a custom root via `--modules` or profile `modules_root`; embedded modules remain available for everything else.
-- Generate module.yaml for your own TF module with `pltf module init --path <module_dir> [--force]`.
+- Builds and pushes images (host registry auth from `~/.docker`), reuses the shared plugin cache, and runs `terraform apply -auto-approve` (no prompt).
+- Example: `pltf terraform apply -f env.yaml -e prod`
 
-## Environment defaults
-`PLTF_DEFAULT_ENV` or profile `default_env` let you omit `--env` when only one environment applies.
+### `pltf terraform destroy`
 
-## Completions
-```bash
-pltf completion bash|zsh|fish|powershell
-```
+- Builds images (no push) and runs `terraform destroy -auto-approve`.
+- Example: `pltf terraform destroy -f env.yaml -e prod`
+
+### `pltf terraform output`
+
+- Prints outputs and optionally renders JSON (`--json`).
+- Example: `pltf terraform output -f service.yaml -e dev --json`
+
+### `pltf terraform graph`
+
+- Emits DOT graphs. Default runs `terraform graph`, `--mode spec` walks YAML dependencies, and `--plan-file/-P` reuses saved plans.
+- Example: `pltf terraform graph -f env.yaml -e dev | dot -Tpng > graph.png`
+
+### `pltf terraform force-unlock`
+
+- Clears Terraform locks with `--lock-id`.
+- Example: `pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345`
+
+## Validation & generation
+
+- `pltf validate` checks spec structure, refs, and readiness for rendering.
+- `pltf generate` renders Terraform-only workspaces; file inputs are copied/rewired into the output tree.
+- Flags: `--modules/-m`, `--out/-o`, `--var/-v`.
+- Examples:
+  ```bash
+  pltf validate -f env.yaml -e prod
+  pltf generate -f service.yaml -e prod -o .pltf/example/payments/workspace
+  pltf generate -f service.yaml -e dev -m ./custom-mods --var cluster_name=my-dev
+  ```
+
+## Module commands
+
+- `pltf module list|get` examine modules from the embedded root or `--modules` override.
+- `pltf module init` generates `module.yaml` metadata (`--force` overwrites).
+- Example: `pltf module list -m ./modules -o json`
+
+## Images
+
+- `pltf image build` runs a Dagger session that builds every declared image (optionally pushing via `--push`).
+- Builds run concurrently and reuse the `pltf-image-cache` volume for BuildKit layers.
+- Images may declare a `platforms` list (`["linux/amd64","linux/arm64"]` style) to target other OS/ARCH combos; when omitted, the host OS/ARCH is used.
+- Example: `pltf image build -f service.yaml -e dev --push`

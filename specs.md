@@ -151,12 +151,16 @@ images:
       - ghcr.io/acme/app:${env_name}
     buildArgs:
       ENV: ${env_name}
+    platforms:
+      - linux/amd64
+      - linux/arm64
 ```
 Notes:
 - `tags` are optional; when pushing images, at least one tag is required.
 - Authenticate to registries outside of pltf (e.g., `docker login`) before running `pltf image build` or `pltf terraform apply`.
 - `pltf terraform plan` builds images; `pltf terraform apply` builds + pushes them.
 - Use `include`/`exclude` to filter the build context sent to Dagger.
+- Use `platforms` to declare the target OS/ARCH combos (`linux/amd64`, `linux/arm64`, etc.); when absent, the host OS/ARCH is used.
 - For Dockerfile build secrets, set `PLTF_IMG_SECRET_<NAME>` or `PLTF_IMG_SECRET_FILE_<NAME>` and use `RUN --mount=type=secret,id=<NAME>` in the Dockerfile.
 
 ## Variable precedence

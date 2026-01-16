@@ -1,159 +1,88 @@
 # Platform Usage
 
-Use this page as a practical guide to the most common flows in pltf.
+This page walks through the most common CLI flows, CI/CD patterns, and how `pltf` keeps Terraform runs deterministic and cache-friendly.
 
-## Validate
+## Validate / Preview / Generate
+
 ```bash
 pltf validate -f env.yaml -e prod
-pltf validate -f service.yaml -e dev
-```
-- Runs structural validation before render/apply.
-- Picks environment from `--env`, `PLTF_DEFAULT_ENV`, or profile `default_env`.
-
-## Preview
-```bash
-pltf preview -f env.yaml -e prod
-```
-- Shows provider, backend type, labels, and modules without running Terraform.
-
-## Generate (Terraform only)
-```bash
-pltf generate -f env.yaml -e dev
+pltf preview  -f example/service.yaml -e prod
 pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace
-pltf generate -f service.yaml -e dev --var cluster_name=my-dev
 ```
-- `--modules/-m` custom root (local path or git ref); modules with `source: custom` resolve here first.
-- `--out/-o` defaults to `.pltf/<env_name>/workspace` or `.pltf/<env_name>/<service>/workspace`.
-- `--var/-v` merges over spec variables → CLI vars.
-- File inputs pointing to existing files in the spec directory are copied into the output and paths are updated.
 
-## Terraform commands
+- `validate` checks spec structure, references, and wiring before any generation. It picks the environment via `--env`, `PLTF_DEFAULT_ENV`, or the profile `default_env`.  
+- `preview` surfaces providers, backend, labels, and modules without invoking Terraform.  
+- `generate` renders workspace-ready Terraform—file inputs are copied into the output tree, and `--var/-v` overrides merge over spec vars.  
+- `--modules/-m` selects a custom module root (local path or git ref); modules tagged `source: custom` resolve only from the custom root.  
+- `--out/-o` defaults to `.pltf/<env>/workspace` or `.pltf/<env>/<service>/workspace`.
+
+## Terraform Commands
+
 ```bash
-pltf terraform plan    -f service.yaml -e dev    # supports --target, --parallelism, --detailed-exitcode, --plan-file
-pltf terraform apply   -f env.yaml    -e prod
-pltf terraform destroy -f env.yaml    -e prod
+pltf terraform plan    -f service.yaml -e dev     # supports --scan, --cost, --rover, --plan-file
+pltf terraform apply   -f env.yaml     -e prod
+pltf terraform destroy -f env.yaml     -e prod
 pltf terraform output  -f service.yaml -e dev --json
 pltf terraform force-unlock -f env.yaml -e prod --lock-id=<id>
 ```
-- Automatically generates Terraform, ensures backend (S3/GCS/Azurerm).
-- Common flags: `--target/-t`, `--parallelism/-p`, `--lock/-l`, `--lock-timeout/-T`, `--no-color/-C`, `--input/-i`, `--refresh/-r`, `--plan-file/-P`, `--detailed-exitcode/-d`, `--json/-j`.
+
+- Every Terraform helper runs inside Dagger with the shared workspace/cache environment and mounts credentials (`~/.aws`, `~/.docker`, etc.).  
+- Plan/apply/destroy all run `terraform plan` first and keep `.pltf-plan.tfplan` plus optional tfsec/cost summaries or Rover output.  
+- Apply/destroy append `-auto-approve` so there’s no interactive approval.  
+- `plan`/`destroy` build images without pushing; `apply` builds and then pushes with the host registry credentials.  
+### Common Terraform flags
+
+- `--target/-t`, `--parallelism/-p`, `--lock/-l`, `--lock-timeout/-T`, `--no-color/-C`, `--input/-i`, `--refresh/-r`, `--plan-file/-P`, `--detailed-exitcode/-d`, `--json/-j`.
 
 ## Module inventory
+
 ```bash
 pltf module list [-m ./modules] [-o table|json|yaml]
 pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
 pltf module init --path ./modules/aws_eks [--force]
 ```
-- Use `source: custom` in specs to force lookup from your custom root (`--modules` or profile `modules_root`, local or git); embedded modules remain available.
+
+- Lists modules from embedded and custom roots; `source: custom` modules resolve only from your `--modules` path or profile `modules_root`.  
+- `module init` emits `module.yaml` from an existing Terraform module directory (`--force` overwrites).
 
 ## Profiles & Defaults
-- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) can set `modules_root`, `default_env`, `default_out`, `telemetry`.
-- `PLTF_DEFAULT_ENV` is also respected for picking the environment.
+
+- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) sets `modules_root`, `default_env`, `default_out`, and telemetry controls.  
+- `PLTF_DEFAULT_ENV` is also respected when choosing the environment.
 
 ## Backends
-- `backend.type` can be `s3|gcs|azurerm` (independent of provider).
-- `backend.profile` supports cross-account S3; optional `region`, `container`, `resource_group`.
+
+- `backend.type` is independent of provider (`s3`, `gcs`, `azurerm`...).  
+- Optional `backend.profile`, `region`, `container`, and `resource_group` support cross-account S3 or Azure storage.
 
 ## CI/CD integration
 
-Below are example GitHub Actions workflows that use `pltf` to plan/apply.
+`pltf` works nicely in GitHub Actions, GitLab CI, or any runner that can install Go and Terraform. Jobs share the same env vars/caches as local runs.
 
 ### Matrix plan across environments
-Plans every environment entry in a spec. Uses `example/env.yaml` as a template; adjust paths and secrets per your repo.
+
+- Checkout + setup Go/Terraform.  
+- Run a matrix plan job once per env/region.  
+- Cache `GITHUB_TOKEN`, AWS credentials, and the `.pltf` workspace artifacts for reuse in later steps or PR comments.  
+- Example plan step:
 
 ```yaml
-name: Terraform Plan (matrix)
-
-on:
-  pull_request:
-    branches: [ "**" ]
-
-jobs:
-  plan:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        env: [dev, staging, prod]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.8.5
-      - name: Install pltf
-        run: |
-          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
-          echo "$HOME/go/bin" >> "$GITHUB_PATH"
-      - name: Terraform plan (${{ matrix.env }})
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-1
-        run: |
-          pltf terraform plan -f example/env.yaml --env ${{ matrix.env }}
+- name: Terraform plan
+  run: |
+    pltf terraform plan -f example/env.yaml --env ${{ matrix.env }}
 ```
 
 ### Deploy on branch/tag
-- `main` merges deploy to staging
-- tag pushes deploy to production
-- other branches can deploy to a "development" environment (optional apply)
+
+- Tags push to prod, `main` deploys staging, others map to `development`.  
+- Select the env in-step and call `pltf terraform plan` + auto-approved `pltf terraform apply`.  
+- Example apply step (staging/prod only):
 
 ```yaml
-name: Terraform Deploy
-
-on:
-  push:
-    branches: [ main ]
-    tags: [ "*" ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-      - uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.8.5
-      - name: Install pltf
-        run: |
-          go install -ldflags "-X 'pltf/pkg/version.Version=${{ github.sha }}'" ./...
-          echo "$HOME/go/bin" >> "$GITHUB_PATH"
-      - name: Select env
-        id: select
-        run: |
-          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
-            echo "env=prod" >> "$GITHUB_OUTPUT"
-          elif [[ "${GITHUB_REF_NAME}" == "main" ]]; then
-            echo "env=staging" >> "$GITHUB_OUTPUT"
-          else
-            echo "env=development" >> "$GITHUB_OUTPUT"
-          fi
-      - name: Plan
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-1
-        run: |
-          pltf terraform plan -f example/env.yaml --env ${{ steps.select.outputs.env }}
-      - name: Apply (staging/prod only)
-        if: github.event_name == 'push'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ap-northeast-1
-        run: |
-          pltf terraform apply -f example/env.yaml --env ${{ steps.select.outputs.env }} --auto-approve
+- name: Apply
+  if: github.event_name == 'push'
+  run: |
+    pltf terraform apply -f example/env.yaml --env ${{ steps.select.outputs.env }}
 ```
 
-Notes:
-- Replace AWS env vars with GCP/Azure equivalents if using those providers.
-- The PR plan job posts a sticky comment with diffs and optional AI risk review when `OPENAI_API_KEY` is set.
-- For services, swap `example/env.yaml` with your service spec and set the correct env list.
+> Tips: swap AWS env vars with GCP/Azure equivalents and run `pltf terraform plan` on service specs when verifying app deployments. Use `OPENAI_API_KEY` to automatically post plan summaries/AI critiques in PR comments.

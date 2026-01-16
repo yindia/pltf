@@ -581,6 +581,44 @@
 </li>
                 
                 
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/pltf/workflows/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Terraform Workflows
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/pltf/caching/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Image & Plugin Caching
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                
             </ul>
         </div>
     </div>
@@ -628,177 +666,121 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>pltf auto-detects whether a spec is an <strong>Environment</strong>, <strong>Service</strong>, or <strong>Stack</strong> based on <code>kind</code>. Most commands accept <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, and <code>--var/-v key=value</code>.</p>
-<h2 id="command-catalog">Command catalog</h2>
+    <p><code>pltf</code> detects the spec kind (Environment, Service, or Stack) and merges stack/env/service layers before leaning on Terraform. Every command supports the shared flags <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, and <code>--var/-v key=value</code> unless noted.</p>
+<h2 id="covered-commands">Covered commands</h2>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>Command</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pltf validate</code></td>
+<td>Structural validation for specs and wiring</td>
+</tr>
+<tr>
+<td><code>pltf preview</code></td>
+<td>Summarizes providers, backend, variables, and module wiring</td>
+</tr>
+<tr>
+<td><code>pltf generate</code></td>
+<td>Renders Terraform workspaces without running Terraform</td>
+</tr>
+<tr>
+<td><code>pltf terraform plan/apply/destroy</code></td>
+<td>Builds images, generates, and executes Terraform via Dagger</td>
+</tr>
+<tr>
+<td><code>pltf terraform graph</code></td>
+<td>Terraform/spec DOT graphs (supports <code>--mode</code>)</td>
+</tr>
+<tr>
+<td><code>pltf terraform output</code></td>
+<td>Shows outputs (JSON support)</td>
+</tr>
+<tr>
+<td><code>pltf terraform force-unlock</code></td>
+<td>Removes stale Terraform locks (<code>--lock-id</code> required)</td>
+</tr>
+<tr>
+<td><code>pltf module list|get|init</code></td>
+<td>Inspect modules from embedded/custom roots</td>
+</tr>
+<tr>
+<td><code>pltf image build</code></td>
+<td>Build/push Docker images defined in the spec via Dagger</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="shared-flags">Shared flags</h2>
 <ul>
-<li><code>pltf validate</code> — validate specs.</li>
-<li><code>pltf generate</code> — render a workspace-style Terraform root (single env with <code>--env</code>, all envs if omitted).</li>
-<li><code>pltf preview</code> — summarize provider/backend/labels/modules.</li>
-<li><code>pltf terraform plan|apply|destroy|output|force-unlock|graph</code> — generate + run Terraform/OpenTofu inside Dagger (use <code>--engine tofu</code> for OpenTofu).</li>
-<li><code>pltf module list|get|init</code> — module inventory and metadata generation.</li>
-<li><code>pltf image build</code> — build/push Docker images defined in Environment or Service specs.</li>
+<li><code>--file/-f</code>: Path to the spec (defaults to <code>env.yaml</code>).</li>
+<li><code>--env/-e</code>: Environment key (falls back to <code>PLTF_DEFAULT_ENV</code> or profile defaults).</li>
+<li><code>--modules/-m</code>: Custom modules root (local path or git ref). Modules with <code>source: custom</code> are resolved here before embedded ones.</li>
+<li><code>--out/-o</code>: Output directory (default <code>.pltf/&lt;env&gt;/workspace</code> or <code>.pltf/&lt;env&gt;/&lt;service&gt;/workspace</code>).</li>
+<li><code>--var/-v key=value</code>: CLI vars merge over spec variables and support strings, numbers, JSON, and lists.</li>
+<li><code>--target</code>, <code>--parallelism</code>, <code>--lock</code>, <code>--lock-timeout</code>, <code>--no-color</code>, <code>--input</code>, <code>--refresh</code>, <code>--plan-file</code>, <code>--detailed-exitcode</code>, <code>--json</code> (passed to Terraform).</li>
+<li>Set <code>DAGGER_HOST</code> to target a remote Dagger engine; <code>PLTF_DAGGER_LOG</code>, <code>PLTF_DEBUG</code>, or <code>PLTF_VERBOSE</code> enable verbose Dagger logging.</li>
 </ul>
-<h3 id="validate">validate</h3>
-<ul>
-<li><strong>What:</strong> Validate Environment, Service, or Stack specs; auto-detects kind.</li>
-<li><strong>Flags:</strong></li>
-<li><code>--file/-f</code> — Path to the spec (default <code>env.yaml</code>).</li>
-<li><code>--env/-e</code> — Environment key (dev/prod/etc.).</li>
-<li><strong>Example:</strong> <code>pltf validate -f service.yaml -e dev</code></li>
-</ul>
-<h3 id="generate">generate</h3>
-<ul>
-<li><strong>What:</strong> Render workspace-ready Terraform only; no init/apply.</li>
-<li><strong>Flags:</strong></li>
-<li><code>--file/-f</code> — Path to the spec.</li>
-<li><code>--env/-e</code> — Environment key.</li>
-<li><code>--modules/-m</code> — Custom modules root (local path or git ref); <code>source: custom</code> resolves here first.</li>
-<li><code>--out/-o</code> — Output dir (defaults to <code>.pltf/&lt;env_name&gt;/workspace</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>).</li>
-<li><code>--var/-v</code> — CLI var override <code>key=value</code>.</li>
-<li><strong>Example:</strong> <code>pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace</code></li>
-</ul>
-<h3 id="preview">preview</h3>
-<ul>
-<li><strong>What:</strong> Show provider, backend, labels, modules without running Terraform.</li>
-<li><strong>Flags:</strong> <code>--file/-f</code>, <code>--env/-e</code></li>
-<li><strong>Example:</strong> <code>pltf preview -f env.yaml -e prod</code></li>
-</ul>
-<h3 id="terraform-plan">terraform plan</h3>
-<ul>
-<li><strong>What:</strong> Build images (if configured), generate, then run <code>terraform plan</code> with standard flags (or <code>tofu</code> via <code>--engine tofu</code>).</li>
-<li><strong>Plan flags:</strong></li>
-<li><code>--target/-t</code> — Target address (repeatable).</li>
-<li><code>--parallelism/-p</code> — Max parallel operations.</li>
-<li><code>--lock/-l</code> — Lock state (default true).</li>
-<li><code>--lock-timeout/-T</code> — Lock timeout (e.g., 30s).</li>
-<li><code>--no-color/-C</code> — Disable color output.</li>
-<li><code>--input/-i</code> — Prompt for input (default false).</li>
-<li><code>--refresh/-r</code> — Refresh state before plan (default true).</li>
-<li><code>--detailed-exitcode/-d</code> — Enable TF detailed exit codes.</li>
-<li><code>--plan-file/-P</code> — Write plan to a file.</li>
-<li><strong>Shared flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>, <code>--engine</code></li>
-<li><strong>Example:</strong> <code>pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan</code></li>
-</ul>
-<h3 id="terraform-apply">terraform apply</h3>
-<ul>
-<li><strong>What:</strong> Build + push images (if configured), generate, then run <code>terraform apply -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
-<li><strong>Flags:</strong> Shared flags (<code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>, <code>--engine</code>).</li>
-<li><strong>Example:</strong> <code>pltf terraform apply -f env.yaml -e prod</code></li>
-</ul>
-<h3 id="terraform-destroy">terraform destroy</h3>
-<ul>
-<li><strong>What:</strong> Generate (if needed) + run <code>terraform destroy -auto-approve</code> (or <code>tofu</code> via <code>--engine tofu</code>).</li>
-<li><strong>Flags:</strong> Same as apply.</li>
-<li><strong>Example:</strong> <code>pltf terraform destroy -f env.yaml -e prod</code></li>
-</ul>
-<h3 id="terraform-output">terraform output</h3>
-<ul>
-<li><strong>What:</strong> Show outputs (optionally JSON).</li>
-<li><strong>Flags:</strong> <code>--json/-j</code> (JSON output), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
-<li><strong>Example:</strong> <code>pltf terraform output -f service.yaml -e dev --json</code></li>
-</ul>
-<h3 id="terraform-force-unlock">terraform force-unlock</h3>
-<ul>
-<li><strong>What:</strong> Force unlock state.</li>
-<li><strong>Flags:</strong> <code>--lock-id</code> (required), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
-<li><strong>Example:</strong> <code>pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345</code></li>
-</ul>
-<h3 id="terraform-graph">terraform graph</h3>
-<ul>
-<li><strong>What:</strong> Emit DOT graph. Default runs <code>terraform graph</code>; <code>--mode spec</code> renders a dependency graph from the YAML only. Use <code>--engine tofu</code> to run <code>tofu graph</code>.</li>
-<li><strong>Flags:</strong> <code>--mode terraform|spec</code> (default terraform), <code>--plan-file/-P</code> (passed to terraform graph), plus shared <code>--file/-f</code>, <code>--env/-e</code>, <code>--modules/-m</code>, <code>--out/-o</code>, <code>--engine</code></li>
-<li><strong>Example:</strong> <code>pltf terraform graph -f env.yaml -e dev | dot -Tpng &gt; graph.png</code></li>
-</ul>
-<h3 id="module-list">module list</h3>
-<ul>
-<li><strong>What:</strong> List module inventory from embedded/custom roots.</li>
-<li><strong>Flags:</strong> <code>--modules/-m</code> (modules root), <code>--output/-o</code> (<code>table|json|yaml</code>)</li>
-<li><strong>Example:</strong> <code>pltf module list -m ./modules -o json</code></li>
-</ul>
-<h3 id="module-get">module get</h3>
-<ul>
-<li><strong>What:</strong> Show module details (inputs/outputs).</li>
-<li><strong>Flags:</strong> Same as module list.</li>
-<li><strong>Example:</strong> <code>pltf module get aws_eks -m ./modules</code></li>
-</ul>
-<h3 id="module-init">module init</h3>
-<ul>
-<li><strong>What:</strong> Generate <code>module.yaml</code> from an existing Terraform module dir.</li>
-<li><strong>Flags:</strong> <code>--path</code> (module dir), <code>--name</code>, <code>--type</code>, <code>--description</code>, <code>--out</code>, <code>--force</code> (overwrite)</li>
-<li><strong>Example:</strong> <code>pltf module init --path ./modules/aws_eks --force</code></li>
-</ul>
-<h3 id="image-build">image build</h3>
-<ul>
-<li><strong>What:</strong> Build (and optionally push) images declared in the spec using Dagger.</li>
-<li><strong>Flags:</strong> <code>--file/-f</code>, <code>--env/-e</code>, <code>--push</code>, <code>--image</code> (repeatable filter)</li>
-<li><strong>Example:</strong> <code>pltf image build -f service.yaml -e dev --push</code>
-Notes:</li>
-<li>To connect to a remote Dagger engine, set <code>DAGGER_HOST</code> before running the command.</li>
-<li>All images in the spec are built in a single Dagger session and run concurrently.</li>
-</ul>
-<h2 id="validate_1">Validate</h2>
-<p>Structural validation for Environment, Service, and Stack specs.
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev
-</span></code></pre></div></p>
-<h2 id="generate_1">Generate</h2>
-<p>Render Terraform without running it. File inputs that point to existing files (relative to the spec) are copied into the output directory and paths are updated.
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>dev
-</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/payments/workspace
-</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w"> </span>-m<span class="w"> </span>./custom-mods<span class="w"> </span>--var<span class="w"> </span><span class="nv">cluster_name</span><span class="o">=</span>my-dev
-</span></code></pre></div>
-Flags:
-- <code>--modules/-m</code> custom modules root (local path or git ref). Modules with <code>source: custom</code> are resolved only from the custom root; others fall back to embedded modules.
-- <code>--out/-o</code> output dir (defaults <code>.pltf/&lt;env_name&gt;/workspace</code> or <code>.pltf/&lt;env_name&gt;/&lt;service&gt;/workspace</code>).
-- <code>--var/-v</code> merges vars (spec variables → CLI vars).</p>
 <h2 id="terraform-helpers">Terraform helpers</h2>
-<p>Terraform commands live under <code>pltf terraform ...</code> and auto-generate before running TF. Use <code>--engine tofu</code> to run OpenTofu.
-These commands now use a workspace-style root and pass <code>-var-file=&lt;env&gt;.tfvars</code> for the selected env; secrets remain in env/CI.
-Terraform/OpenTofu runs are executed inside Dagger; set <code>DAGGER_HOST</code> to target a remote engine.
-Credential injection for Dagger runs:
-- All host environment variables are passed into the Terraform container.
-- <code>PLTF_TF_FILE_&lt;NAME&gt;=/path/to/file</code> mounts the file and sets <code>&lt;NAME&gt;</code> to the mounted path (if not already set).
-  This always overrides the env var inside the container.
-- <code>PLTF_TF_SECRET_&lt;NAME&gt;=&lt;value&gt;</code> injects <code>&lt;NAME&gt;</code> as a Dagger secret env var (masked in logs/cache).
-- <code>PLTF_TF_SECRET_FILE_&lt;NAME&gt;=/path/to/file</code> mounts the file as a Dagger secret at <code>/run/secrets/&lt;NAME&gt;</code> and sets <code>&lt;NAME&gt;</code> to that path.
-Example (GCP JSON key):
-<code>PLTF_TF_FILE_GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/key.json</code>
-Provider version overrides (env vars):
-- <code>PLTF_PROVIDER_AWS_VERSION</code>
-- <code>PLTF_PROVIDER_GCP_VERSION</code>
-- <code>PLTF_PROVIDER_AZURE_VERSION</code>
-- <code>PLTF_PROVIDER_K8S_VERSION</code>
-- <code>PLTF_PROVIDER_HELM_VERSION</code>
-- <code>PLTF_PROVIDER_KUSTOMIZE_VERSION</code>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">    </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># plan (supports --target, --parallelism, --detailed-exitcode, --plan-file)</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>apply<span class="w">   </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># apply</span>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>destroy<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w">    </span>-e<span class="w"> </span>prod<span class="w">    </span><span class="c1"># destroy</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>output<span class="w">  </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w">    </span><span class="c1"># outputs (--json supported)</span>
-</span><span id="__span-2-5"><a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>force-unlock<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>--lock-id<span class="o">=</span>&lt;id&gt;
-</span></code></pre></div>
-Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--lock/-l</code>, <code>--lock-timeout/-T</code>, <code>--no-color/-C</code>, <code>--input/-i</code>, <code>--refresh/-r</code>, <code>--plan-file/-P</code>, <code>--detailed-exitcode/-d</code>, <code>--json/-j</code>.</p>
-<h2 id="preview_1">Preview</h2>
-<p>Quick summary (provider, backend, labels, modules) without TF.
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>pltf<span class="w"> </span>preview<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
-</span></code></pre></div></p>
-<h2 id="module-inventory">Module inventory</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>pltf<span class="w"> </span>module<span class="w"> </span>list<span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>./modules<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>table<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>pltf<span class="w"> </span>module<span class="w"> </span>get<span class="w"> </span>aws_eks<span class="w"> </span><span class="o">[</span>-m<span class="w"> </span>./modules<span class="o">]</span><span class="w"> </span><span class="o">[</span>-o<span class="w"> </span>table<span class="p">|</span>json<span class="p">|</span>yaml<span class="o">]</span>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>pltf<span class="w"> </span>module<span class="w"> </span>init<span class="w"> </span>--path<span class="w"> </span>./modules/aws_eks<span class="w"> </span><span class="o">[</span>--force<span class="o">]</span>
-</span></code></pre></div>
-<h2 id="custom-backends">Custom backends</h2>
-<p>In env spec <code>backend.type</code> can be <code>s3|gcs|azurerm</code> regardless of provider. Optional <code>region</code>, <code>container</code>, <code>resource_group</code>, <code>profile</code> (S3) supported.</p>
-<h2 id="custom-modules">Custom modules</h2>
+<h3 id="pltf-terraform-plan"><code>pltf terraform plan</code></h3>
 <ul>
-<li>Mark a module with <code>source: custom</code> to force lookup in your custom modules root.</li>
-<li>Provide a custom root via <code>--modules</code> or profile <code>modules_root</code>; embedded modules remain available for everything else.</li>
-<li>Generate module.yaml for your own TF module with <code>pltf module init --path &lt;module_dir&gt; [--force]</code>.</li>
+<li>Builds images defined in the spec (no push), generates the workspace, and runs <code>terraform plan</code>.</li>
+<li>Supports <code>--scan</code>, <code>--cost</code>, <code>--rover</code>, <code>--detailed-exitcode</code>, <code>--plan-file</code>, and the shared flags above.</li>
+<li>Produces <code>.pltf-plan.tfplan</code>, optional plan JSON, tfsec/cost summaries, and reruns <code>terraform show -json</code> for Rover.</li>
+<li>Example: <code>pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan</code></li>
 </ul>
-<h2 id="environment-defaults">Environment defaults</h2>
-<p><code>PLTF_DEFAULT_ENV</code> or profile <code>default_env</code> let you omit <code>--env</code> when only one environment applies.</p>
-<h2 id="completions">Completions</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pltf<span class="w"> </span>completion<span class="w"> </span>bash<span class="p">|</span>zsh<span class="p">|</span>fish<span class="p">|</span>powershell
-</span></code></pre></div>
+<h3 id="pltf-terraform-apply"><code>pltf terraform apply</code></h3>
+<ul>
+<li>Builds and pushes images (host registry auth from <code>~/.docker</code>), reuses the shared plugin cache, and runs <code>terraform apply -auto-approve</code> (no prompt).</li>
+<li>Example: <code>pltf terraform apply -f env.yaml -e prod</code></li>
+</ul>
+<h3 id="pltf-terraform-destroy"><code>pltf terraform destroy</code></h3>
+<ul>
+<li>Builds images (no push) and runs <code>terraform destroy -auto-approve</code>.</li>
+<li>Example: <code>pltf terraform destroy -f env.yaml -e prod</code></li>
+</ul>
+<h3 id="pltf-terraform-output"><code>pltf terraform output</code></h3>
+<ul>
+<li>Prints outputs and optionally renders JSON (<code>--json</code>).</li>
+<li>Example: <code>pltf terraform output -f service.yaml -e dev --json</code></li>
+</ul>
+<h3 id="pltf-terraform-graph"><code>pltf terraform graph</code></h3>
+<ul>
+<li>Emits DOT graphs. Default runs <code>terraform graph</code>, <code>--mode spec</code> walks YAML dependencies, and <code>--plan-file/-P</code> reuses saved plans.</li>
+<li>Example: <code>pltf terraform graph -f env.yaml -e dev | dot -Tpng &gt; graph.png</code></li>
+</ul>
+<h3 id="pltf-terraform-force-unlock"><code>pltf terraform force-unlock</code></h3>
+<ul>
+<li>Clears Terraform locks with <code>--lock-id</code>.</li>
+<li>Example: <code>pltf terraform force-unlock -f env.yaml -e prod --lock-id=12345</code></li>
+</ul>
+<h2 id="validation-generation">Validation &amp; generation</h2>
+<ul>
+<li><code>pltf validate</code> checks spec structure, refs, and readiness for rendering.</li>
+<li><code>pltf generate</code> renders Terraform-only workspaces; file inputs are copied/rewired into the output tree.</li>
+<li>Flags: <code>--modules/-m</code>, <code>--out/-o</code>, <code>--var/-v</code>.</li>
+<li>Examples:
+  <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>validate<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>-o<span class="w"> </span>.pltf/example/payments/workspace
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pltf<span class="w"> </span>generate<span class="w"> </span>-f<span class="w"> </span>service.yaml<span class="w"> </span>-e<span class="w"> </span>dev<span class="w"> </span>-m<span class="w"> </span>./custom-mods<span class="w"> </span>--var<span class="w"> </span><span class="nv">cluster_name</span><span class="o">=</span>my-dev
+</span></code></pre></div></li>
+</ul>
+<h2 id="module-commands">Module commands</h2>
+<ul>
+<li><code>pltf module list|get</code> examine modules from the embedded root or <code>--modules</code> override.</li>
+<li><code>pltf module init</code> generates <code>module.yaml</code> metadata (<code>--force</code> overwrites).</li>
+<li>Example: <code>pltf module list -m ./modules -o json</code></li>
+</ul>
+<h2 id="images">Images</h2>
+<ul>
+<li><code>pltf image build</code> runs a Dagger session that builds every declared image (optionally pushing via <code>--push</code>).</li>
+<li>Builds run concurrently and reuse the <code>pltf-image-cache</code> volume for BuildKit layers.</li>
+<li>Images may declare a <code>platforms</code> list (<code>["linux/amd64","linux/arm64"]</code> style) to target other OS/ARCH combos; when omitted, the host OS/ARCH is used.</li>
+<li>Example: <code>pltf image build -f service.yaml -e dev --push</code></li>
+</ul>
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -836,6 +818,18 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
                     <a class="text-2xl font-medium" href="../faq/">
                         
                         FAQ
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../workflows/">
+                        
+                        Terraform Workflows
+                        
+                    </a>
+                    
+                    <a class="text-2xl font-medium" href="../caching/">
+                        
+                        Image & Plugin Caching
                         
                     </a>
                     
@@ -989,106 +983,18 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
         
         
         
-        <a href="#command-catalog"
+        <a href="#covered-commands"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Command catalog
-        </a>
-        
-        
-        <a href="#validate"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            validate
-        </a>
-        
-        <a href="#generate"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            generate
-        </a>
-        
-        <a href="#preview"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            preview
-        </a>
-        
-        <a href="#terraform-plan"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform plan
-        </a>
-        
-        <a href="#terraform-apply"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform apply
-        </a>
-        
-        <a href="#terraform-destroy"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform destroy
-        </a>
-        
-        <a href="#terraform-output"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform output
-        </a>
-        
-        <a href="#terraform-force-unlock"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform force-unlock
-        </a>
-        
-        <a href="#terraform-graph"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            terraform graph
-        </a>
-        
-        <a href="#module-list"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            module list
-        </a>
-        
-        <a href="#module-get"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            module get
-        </a>
-        
-        <a href="#module-init"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            module init
-        </a>
-        
-        <a href="#image-build"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            image build
-        </a>
-        
-        
-
-        
-        <a href="#validate_1"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Validate
+            Covered commands
         </a>
         
 
         
-        <a href="#generate_1"
+        <a href="#shared-flags"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Generate
+            Shared flags
         </a>
         
 
@@ -1099,52 +1005,66 @@ Common flags: <code>--target/-t</code>, <code>--parallelism/-p</code>, <code>--l
             Terraform helpers
         </a>
         
+        
+        <a href="#pltf-terraform-plan"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform plan
+        </a>
+        
+        <a href="#pltf-terraform-apply"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform apply
+        </a>
+        
+        <a href="#pltf-terraform-destroy"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform destroy
+        </a>
+        
+        <a href="#pltf-terraform-output"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform output
+        </a>
+        
+        <a href="#pltf-terraform-graph"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform graph
+        </a>
+        
+        <a href="#pltf-terraform-force-unlock"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="3">
+            pltf terraform force-unlock
+        </a>
+        
+        
 
         
-        <a href="#preview_1"
+        <a href="#validation-generation"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Preview
+            Validation &amp; generation
         </a>
         
 
         
-        <a href="#module-inventory"
+        <a href="#module-commands"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Module inventory
+            Module commands
         </a>
         
 
         
-        <a href="#custom-backends"
+        <a href="#images"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Custom backends
-        </a>
-        
-
-        
-        <a href="#custom-modules"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Custom modules
-        </a>
-        
-
-        
-        <a href="#environment-defaults"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Environment defaults
-        </a>
-        
-
-        
-        <a href="#completions"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Completions
+            Images
         </a>
         
 
