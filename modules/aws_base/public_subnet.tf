@@ -3,15 +3,17 @@ resource "aws_subnet" "public_subnets" {
   cidr_block              = var.public_ipv4_cidr_blocks[count.index]
   availability_zone_id    = data.aws_availability_zones.current.zone_ids[count.index]
   vpc_id                  = local.vpc_id
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = var.public_subnet_map_public_ip_on_launch
 
-  tags = {
-    Name                                           = "pltf-${var.layer_name}-public-${data.aws_availability_zones.current.zone_ids[count.index]}"
-    "kubernetes.io/cluster/pltf-${var.layer_name}" = "shared"
-    type                                           = "public"
-    terraform                                      = "true"
-    "kubernetes.io/role/elb"                       = "1"
-  }
+  tags = merge(
+    {
+      Name                     = "pltf-${var.layer_name}-public-${data.aws_availability_zones.current.zone_ids[count.index]}"
+      type                     = "public"
+      terraform                = "true"
+      "kubernetes.io/role/elb" = "1"
+    },
+    local.cluster_tags
+  )
 }
 
 resource "aws_internet_gateway" "igw" {

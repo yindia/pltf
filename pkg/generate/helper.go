@@ -1,16 +1,17 @@
 package generate
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-
-	"encoding/json"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/hcl/v2"
+	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/zclconf/go-cty/cty"
 
 	"pltf/pkg/config"
@@ -229,4 +230,63 @@ func parseVarValue(v interface{}) interface{} {
 	default:
 		return t
 	}
+}
+
+// module.<moduleID>.<outputName> (index when outputName is not identifier-safe)
+func setAttrModuleOutputRef(body *hclwrite.Body, name, moduleID, outputName string) {
+	body.SetAttributeRaw(name, hclwrite.TokensForTraversal(moduleOutputTraversal(moduleID, outputName)))
+}
+
+// data.terraform_remote_state.env.outputs.<outputName> (index when outputName is not identifier-safe)
+func setAttrParentOutputRef(body *hclwrite.Body, name, outputName string) {
+	body.SetAttributeRaw(name, hclwrite.TokensForTraversal(parentOutputTraversal(outputName)))
+}
+
+func moduleOutputTraversal(moduleID, outputName string) hcl.Traversal {
+	trav := hcl.Traversal{
+		hcl.TraverseRoot{Name: "module"},
+	}
+	if isTraversalIdentifier(moduleID) {
+		trav = append(trav, hcl.TraverseAttr{Name: moduleID})
+	} else {
+		trav = append(trav, hcl.TraverseIndex{Key: cty.StringVal(moduleID)})
+	}
+	if isTraversalIdentifier(outputName) {
+		return append(trav, hcl.TraverseAttr{Name: outputName})
+	}
+	return append(trav, hcl.TraverseIndex{Key: cty.StringVal(outputName)})
+}
+
+func parentOutputTraversal(outputName string) hcl.Traversal {
+	trav := hcl.Traversal{
+		hcl.TraverseRoot{Name: "data"},
+		hcl.TraverseAttr{Name: "terraform_remote_state"},
+		hcl.TraverseAttr{Name: "env"},
+		hcl.TraverseAttr{Name: "outputs"},
+	}
+	if isTraversalIdentifier(outputName) {
+		return append(trav, hcl.TraverseAttr{Name: outputName})
+	}
+	return append(trav, hcl.TraverseIndex{Key: cty.StringVal(outputName)})
+}
+
+func isTraversalIdentifier(name string) bool {
+	if name == "" {
+		return false
+	}
+	for i := 0; i < len(name); i++ {
+		ch := name[i]
+		isAlpha := (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z')
+		isDigit := ch >= '0' && ch <= '9'
+		if i == 0 {
+			if !(isAlpha || ch == '_') {
+				return false
+			}
+			continue
+		}
+		if !(isAlpha || isDigit || ch == '_') {
+			return false
+		}
+	}
+	return true
 }

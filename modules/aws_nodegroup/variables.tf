@@ -1,3 +1,4 @@
+# tflint-ignore: terraform_unused_declarations
 data "aws_region" "current" {}
 
 data "aws_eks_cluster" "main" {
@@ -11,6 +12,7 @@ locals {
   }
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "env_name" {
   description = "Env name"
   type        = string
@@ -66,6 +68,7 @@ variable "ami_type" {
   default = "AL2023_x86_64_STANDARD"
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "use_gpu" {
   type    = bool
   default = false

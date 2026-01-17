@@ -10,6 +10,10 @@ output "k8s_cluster_name" {
   value = aws_eks_cluster.cluster.name
 }
 
+output "plt_cluster_type" {
+  value = true
+}
+
 output "k8s_openid_provider_url" {
   value = aws_iam_openid_connect_provider.cluster.url
 }

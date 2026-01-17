@@ -3,6 +3,7 @@ locals {
   mime_types      = jsondecode(file("${path.module}/mime.json"))
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "env_name" {
   description = "Env name"
   type        = string
@@ -54,5 +55,5 @@ variable "same_region_replication" {
 
 variable "enable_logging" {
   type    = bool
-  default = false
+  default = true
 }

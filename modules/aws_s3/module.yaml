@@ -2,6 +2,34 @@ name: aws_s3
 type: aws_s3
 provider: aws
 version: 1.0.0
+resources:
+    - aws_cloudfront_origin_access_identity.read
+    - aws_iam_policy.replication
+    - aws_iam_role.replication
+    - aws_iam_role_policy_attachment.replication
+    - aws_s3_bucket.bucket
+    - aws_s3_bucket.replica
+    - aws_s3_bucket_cors_configuration.bucket
+    - aws_s3_bucket_lifecycle_configuration.bucket
+    - aws_s3_bucket_lifecycle_configuration.replica
+    - aws_s3_bucket_logging.bucket
+    - aws_s3_bucket_logging.replica
+    - aws_s3_bucket_object.user_files
+    - aws_s3_bucket_ownership_controls.ownership_controls
+    - aws_s3_bucket_policy.policy
+    - aws_s3_bucket_policy.replica_bucket_policy
+    - aws_s3_bucket_public_access_block.block
+    - aws_s3_bucket_public_access_block.block_for_replica
+    - aws_s3_bucket_replication_configuration.bucket
+    - aws_s3_bucket_server_side_encryption_configuration.bucket
+    - aws_s3_bucket_server_side_encryption_configuration.replica
+    - aws_s3_bucket_versioning.bucket
+    - aws_s3_bucket_versioning.replica
+data:
+    - data.aws_iam_policy_document.replica_bucket_policy
+    - data.aws_iam_policy_document.replication
+    - data.aws_iam_policy_document.replication_trust
+    - data.aws_iam_policy_document.s3_policy
 inputs:
     - default: true
       name: block_public
@@ -18,6 +46,10 @@ inputs:
       name: cors_rule
       required: false
       type: any
+    - default: true
+      name: enable_logging
+      required: false
+      type: bool
     - description: Env name
       name: env_name
       required: true
@@ -42,10 +74,6 @@ inputs:
       name: same_region_replication
       required: false
       type: bool
-    - name: enable_logging
-      type: bool
-      required: false
-      default: true
 outputs:
     - name: bucket_arn
       type: string

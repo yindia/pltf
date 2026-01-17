@@ -5,7 +5,7 @@ data "external" "thumbprint" {
   program = [
     "/bin/bash",
     "${path.module}/thumbprint.sh",
-    data.aws_region.current.name,
+    data.aws_region.current.id,
   ]
 }
 

@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"pltf/pkg/clihelper"
 )
 
 // Global flags (if you want them later)
@@ -12,6 +14,12 @@ var (
 	flagVerbose   bool
 	flagTelemetry bool
 )
+
+var RootCmd *cobra.Command
+
+func init() {
+	RootCmd = rootCmd
+}
 
 // rootCmd is the base command for the CLI.
 // Subcommands like `env` and `service` are added to this in their own init() funcs.
@@ -55,7 +63,7 @@ func Execute() {
 func init() {
 	// Global flags for all subcommands
 	defaultTelemetry := false
-	if p := loadProfile(); p != nil {
+	if p := clihelper.LoadProfile(); p != nil {
 		defaultTelemetry = p.Telemetry
 	}
 	rootCmd.PersistentFlags().BoolVarP(

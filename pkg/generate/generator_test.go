@@ -109,6 +109,66 @@ func TestGeneratorServiceUsesParentOutputs(t *testing.T) {
 	assertFiles(t, outDir, "versions.tf", "providers.tf", "state.tf", filepath.Join("eks.tf"))
 }
 
+func TestGeneratorServiceSkipsEnvDependsOn(t *testing.T) {
+	envCfg := &config.EnvironmentConfig{
+		Metadata: config.EnvironmentMetadata{
+			Name:     "example",
+			Org:      "testorg",
+			Provider: "aws",
+		},
+		Environments: map[string]config.EnvironmentEntry{
+			"dev": {Account: "111111111111", Region: "us-east-1"},
+		},
+		Modules: []config.Module{
+			{ID: "base", Type: "aws_base"},
+		},
+	}
+
+	svcCfg := &config.ServiceConfig{
+		Metadata: config.ServiceMetadata{
+			Name: "payments",
+			EnvRef: map[string]config.ServiceEnvRefEntry{
+				"dev": {},
+			},
+		},
+		Modules: []config.Module{
+			{
+				ID:   "eks",
+				Type: "aws_eks",
+				Inputs: map[string]interface{}{
+					"vpc_id": "module.base.vpc_id",
+					// satisfy required input
+					"cluster_name":   "svc-dev",
+					"enable_metrics": true,
+				},
+			},
+		},
+	}
+
+	modRoot, err := modules.Materialize()
+	if err != nil {
+		t.Fatalf("materialize embedded modules: %v", err)
+	}
+	outDir := t.TempDir()
+
+	g, err := NewGenerator(envCfg, svcCfg, modRoot, "", "dev", outDir, "", nil)
+	if err != nil {
+		t.Fatalf("NewGenerator(service) error: %v", err)
+	}
+	if err := g.Generate(); err != nil {
+		t.Fatalf("Generate(service) error: %v", err)
+	}
+
+	eksTf := filepath.Join(outDir, "eks.tf")
+	data, err := os.ReadFile(eksTf)
+	if err != nil {
+		t.Fatalf("read generated eks.tf: %v", err)
+	}
+	if strings.Contains(string(data), "depends_on") {
+		t.Fatalf("expected no depends_on for env-only dependencies, got:\n%s", string(data))
+	}
+}
+
 func TestGeneratorIgnoresEmptyCustomRoot(t *testing.T) {
 	envCfg := &config.EnvironmentConfig{
 		Metadata: config.EnvironmentMetadata{
@@ -175,6 +235,7 @@ func TestGeneratorRejectsUnsafeOutDir(t *testing.T) {
 func TestReplaceIntrinsicPlaceholdersInValueRecurses(t *testing.T) {
 	g := &Generator{
 		envName: "platform",
+		envKey:  "dev",
 		envEntry: config.EnvironmentEntry{
 			Account: "123456789012",
 			Region:  "us-west-2",
@@ -201,7 +262,7 @@ func TestReplaceIntrinsicPlaceholdersInValueRecurses(t *testing.T) {
 	// Ensure input is not mutated.
 	origFirst := input["list"].([]interface{})[0]
 
-	got := g.replaceIntrinsicPlaceholdersInValue(input).(map[string]interface{})
+	got := g.replaceIntrinsicPlaceholdersInValue(input, true).(map[string]interface{})
 
 	if origFirst != "${account_id}" {
 		t.Fatalf("original input mutated: %v", origFirst)
@@ -217,7 +278,7 @@ func TestReplaceIntrinsicPlaceholdersInValueRecurses(t *testing.T) {
 	}
 	nestedSlice := list[2].([]interface{})
 	expectedLayer := "payments" // service name becomes layer for services
-	if nestedSlice[0] != expectedLayer || nestedSlice[1] != "platform" || nestedSlice[2] != expectedLayer {
+	if nestedSlice[0] != expectedLayer || nestedSlice[1] != "dev" || nestedSlice[2] != expectedLayer {
 		t.Fatalf("layer/env/parent placeholders not replaced: %v", nestedSlice)
 	}
 
@@ -238,12 +299,24 @@ func TestStringToTokensHandlesCurlyRefs(t *testing.T) {
 
 	file := hclwrite.NewEmptyFile()
 	body := file.Body()
-	body.SetAttributeRaw("region_val", g.stringToTokens("{region}"))
-	body.SetAttributeRaw("module_ref", g.stringToTokens("{module.dns.domain}"))
-	body.SetAttributeRaw("double_curly", g.stringToTokens("{{region}}"))
-	body.SetAttributeRaw("dollar_curly", g.stringToTokens("${region}"))
-	body.SetAttributeRaw("dollar_double_curly", g.stringToTokens("${{region}}"))
-	body.SetAttributeRaw("dollar_double_module", g.stringToTokens("${{module.dns.domain}}"))
+	if err := g.setAttribute(body, "region_val", "{region}", true); err != nil {
+		t.Fatalf("setAttribute region_val: %v", err)
+	}
+	if err := g.setAttribute(body, "module_ref", "{module.dns.domain}", true); err != nil {
+		t.Fatalf("setAttribute module_ref: %v", err)
+	}
+	if err := g.setAttribute(body, "double_curly", "{{region}}", true); err != nil {
+		t.Fatalf("setAttribute double_curly: %v", err)
+	}
+	if err := g.setAttribute(body, "dollar_curly", "${region}", true); err != nil {
+		t.Fatalf("setAttribute dollar_curly: %v", err)
+	}
+	if err := g.setAttribute(body, "dollar_double_curly", "${{region}}", true); err != nil {
+		t.Fatalf("setAttribute dollar_double_curly: %v", err)
+	}
+	if err := g.setAttribute(body, "dollar_double_module", "${{module.dns.domain}}", true); err != nil {
+		t.Fatalf("setAttribute dollar_double_module: %v", err)
+	}
 
 	out := string(file.Bytes())
 	if !strings.Contains(out, `region_val`) || strings.Contains(out, `{region}`) || !strings.Contains(out, `"us-east-1"`) {
@@ -276,7 +349,7 @@ func TestMapKeysWithDotsAreQuoted(t *testing.T) {
 		"nginx.ingress.kubernetes.io/app-root": "/console",
 		"simple":                               "ok",
 	}
-	if err := g.setAttribute(body, "values", value); err != nil {
+	if err := g.setAttribute(body, "values", value, true); err != nil {
 		t.Fatalf("setAttribute error: %v", err)
 	}
 	out := string(file.Bytes())
@@ -381,6 +454,22 @@ func TestOutputsDeduplicateWithModulePrefix(t *testing.T) {
 	}
 	if !strings.Contains(out, `output "topic_kms_arn"`) || !strings.Contains(out, `output "queue_kms_arn"`) {
 		t.Fatalf("expected module-prefixed kms_arn outputs, got:\n%s", out)
+	}
+}
+
+func TestOutputTraversalUsesIndexForInvalidIdentifiers(t *testing.T) {
+	file := hclwrite.NewEmptyFile()
+	body := file.Body()
+
+	setAttrModuleOutputRef(body, "module_out", "cluster", "k8s-endpoint")
+	setAttrParentOutputRef(body, "parent_out", "k8s-endpoint")
+
+	out := string(file.Bytes())
+	if !strings.Contains(out, `module.cluster["k8s-endpoint"]`) {
+		t.Fatalf("expected module output to use index syntax, got:\n%s", out)
+	}
+	if !strings.Contains(out, `data.terraform_remote_state.env.outputs["k8s-endpoint"]`) {
+		t.Fatalf("expected parent output to use index syntax, got:\n%s", out)
 	}
 }
 

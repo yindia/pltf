@@ -1,0 +1,177 @@
+package clihelper
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"strings"
+
+	"pltf/pkg/git"
+)
+
+const prCommentMarker = "<!-- pltf:terraform-run -->"
+
+type RunSummary struct {
+	Action string
+	Status string
+	Spec   string
+	Env    string
+	OutDir string
+	Err    string
+	Plan   *PlanSummary
+	AI     string
+	Scan   *TfsecSummary
+	Cost   *CostSummary
+}
+
+func MaybeUpsertPRComment(run RunSummary) error {
+	body := buildPRCommentBody(run)
+	commenter, err := git.NewCommenter("")
+	if err != nil {
+		if errors.Is(err, git.ErrNoProvider) {
+			fmt.Fprintln(os.Stderr, "info: skipping PR comment, missing git provider credentials")
+			return nil
+		}
+		if errors.Is(err, git.ErrProviderNotImplemented) {
+			fmt.Fprintf(os.Stderr, "info: skipping PR comment, provider not implemented: %v\n", err)
+			return nil
+		}
+		return err
+	}
+
+	if err := commenter.UpsertPRComment(git.PRComment{Body: body, Marker: prCommentMarker}); err != nil {
+		if errors.Is(err, git.ErrNoPRNumber) {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
+func buildPRCommentBody(run RunSummary) string {
+	statusEmoji := "✅"
+	statusText := run.Status
+	if strings.ToLower(run.Status) != "succeeded" {
+		statusEmoji = "❌"
+		if strings.TrimSpace(statusText) == "" {
+			statusText = "failed"
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString(prCommentMarker)
+	sb.WriteString("\n\n")
+	sb.WriteString("### Terrateam Plan Output\n\n")
+	sb.WriteString(fmt.Sprintf("**%s** %s\n\n", run.Spec, statusEmoji+" "+titleCase(statusText)))
+
+	if run.Plan != nil {
+		sb.WriteString(fmt.Sprintf("Plan: %d to add, %d to change, %d to destroy\n\n",
+			run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+	}
+
+	sb.WriteString("<details><summary>Expand for plan output details</summary>\n\n")
+	sb.WriteString("```\n")
+	if run.Plan != nil {
+		writePlanLines := func(title string, items []string) {
+			sb.WriteString(title + ":\n")
+			if len(items) == 0 {
+				sb.WriteString("  (none)\n")
+				return
+			}
+			for _, item := range items {
+				sb.WriteString("  - " + item + "\n")
+			}
+		}
+		writePlanLines("Adds", run.Plan.Adds)
+		writePlanLines("Changes", run.Plan.Changes)
+		writePlanLines("Destroys", run.Plan.Deletes)
+	} else {
+		sb.WriteString("Plan output unavailable.\n")
+	}
+	sb.WriteString("```\n")
+	if run.Plan != nil {
+		sb.WriteString(fmt.Sprintf("\nPlan: %d to add, %d to change, %d to destroy\n",
+			run.Plan.Added, run.Plan.Changed, run.Plan.Destroyed))
+	}
+	if strings.TrimSpace(run.Err) != "" {
+		sb.WriteString(fmt.Sprintf("\nError: %s\n", truncateForComment(run.Err)))
+	}
+	sb.WriteString("\n</details>\n")
+
+	if run.Cost != nil {
+		sb.WriteString("\n---\n\n")
+		sb.WriteString("**Cost Estimation**\n\n")
+		if run.Cost.TotalMonthly != "" {
+			sb.WriteString(fmt.Sprintf("Total Monthly Difference: %s\n\n", run.Cost.TotalMonthly))
+		}
+		if strings.TrimSpace(run.Cost.Breakdown) != "" {
+			sb.WriteString("<details><summary>Expand for cost estimation details</summary>\n\n")
+			sb.WriteString("```\n")
+			sb.WriteString(run.Cost.Breakdown)
+			if !strings.HasSuffix(run.Cost.Breakdown, "\n") {
+				sb.WriteString("\n")
+			}
+			sb.WriteString("```\n</details>\n")
+		}
+		if strings.TrimSpace(run.Cost.Raw) != "" {
+			raw := truncateForComment(run.Cost.Raw)
+			sb.WriteString("\n<details><summary>Raw cost data (json)</summary>\n\n")
+			sb.WriteString("```\n")
+			sb.WriteString(raw)
+			if !strings.HasSuffix(raw, "\n") {
+				sb.WriteString("\n")
+			}
+			sb.WriteString("```\n</details>\n")
+		}
+	}
+
+	sb.WriteString("\n---\n\n")
+	sb.WriteString("To apply all these changes, comment:\n\n")
+	sb.WriteString("```\n")
+	sb.WriteString(fmt.Sprintf("pltf terraform apply -f %s --auto-approve", run.Spec))
+	if strings.TrimSpace(run.Env) != "" {
+		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
+	}
+	sb.WriteString("\n```\n")
+
+	if strings.TrimSpace(run.AI) != "" || run.Scan != nil {
+		sb.WriteString("\n---\n\n")
+		sb.WriteString("**Approval Requirements**\n\n")
+		if strings.TrimSpace(run.AI) != "" {
+			sb.WriteString("AI risk review:\n")
+			sb.WriteString(run.AI)
+			if !strings.HasSuffix(run.AI, "\n") {
+				sb.WriteString("\n")
+			}
+		}
+		if run.Scan != nil {
+			report := strings.TrimSpace(run.Scan.Report)
+			if report == "" {
+				report = FormatTfsecReport(run.Scan)
+			}
+			sb.WriteString("\n<details><summary>Security scan (tfsec)</summary>\n\n")
+			sb.WriteString("```\n")
+			sb.WriteString(report)
+			sb.WriteString("```\n")
+			sb.WriteString("</details>\n")
+		}
+	}
+
+	sb.WriteString("\n_NOTE: This comment updates automatically on pushes to the PR._\n")
+	return sb.String()
+}
+
+func truncateForComment(s string) string {
+	const max = 4000
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "..."
+}
+
+func titleCase(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}

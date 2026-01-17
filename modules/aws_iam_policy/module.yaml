@@ -2,6 +2,15 @@ name: aws_iam_policy
 type: aws_iam_policy
 provider: aws
 version: 1.0.0
+capabilities:
+    provides:
+        - iam.policy
+resources:
+    - aws_iam_policy.policy
+    - random_string.policy_suffix
+data:
+    - data.aws_caller_identity.current
+    - data.aws_region.current
 inputs:
     - description: Env name
       name: env_name

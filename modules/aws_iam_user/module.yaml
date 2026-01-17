@@ -2,6 +2,23 @@ name: aws_iam_user
 type: aws_iam_user
 provider: aws
 version: 1.0.0
+capabilities:
+    provides:
+        - iam.user
+    accepts:
+        - iam.policy
+resources:
+    - aws_iam_group.group
+    - aws_iam_group_policy.enforce_mfa
+    - aws_iam_group_policy.pass_role_to_self
+    - aws_iam_group_policy_attachment.extra_policies_attachment
+    - aws_iam_group_policy_attachment.vanilla_role_attachment
+    - aws_iam_policy.vanilla_policy
+    - aws_iam_user.user
+    - aws_iam_user_group_membership.group_membership
+data:
+    - data.aws_iam_policy_document.enforce_mfa
+    - data.aws_iam_policy_document.pass_role_to_self
 inputs:
     - description: Env name
       name: env_name
@@ -11,15 +28,20 @@ inputs:
       name: extra_iam_policies
       required: false
       type: list(string)
-    - name: iam_policy
-      required: true
+    - default: null
+      description: iam policy
+      name: iam_policy
+      required: false
+      type: any
     - description: Layer name
       name: layer_name
       required: true
       type: string
     - default: []
+      description: Links for module
       name: links
       required: false
+      type: any
     - description: Module name
       name: module_name
       required: true

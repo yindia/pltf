@@ -1,7 +1,10 @@
 name: helm_chart
 type: helm_chart
-provider: helm
+provider: aws
 version: 1.0.0
+resources:
+    - helm_release.local_chart
+    - helm_release.remote_chart
 inputs:
     - default: true
       name: atomic
@@ -49,6 +52,7 @@ inputs:
     - default: null
       name: release_name
       required: false
+      type: string
     - default: null
       name: repository
       required: false
@@ -60,6 +64,7 @@ inputs:
     - default: {}
       name: values
       required: false
+      type: any
     - default: null
       name: values_file
       required: false

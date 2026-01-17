@@ -2,6 +2,16 @@ name: aws_redis
 type: aws_redis
 provider: aws
 version: 1.0.0
+capabilities:
+    provides:
+        - secret
+resources:
+    - aws_elasticache_replication_group.redis_cluster
+    - random_password.redis_auth
+    - random_string.redis_name_hash
+data:
+    - data.aws_kms_key.main
+    - data.aws_security_group.security_group
 inputs:
     - name: elasticache_aws_security_group
       required: true
@@ -42,5 +52,6 @@ inputs:
 outputs:
     - name: cache_auth_token
       type: string
+      capability: secret
     - name: cache_host
       type: string

@@ -1,13 +1,28 @@
 package cmd
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"dagger.io/dagger"
+	tfscanner "github.com/aquasecurity/defsec/pkg/scanners/terraform"
+	defsecTypes "github.com/aquasecurity/defsec/pkg/types"
 	"github.com/spf13/cobra"
 
+	"pltf/pkg/backend"
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
+	"pltf/pkg/daggerx"
+	"pltf/pkg/generate"
+	terraform "pltf/pkg/terraform"
+	rover "rover"
 )
 
 var (
@@ -23,7 +38,7 @@ var (
 	applyNoColor     bool
 	applyInput       bool
 	applyRefresh     bool
-	applyAutoApprove bool
+	applyAutoApprove = true
 
 	destroyFile        string
 	destroyEnv         string
@@ -37,23 +52,25 @@ var (
 	destroyNoColor     bool
 	destroyInput       bool
 	destroyRefresh     bool
-	destroyAutoApprove bool
+	destroyAutoApprove = true
 
-	planFile       string
-	planEnv        string
-	planOut        string
-	planModulesDir string
-	planVars       []string
-	planTargets    []string
-	planParallel   int
-	planLock       bool
-	planLockTime   string
-	planNoColor    bool
-	planInput      bool
-	planRefresh    bool
-	planDetailed   bool
-	planOutFile    string
-
+	planFile         string
+	planEnv          string
+	planOut          string
+	planModulesDir   string
+	planVars         []string
+	planTargets      []string
+	planParallel     int
+	planLock         bool
+	planLockTime     string
+	planNoColor      bool
+	planInput        bool
+	planRefresh      bool
+	planDetailed     bool
+	planOutFile      string
+	planRover        bool
+	planScan         bool
+	planCost         bool
 	outputFile       string
 	outputEnv        string
 	outputOut        string
@@ -80,6 +97,8 @@ var (
 	graphOutFile    string
 	graphPlanFile   string
 )
+
+const defaultTfEngine = "terraform"
 
 var applyCmd = &cobra.Command{
 	Use:   "apply",
@@ -111,8 +130,8 @@ standard output layout unless overridden.`,
 var graphCmd = &cobra.Command{
 	Use:   "graph",
 	Args:  cobra.NoArgs,
-	Short: "Generate a DOT graph for a spec (terraform graph or spec dependency graph)",
-	Long: `Render Terraform (if needed) and produce a DOT graph. By default runs 'terraform graph'
+	Short: "Generate a graph for a spec (terraform or spec)",
+	Long: `Render Terraform (if needed) and produce a graph. By default runs 'terraform graph'
 against the generated stack. With --mode=spec, emits a dependency graph from the env/service
 YAML (links and module references) without invoking Terraform.`,
 	Example: `  pltf terraform graph -f env.yaml -e dev > graph.dot
@@ -153,7 +172,10 @@ var planCmd = &cobra.Command{
 plan file output, targets, locking, refresh toggles, and parallelism. Ideal for CI or
 local dry runs with the same generation defaults as apply.`,
 	Example: `  pltf terraform plan -f env.yaml -e prod
-  pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`,
+  pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan
+  pltf terraform plan -f env.yaml -e prod --rover   # renders plan.json and opens rover (https://github.com/yindia/rover)
+  pltf terraform plan -f env.yaml -e prod --scan    # run tfsec against generated TF
+  pltf terraform plan -f env.yaml -e prod --cost    # run infracost breakdown (if infracost binary present)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", tfExecOpts{
 			targets:      planTargets,
@@ -165,6 +187,9 @@ local dry runs with the same generation defaults as apply.`,
 			refresh:      &planRefresh,
 			planFile:     planOutFile,
 			detailedExit: planDetailed,
+			rover:        planRover,
+			scan:         planScan,
+			cost:         planCost,
 		})
 	},
 }
@@ -215,19 +240,63 @@ type tfExecOpts struct {
 	detailedExit bool
 	jsonOutput   bool
 	autoApprove  bool
+	rover        bool
+	scan         bool
+	cost         bool
+	stdout       io.Writer
+	stderr       io.Writer
+}
+
+func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
+	if opts.noColor {
+		args = append(args, "-no-color")
+	}
+	if !opts.input {
+		args = append(args, "-input=false")
+	}
+	if !opts.lock {
+		args = append(args, "-lock=false")
+	}
+	if opts.lockTimeout != "" {
+		args = append(args, "-lock-timeout="+opts.lockTimeout)
+	}
+	if opts.parallelism > 0 {
+		args = append(args, fmt.Sprintf("-parallelism=%d", opts.parallelism))
+	}
+	for _, t := range opts.targets {
+		args = append(args, "-target="+t)
+	}
+	if opts.refresh != nil {
+		args = append(args, fmt.Sprintf("-refresh=%t", *opts.refresh))
+	}
+	if opts.autoApprove {
+		args = append(args, "-auto-approve")
+	}
+	return args
 }
 
 type stackContext struct {
 	kind   string
 	env    string
 	envCfg *config.EnvironmentConfig
+	svcCfg *config.ServiceConfig
 	outDir string
 }
 
-func prepareStackContext(file, env, out string) (stackContext, error) {
+func hasImageBuilds(ctx stackContext) bool {
+	if ctx.envCfg != nil && len(ctx.envCfg.Images) > 0 {
+		return true
+	}
+	if ctx.svcCfg != nil && len(ctx.svcCfg.Images) > 0 {
+		return true
+	}
+	return false
+}
+
+func prepareWorkspaceContext(file, env, out string) (stackContext, error) {
 	var ctx stackContext
 
-	kind, err := config.DetectKind(defaultString(file, "env.yaml"))
+	kind, err := config.DetectKind(clihelper.DefaultString(file, "env.yaml"))
 	if err != nil {
 		return ctx, err
 	}
@@ -235,67 +304,167 @@ func prepareStackContext(file, env, out string) (stackContext, error) {
 
 	switch kind {
 	case "Environment":
-		envCfg, err := config.LoadEnvironmentConfig(defaultString(file, "env.yaml"))
+		envCfg, err := config.LoadEnvironmentConfig(clihelper.DefaultString(file, "env.yaml"))
 		if err != nil {
 			return ctx, err
 		}
-		env, err = selectEnvName(kind, env, envCfg, nil)
+		env, err = clihelper.SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return ctx, err
 		}
 		ctx.envCfg = envCfg
+		ctx.svcCfg = nil
 		if out == "" {
-			ctx.outDir = filepath.Join(".pltf", envCfg.Metadata.Name, "env", env)
+			ctx.outDir = filepath.Join(".pltf", envCfg.Metadata.Name, "workspace")
 		} else {
 			ctx.outDir = out
 		}
 	case "Service":
-		svcCfg, envCfg, err := config.LoadService(defaultString(file, "service.yaml"))
+		svcCfg, envCfg, err := config.LoadService(clihelper.DefaultString(file, "service.yaml"))
 		if err != nil {
 			return ctx, err
 		}
-		env, err = selectEnvName(kind, env, envCfg, svcCfg)
+		env, err = clihelper.SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return ctx, err
 		}
 		ctx.envCfg = envCfg
+		ctx.svcCfg = svcCfg
 		if out == "" {
-			ctx.outDir = filepath.Join(".pltf", envCfg.Metadata.Name, svcCfg.Metadata.Name, "env", env)
+			ctx.outDir = filepath.Join(".pltf", envCfg.Metadata.Name, svcCfg.Metadata.Name, "workspace")
 		} else {
 			ctx.outDir = out
 		}
+	case "Stack":
+		return ctx, fmt.Errorf("stack specs cannot be used with terraform commands; reference them from Environment or Service specs")
 	default:
 		return ctx, fmt.Errorf("unknown kind %q", kind)
 	}
 
 	ctx.env = env
-	ctx.outDir = filepath.Clean(ctx.outDir)
+	ctx.outDir, _ = filepath.Abs(filepath.Clean(ctx.outDir))
 	return ctx, nil
 }
 
-func runTfWithAction(action, file, env, modules, out string, vars []string, lockID string, opts tfExecOpts) error {
-	// Generate configs first
-	if err := autoGenerate(file, env, modules, out, vars); err != nil {
-		return err
+func autoGenerateWorkspace(file, env, modulesRoot, out string, vars []string) (stackContext, string, error) {
+	ctx, err := prepareWorkspaceContext(file, env, out)
+	if err != nil {
+		return ctx, "", err
 	}
+	cliVars, err := clihelper.ParseVarFlags(vars)
+	if err != nil {
+		return ctx, "", err
+	}
+	cliVars = clihelper.MergeVarMaps(clihelper.ParseVarEnv(), cliVars)
+	embeddedRoot, customRoot, err := clihelper.ResolveModuleRoots(modulesRoot)
+	if err != nil {
+		return ctx, "", err
+	}
+	specPath := clihelper.DefaultString(file, "env.yaml")
+	specDir := filepath.Dir(specPath)
+	if ctx.kind == "Environment" {
+		if err := generate.ExportEnvironmentWorkspaceForEnv(ctx.envCfg, embeddedRoot, customRoot, ctx.outDir, specDir, ctx.env, cliVars); err != nil {
+			return ctx, "", err
+		}
+	} else {
+		if err := generate.ExportServiceWorkspaceForEnv(ctx.svcCfg, ctx.envCfg, embeddedRoot, customRoot, ctx.outDir, specDir, ctx.env, cliVars); err != nil {
+			return ctx, "", err
+		}
+	}
+	tfvarsPath := filepath.Join(ctx.outDir, fmt.Sprintf("%s.tfvars", ctx.env))
+	return ctx, tfvarsPath, nil
+}
 
-	ctx, err := prepareStackContext(file, env, out)
+func runTfWithAction(action, file, env, modules, out string, vars []string, lockID string, opts tfExecOpts) (retErr error) {
+	ctx, tfvarsPath, err := autoGenerateWorkspace(file, env, modules, out, vars)
 	if err != nil {
 		return err
 	}
+	tfvarsArg := ""
+	if tfvarsPath != "" {
+		tfvarsArg = filepath.Base(tfvarsPath)
+	}
 
-	bk, err := computeBackend(ctx.envCfg, ctx.env)
+	rootDir, _ := os.Getwd()
+
+	_, finishRun := clihelper.StartLocalRun(action, file, ctx.env, ctx.outDir)
+	defer func() {
+		finishRun(retErr)
+	}()
+
+	if requiresEnvLock(action) {
+		release, err := acquireEnvLock(ctx.envCfg.Metadata.Name, ctx.env)
+		if err != nil {
+			return err
+		}
+		defer release()
+	}
+
+	engine := defaultTfEngine
+	stdout := opts.stdout
+	if stdout == nil {
+		stdout = os.Stdout
+	}
+	stderr := opts.stderr
+	if stderr == nil {
+		stderr = os.Stderr
+	}
+
+	log := func(format string, args ...interface{}) {
+		if stdout == nil {
+			return
+		}
+		fmt.Fprintf(stdout, "[pltf] "+format+"\n", args...)
+	}
+
+	var session *daggerx.Session
+	var imageCache *dagger.CacheVolume
+	needImages := (action == "plan" || action == "apply") && hasImageBuilds(ctx)
+	if needImages {
+		session, err = daggerx.NewSession(clihelper.DaggerLogOutput(stderr))
+		if err != nil {
+			return err
+		}
+		defer session.Close()
+		imageCache = session.Client.CacheVolume("pltf-image-cache")
+		log("building images (push=%t)", action == "apply")
+		if err := autoImageBuildWithSession(session, file, ctx.env, action == "apply", nil, imageCache); err != nil {
+			return err
+		}
+	}
+	tfRunner, err := terraform.NewRunner(ctx.outDir, stdout, stderr)
 	if err != nil {
 		return err
 	}
-	if isS3Backend(bk) {
-		if err := ensureS3Bucket(bk.bucket, bk.region); err != nil {
-			return fmt.Errorf("failed to ensure backend bucket: %w", err)
+	log("using workspace %s at %s", ctx.env, ctx.outDir)
+
+	// Optional security scan happens before init/plan to fail fast.
+
+	var scanSum *clihelper.TfsecSummary
+	if action == "plan" && opts.scan {
+		var err error
+		scanSum, err = clihelper.RunTfsecScan(ctx.outDir)
+		if err != nil {
+			return fmt.Errorf("tfsec scan failed: %w", err)
 		}
 	}
 
-	if err := runCmd(ctx.outDir, "terraform", "init"); err != nil {
-		return fmt.Errorf("terraform init failed: %w", err)
+	envEntry := ctx.envCfg.Environments[ctx.env]
+	bk, err := backend.Resolve(ctx.envCfg.Metadata.Provider, ctx.envCfg, envEntry)
+	if err != nil {
+		return err
+	}
+	if err := backend.Ensure(context.Background(), bk); err != nil {
+		return fmt.Errorf("failed to ensure backend: %w", err)
+	}
+
+	log("running %s init", engine)
+	if err := runTerraformInitWithRetry(tfRunner); err != nil {
+		return fmt.Errorf("%s init failed: %w", engine, err)
+	}
+	log("ensuring workspace %s", ctx.env)
+	if err := selectOrCreateWorkspace(tfRunner, ctx.env); err != nil {
+		return err
 	}
 
 	common := func(args []string) []string {
@@ -303,53 +472,354 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		return args
 	}
 
+	var runErr error
+	var planSum *clihelper.PlanSummary
+	runStatus := "succeeded"
+	var planResult planExecutionResult
+	var planJSONPath string
+	var costSum *clihelper.CostSummary
+	if action == "plan" || action == "apply" || action == "destroy" {
+		var errPlan error
+		log("running %s plan", engine)
+			planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, rootDir, common)
+		if errPlan != nil {
+			runErr = errPlan
+		}
+		if planResult.summary != nil {
+			planSum = planResult.summary
+		}
+		if opts.detailedExit && planResult.exitCode == 2 {
+			runStatus = "changes"
+		}
+		if opts.rover && planResult.summary != nil && planResult.summary.PlanJSON != "" {
+			tfPath := engine
+			if p, err := exec.LookPath(engine); err == nil {
+				tfPath = p
+			} else {
+				fmt.Fprintf(stderr, "warn: %s not found in PATH for rover (defaulting to %q): %v\n", engine, tfPath, err)
+			}
+			r, err := rover.New(rover.Config{
+				WorkingDir:   ctx.outDir,
+				TfPath:       tfPath,
+				PlanJSONPath: planResult.summary.PlanJSON,
+				PlanPath:     planResult.planPathOnDisk,
+			})
+			if err != nil {
+				fmt.Fprintf(stderr, "warn: rover init failed: %v\n", err)
+			} else {
+				if err := r.GenerateAssets(); err != nil {
+					fmt.Fprintf(stderr, "warn: rover asset generation failed: %v\n", err)
+				} else if err := r.StartServer("0.0.0.0:9000"); err != nil {
+					fmt.Fprintf(stderr, "warn: rover server failed: %v\n", err)
+				}
+			}
+		}
+		if planResult.summary != nil {
+			planJSONPath = planResult.summary.PlanJSON
+		}
+		if planResult.summary != nil && planJSONPath != "" && opts.cost {
+			if sum, err := runInfracost(planJSONPath, ctx.outDir); err == nil {
+				costSum = sum
+			} else {
+				fmt.Fprintf(stderr, "warn: infracost run failed: %v\n", err)
+			}
+		}
+	}
+	if (action == "apply" || action == "destroy") && runErr != nil {
+		return runErr
+	}
+
 	switch action {
 	case "apply":
+		log("running %s apply", engine)
 		args := []string{"apply"}
-		if opts.autoApprove {
-			args = append(args, "-auto-approve")
+		if tfvarsArg != "" {
+			args = append(args, "-var-file="+tfvarsArg)
 		}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform apply failed: %w", err)
+		if _, _, err := tfRunner.Exec(common(args)); err != nil {
+			runErr = fmtTfError(engine, "apply", err)
 		}
 	case "destroy":
+		log("running %s destroy", engine)
 		args := []string{"destroy"}
-		if opts.autoApprove {
-			args = append(args, "-auto-approve")
+		if tfvarsArg != "" {
+			args = append(args, "-var-file="+tfvarsArg)
 		}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform destroy failed: %w", err)
-		}
-	case "plan":
-		args := []string{"plan"}
-		if opts.detailedExit {
-			args = append(args, "-detailed-exitcode")
-		}
-		if opts.planFile != "" {
-			args = append(args, "-out="+opts.planFile)
-		}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform plan failed: %w", err)
+		if _, _, err := tfRunner.Exec(common(args)); err != nil {
+			runErr = fmtTfError(engine, "destroy", err)
 		}
 	case "output":
 		args := []string{"output"}
-		if lockID != "" {
-			args = append(args, lockID)
-		}
 		if opts.jsonOutput {
 			args = append(args, "-json")
 		}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform output failed: %w", err)
+		if lockID != "" {
+			args = append(args, lockID)
+		}
+		if _, _, err := tfRunner.Exec(args); err != nil {
+			runErr = fmt.Errorf("%s output failed: %w", engine, err)
 		}
 	case "force-unlock":
 		args := []string{"force-unlock", "-force", lockID}
-		if err := runCmd(ctx.outDir, "terraform", common(args)...); err != nil {
-			return fmt.Errorf("terraform force-unlock failed: %w", err)
+		if _, _, err := tfRunner.Exec(args); err != nil {
+			runErr = fmt.Errorf("%s force-unlock failed: %w", engine, err)
 		}
 	}
 
+	if action == "plan" || action == "apply" {
+		status := clihelper.RunSummary{
+			Action: action,
+			Spec:   file,
+			Env:    env,
+			OutDir: ctx.outDir,
+			Plan:   planSum,
+			Scan:   scanSum,
+			Cost:   costSum,
+		}
+		if runErr != nil {
+			status.Status = "failed"
+			status.Err = runErr.Error()
+		} else {
+			status.Status = runStatus
+		}
+		if status.Plan != nil {
+			status.AI = clihelper.MaybeAICritique(status)
+		}
+		if err := clihelper.MaybeUpsertPRComment(status); err != nil {
+			fmt.Fprintf(stderr, "warn: failed to update PR comment: %v\n", err)
+		}
+	}
+
+	return runErr
+}
+
+type planExecutionResult struct {
+	summary        *clihelper.PlanSummary
+	planArgs       []string
+	exitCode       int
+	planPathOnDisk string
+}
+
+func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, rootDir string, common func([]string) []string) (planExecutionResult, error) {
+	var res planExecutionResult
+	args := []string{"plan"}
+	if tfvarsArg != "" {
+		args = append(args, "-var-file="+filepath.Join(ctx.outDir, tfvarsArg))
+	}
+	if opts.detailedExit {
+		args = append(args, "-detailed-exitcode")
+	}
+	planPath := opts.planFile
+	planArg := opts.planFile
+	tempPlan := false
+	if strings.TrimSpace(planPath) == "" {
+		planArg = ".pltf-plan.tfplan"
+		planPath = filepath.Join(ctx.outDir, planArg)
+		tempPlan = true
+	} else {
+		if filepath.IsAbs(planPath) {
+			planArg = planPath
+		} else {
+			planArg = planPath
+			planPath = filepath.Join(ctx.outDir, planPath)
+		}
+	}
+	args = append(args, "-out="+planArg)
+	planArgs := append([]string(nil), common(args)...)
+	_, planExit, err := runner.Exec(planArgs)
+	if err != nil && !(opts.detailedExit && planExit == 2) {
+		return res, fmt.Errorf("%s plan failed: %w", runner.EngineCmd(), err)
+	}
+	res.exitCode = planExit
+	planPathOnDisk := planPath
+	if !filepath.IsAbs(planPathOnDisk) {
+		planPathOnDisk = filepath.Clean(planPathOnDisk)
+		if !strings.HasPrefix(planPathOnDisk, ctx.outDir) {
+			planPathOnDisk = filepath.Join(ctx.outDir, planPathOnDisk)
+		}
+	}
+	res.planPathOnDisk = planPathOnDisk
+	planJSONPath := ""
+	var planJSONOutput string
+	if tempPlan || strings.TrimSpace(planPathOnDisk) != "" {
+		planJSONPath = strings.TrimSuffix(planPathOnDisk, filepath.Ext(planPathOnDisk)) + ".json"
+		out, _, err := runner.Exec([]string{"show", "-json", planArg})
+		if err != nil {
+			fmt.Fprintf(stderr, "warn: %s show -json failed: %v\n", runner.EngineCmd(), err)
+		} else {
+			planJSONOutput = out
+			if err := os.WriteFile(planJSONPath, []byte(out), 0o644); err != nil {
+				fmt.Fprintf(stderr, "warn: write plan json failed: %v\n", err)
+			}
+		}
+	}
+	if sum, err := clihelper.CollectPlanSummaryWithRunner(ctx.outDir, planPathOnDisk, planJSONOutput, stderr); err == nil {
+		res.summary = sum
+		res.summary.RawPlanArgs = sanitizePlanArgs(planArgs, ctx.outDir, tfvarsArg, rootDir)
+		if planJSONPath != "" {
+			res.summary.PlanJSON = planJSONPath
+		}
+	} else {
+		fmt.Fprintf(stderr, "warn: failed to collect plan summary: %v\n", err)
+	}
+	res.planArgs = planArgs
+	return res, nil
+}
+
+func sanitizePlanArgs(planArgs []string, outDir, tfvarsArg, rootDir string) []string {
+	sanitized := append([]string(nil), planArgs...)
+	if tfvarsArg == "" {
+		return sanitized
+	}
+	absVar := "-var-file=" + filepath.Join(outDir, tfvarsArg)
+	relPath := tfvarsArg
+	if rootDir != "" {
+		if rel, err := filepath.Rel(rootDir, outDir); err == nil && rel != "." && rel != "" {
+			relPath = filepath.Join(rel, tfvarsArg)
+		}
+	}
+	relPath = filepath.ToSlash(filepath.Clean(relPath))
+	if relPath == "." {
+		relPath = tfvarsArg
+	}
+	relVar := "-var-file=" + relPath
+	for i, arg := range sanitized {
+		if arg == absVar {
+			sanitized[i] = relVar
+		}
+	}
+	return sanitized
+}
+
+func runTerraformInitWithRetry(r *terraform.Runner) error {
+	return clihelper.RunWithRetry(3, time.Second, func() error {
+		_, _, err := r.Exec([]string{"init"})
+		if err != nil && !clihelper.IsTransientInitError(err) {
+			return err
+		}
+		return err
+	})
+}
+
+func selectOrCreateWorkspace(r *terraform.Runner, name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return fmt.Errorf("workspace name is empty")
+	}
+	if _, _, err := r.Exec([]string{"workspace", "select", name}); err == nil {
+		return nil
+	}
+	if _, _, err := r.Exec([]string{"workspace", "new", name}); err != nil {
+		return fmt.Errorf("%s workspace create failed: %w", r.EngineCmd(), err)
+	}
 	return nil
+}
+
+func renderSnippet(root string, rng defsecTypes.Range) string {
+	start := rng.GetStartLine()
+	end := rng.GetEndLine()
+	filename := rng.GetFilename()
+	local := rng.GetLocalFilename()
+	path := filepath.Join(root, filename)
+	if _, err := os.Stat(path); err != nil {
+		alt := filepath.Join(root, local)
+		if _, err2 := os.Stat(alt); err2 == nil {
+			path = alt
+		} else {
+			return ""
+		}
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	lines := strings.Split(string(data), "\n")
+	if start <= 0 {
+		start = 1
+	}
+	if end <= 0 || end > len(lines) {
+		end = len(lines)
+	}
+	var b strings.Builder
+	for i := start; i <= end; i++ {
+		fmt.Fprintf(&b, "      %4d | %s\n", i, lines[i-1])
+	}
+	return b.String()
+}
+
+func tfsecExitCode(metrics tfscanner.Metrics) int {
+	if metrics.Executor.Counts.Failed == 0 {
+		return 0
+	}
+	if metrics.Executor.Counts.Failed == metrics.Executor.Counts.Low {
+		return 2
+	}
+	return 1
+}
+
+func printTfsecInsights(summary *clihelper.TfsecSummary) {
+	report := summary.Report
+	if strings.TrimSpace(report) == "" {
+		report = clihelper.FormatTfsecReport(summary)
+	}
+	fmt.Fprint(os.Stderr, report)
+}
+
+func runInfracost(planJSONPath, workdir string) (*clihelper.CostSummary, error) {
+	if _, err := exec.LookPath("infracost"); err != nil {
+		return nil, fmt.Errorf("infracost binary not found in PATH")
+	}
+	if strings.TrimSpace(planJSONPath) == "" {
+		return nil, fmt.Errorf("plan json path is empty")
+	}
+	args := []string{"breakdown", "--path", planJSONPath, "--format", "json"}
+	out, err := clihelper.RunCmdOutput(workdir, "infracost", args...)
+	if err != nil {
+		return nil, err
+	}
+	sum := &clihelper.CostSummary{Raw: out}
+	if t := extractInfracostTotal(out); t != "" {
+		sum.TotalMonthly = t
+	}
+	if txt, err := clihelper.RunCmdOutput(workdir, "infracost", "breakdown", "--path", planJSONPath, "--format", "table"); err == nil {
+		sum.Breakdown = txt
+	}
+	return sum, nil
+}
+
+func extractInfracostTotal(jsonStr string) string {
+	type total struct {
+		TotalMonthlyCost string `json:"totalMonthlyCost"`
+	}
+	type root struct {
+		Projects []struct {
+			Breakdown total `json:"breakdown"`
+		} `json:"projects"`
+		Summary total `json:"summary"`
+	}
+	var r root
+	if err := json.Unmarshal([]byte(jsonStr), &r); err != nil {
+		return ""
+	}
+	if r.Summary.TotalMonthlyCost != "" {
+		return r.Summary.TotalMonthlyCost
+	}
+	for _, p := range r.Projects {
+		if p.Breakdown.TotalMonthlyCost != "" {
+			return p.Breakdown.TotalMonthlyCost
+		}
+	}
+	return ""
+}
+
+func fmtTfError(engine, action string, err error) error {
+	if err == nil {
+		return nil
+	}
+	if strings.Contains(strings.ToLower(err.Error()), "error asking for approval") {
+		return fmt.Errorf("%s %s failed: Terraform requested interactive approval but stdin is unavailable; rerun with --auto-approve", engine, action)
+	}
+	return fmt.Errorf("%s %s failed: %w", engine, action, err)
 }
 
 func init() {
@@ -374,7 +844,7 @@ func init() {
 	applyCmd.Flags().BoolVarP(&applyNoColor, "no-color", "C", false, "Disable color output")
 	applyCmd.Flags().BoolVarP(&applyInput, "input", "i", false, "Ask for input if necessary (default false)")
 	applyCmd.Flags().BoolVarP(&applyRefresh, "refresh", "r", true, "Update state prior to actions")
-	applyCmd.Flags().BoolVar(&applyAutoApprove, "auto-approve", false, "Pass -auto-approve to terraform apply")
+	applyCmd.Flags().BoolVar(&applyAutoApprove, "auto-approve", true, "Pass -auto-approve to terraform apply")
 
 	destroyCmd.Flags().StringVarP(&destroyFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	destroyCmd.Flags().StringVarP(&destroyEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")
@@ -388,7 +858,7 @@ func init() {
 	destroyCmd.Flags().BoolVarP(&destroyNoColor, "no-color", "C", false, "Disable color output")
 	destroyCmd.Flags().BoolVarP(&destroyInput, "input", "i", false, "Ask for input if necessary (default false)")
 	destroyCmd.Flags().BoolVarP(&destroyRefresh, "refresh", "r", true, "Update state prior to actions")
-	destroyCmd.Flags().BoolVar(&destroyAutoApprove, "auto-approve", false, "Pass -auto-approve to terraform destroy")
+	destroyCmd.Flags().BoolVar(&destroyAutoApprove, "auto-approve", true, "Pass -auto-approve to terraform destroy")
 
 	planCmd.Flags().StringVarP(&planFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	planCmd.Flags().StringVarP(&planEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")
@@ -404,6 +874,9 @@ func init() {
 	planCmd.Flags().BoolVarP(&planRefresh, "refresh", "r", true, "Update state prior to actions")
 	planCmd.Flags().BoolVarP(&planDetailed, "detailed-exitcode", "d", false, "Use detailed exit codes for plan (2 = changes present)")
 	planCmd.Flags().StringVarP(&planOutFile, "plan-file", "P", "", "Write plan to a file (terraform -out)")
+	planCmd.Flags().BoolVar(&planRover, "rover", false, "Run rover (https://github.com/yindia/rover) against the generated plan.json (requires rover binary in PATH)")
+	planCmd.Flags().BoolVar(&planScan, "scan", false, "Run tfsec security scan against the generated Terraform")
+	planCmd.Flags().BoolVar(&planCost, "cost", false, "Run infracost breakdown against the plan (requires infracost binary in PATH and INFRACOST_API_KEY)")
 
 	outputCmd.Flags().StringVarP(&outputFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	outputCmd.Flags().StringVarP(&outputEnv, "env", "e", "", "Environment key to render (dev, prod, etc.)")

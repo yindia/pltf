@@ -5,6 +5,18 @@ version: 1.0.0
 capabilities:
     provides:
         - secret
+resources:
+    - aws_rds_cluster.db_cluster
+    - aws_rds_cluster.secondary
+    - aws_rds_cluster_instance.db_instance
+    - aws_rds_cluster_instance.secondary
+    - aws_rds_global_cluster.global_cluster
+    - random_password.pg_password
+    - random_string.db_name_hash
+    - time_sleep.wait_for_db
+data:
+    - data.aws_kms_key.main
+    - data.aws_security_group.security_group
 inputs:
     - default: 7
       description: How many days to keep the backup retention

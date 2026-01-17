@@ -86,7 +86,7 @@ resource "aws_s3_bucket_logging" "bucket" {
   count  = var.enable_logging ? 1 : 0
   bucket = aws_s3_bucket.bucket.id
 
-  target_bucket = var.s3_log_bucket_name
+  target_bucket = coalesce(var.s3_log_bucket_name, aws_s3_bucket.bucket.id)
   target_prefix = "log/"
 }
 

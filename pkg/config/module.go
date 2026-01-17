@@ -11,7 +11,10 @@ type ModuleMetadata struct {
 	Provider     string       `yaml:"provider"` // "aws", "kubernetes", etc.
 	Version      string       `yaml:"version"`  // "1.0.0"
 	Description  string       `yaml:"description,omitempty"`
+	Cluster      bool         `yaml:"cluster,omitempty"` // true when module provides k8s cluster outputs
 	Capabilities Capabilities `yaml:"capabilities"` // what it provides/accepts
+	Resources    []string     `yaml:"resources,omitempty"`
+	DataSources  []string     `yaml:"data,omitempty"`
 	Inputs       []InputSpec  `yaml:"inputs,omitempty"`
 	Outputs      []OutputSpec `yaml:"outputs,omitempty"`
 }
@@ -86,6 +89,14 @@ func (m *ModuleMetadata) Validate() error {
 		}
 	}
 
+	hasClusterOutputs := hasClusterContractOutputs(outputNames)
+	if m.Cluster && !hasClusterOutputs {
+		return fmt.Errorf("cluster=true requires outputs: k8s_endpoint, k8s_ca_data, k8s_cluster_name, plt_cluster_type")
+	}
+	if !m.Cluster && hasClusterOutputs {
+		return fmt.Errorf("outputs include k8s_endpoint/k8s_ca_data/k8s_cluster_name/plt_cluster_type; set cluster: true or rename outputs")
+	}
+
 	// ---------- Capabilities ----------
 	// No duplicates in provides/accepts
 	providesSeen := make(map[string]struct{})
@@ -121,6 +132,56 @@ func (m *ModuleMetadata) Validate() error {
 				out.Name,
 				out.Capability,
 			)
+		}
+	}
+
+	if err := validateIamContract(m, inputNames, outputNames); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func hasClusterContractOutputs(outputs map[string]struct{}) bool {
+	required := []string{"k8s_endpoint", "k8s_ca_data", "k8s_cluster_name", "plt_cluster_type"}
+	for _, name := range required {
+		if _, ok := outputs[name]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func validateIamContract(m *ModuleMetadata, inputs, outputs map[string]struct{}) error {
+	provides := map[string]struct{}{}
+	for _, cap := range m.Capabilities.Provides {
+		provides[cap] = struct{}{}
+	}
+
+	if _, ok := provides["iam.role"]; ok {
+		if _, exists := inputs["iam_policy"]; !exists {
+			return fmt.Errorf("iam.role modules must declare input iam_policy")
+		}
+		if _, exists := inputs["kubernetes_trusts"]; !exists {
+			return fmt.Errorf("iam.role modules must declare input kubernetes_trusts")
+		}
+		if _, exists := outputs["role_arn"]; !exists {
+			return fmt.Errorf("iam.role modules must declare output role_arn")
+		}
+	}
+
+	if _, ok := provides["iam.user"]; ok {
+		if _, exists := inputs["iam_policy"]; !exists {
+			return fmt.Errorf("iam.user modules must declare input iam_policy")
+		}
+		if _, exists := outputs["user_arn"]; !exists {
+			return fmt.Errorf("iam.user modules must declare output user_arn")
+		}
+	}
+
+	if _, ok := provides["iam.policy"]; ok {
+		if _, exists := outputs["policy_arn"]; !exists {
+			return fmt.Errorf("iam.policy modules must declare output policy_arn")
 		}
 	}
 
