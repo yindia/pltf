@@ -62,10 +62,14 @@ go install ./...
        inputs:
          cluster_name: var.cluster_name
          vpc_id: module.network.vpc_id
+         subnet_ids: module.network.private_subnet_ids
      - id: observability
        type: aws_logging
        inputs:
          log_bucket: var.log_bucket
+   outputs:
+     - name: cluster_name
+       value: module.eks.cluster_name
    ```
 
 2. **Declare the base environment** (`env.yaml`) that references the stack, backend, variables, secrets, and multi-arch images:
@@ -96,26 +100,27 @@ go install ./...
          log_bucket: prod-logs
    variables:
      cluster_name: enterprise-cluster
-  modules:
-    - id: dns
-      type: aws_dns
-      inputs:
-        domain: var.base_domain
-  images:
-    - name: platform-tools
-      context: .
-      platforms:
-        - linux/amd64
-        - linux/arm64
-      tags:
-        - ghcr.io/acme/platform-tools:${env_name}
-  secrets:
-    aws:
-      type: file
-      path: ~/.aws/credentials
+     base_domain: example.com
+   modules:
+     - id: dns
+       type: aws_dns
+       inputs:
+         domain: var.base_domain
+   images:
+     - name: platform-tools
+       context: .
+       platforms:
+         - linux/amd64
+         - linux/arm64
+       tags:
+         - ghcr.io/acme/platform-tools:${env_name}
+   secrets:
+     aws:
+       type: file
+       path: ~/.aws/credentials
    ```
 
-   You can point to your own Terraform modules by dropping a `module.yaml` next to them and referencing them alongside the embedded modules in your spec.
+   Point to your own Terraform modules by dropping a `module.yaml` next to them and referencing them alongside the embedded modules in your spec.
 
 3. **Add a service** (`service.yaml`) that plugs into the environment and runs workload-specific modules/secrets across multiple envs:
 
@@ -131,14 +136,14 @@ go install ./...
          variables:
            replica_count: 3
    modules:
-  - id: api
-    type: helm_chart
-    inputs:
-      chart: ./services/billing/chart
-      repo: ./services/billing
-      values:
-        cluster: module.eks.cluster_name
-        replicas: var.replica_count
+     - id: api
+       type: helm_chart
+       inputs:
+         chart: ./services/billing/chart
+         repo: ./services/billing
+         values:
+           cluster: module.eks.cluster_name
+           replicas: var.replica_count
    secrets:
      db_password:
        type: file
@@ -159,6 +164,7 @@ go install ./...
    ./pltf terraform plan -f env.yaml -e prod --scan --cost
    ./pltf terraform apply -f env.yaml -e prod
    ```
+
 
 ## Terraform Workflows
 

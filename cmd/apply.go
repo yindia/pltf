@@ -385,6 +385,8 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		tfvarsArg = filepath.Base(tfvarsPath)
 	}
 
+	rootDir, _ := os.Getwd()
+
 	_, finishRun := clihelper.StartLocalRun(action, file, ctx.env, ctx.outDir)
 	defer func() {
 		finishRun(retErr)
@@ -479,7 +481,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	if action == "plan" || action == "apply" || action == "destroy" {
 		var errPlan error
 		log("running %s plan", engine)
-		planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, common)
+			planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, rootDir, common)
 		if errPlan != nil {
 			runErr = errPlan
 		}
@@ -598,7 +600,7 @@ type planExecutionResult struct {
 	planPathOnDisk string
 }
 
-func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, common func([]string) []string) (planExecutionResult, error) {
+func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, rootDir string, common func([]string) []string) (planExecutionResult, error) {
 	var res planExecutionResult
 	args := []string{"plan"}
 	if tfvarsArg != "" {
@@ -653,7 +655,7 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 	}
 	if sum, err := clihelper.CollectPlanSummaryWithRunner(ctx.outDir, planPathOnDisk, planJSONOutput, stderr); err == nil {
 		res.summary = sum
-		res.summary.RawPlanArgs = planArgs
+		res.summary.RawPlanArgs = sanitizePlanArgs(planArgs, ctx.outDir, tfvarsArg, rootDir)
 		if planJSONPath != "" {
 			res.summary.PlanJSON = planJSONPath
 		}
@@ -662,6 +664,31 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 	}
 	res.planArgs = planArgs
 	return res, nil
+}
+
+func sanitizePlanArgs(planArgs []string, outDir, tfvarsArg, rootDir string) []string {
+	sanitized := append([]string(nil), planArgs...)
+	if tfvarsArg == "" {
+		return sanitized
+	}
+	absVar := "-var-file=" + filepath.Join(outDir, tfvarsArg)
+	relPath := tfvarsArg
+	if rootDir != "" {
+		if rel, err := filepath.Rel(rootDir, outDir); err == nil && rel != "." && rel != "" {
+			relPath = filepath.Join(rel, tfvarsArg)
+		}
+	}
+	relPath = filepath.ToSlash(filepath.Clean(relPath))
+	if relPath == "." {
+		relPath = tfvarsArg
+	}
+	relVar := "-var-file=" + relPath
+	for i, arg := range sanitized {
+		if arg == absVar {
+			sanitized[i] = relVar
+		}
+	}
+	return sanitized
 }
 
 func runTerraformInitWithRetry(r *terraform.Runner) error {
