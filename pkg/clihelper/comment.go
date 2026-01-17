@@ -132,13 +132,6 @@ func buildPRCommentBody(run RunSummary) string {
 	if strings.TrimSpace(run.Env) != "" {
 		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
 	}
-	if run.Plan != nil && len(run.Plan.RawPlanArgs) > 0 {
-		sb.WriteString("\nplan")
-		for _, a := range run.Plan.RawPlanArgs {
-			sb.WriteString(" ")
-			sb.WriteString(a)
-		}
-	}
 	sb.WriteString("\n```\n")
 
 	if strings.TrimSpace(run.AI) != "" || run.Scan != nil {
@@ -159,7 +152,8 @@ func buildPRCommentBody(run RunSummary) string {
 			sb.WriteString("\n<details><summary>Security scan (tfsec)</summary>\n\n")
 			sb.WriteString("```\n")
 			sb.WriteString(report)
-			sb.WriteString("```\n</details>\n")
+			sb.WriteString("```\n")
+			sb.WriteString("</details>\n")
 		}
 	}
 
