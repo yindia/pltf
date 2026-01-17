@@ -12,7 +12,6 @@ metadata:
     - ./stack-eks.yaml
 variables:
   base_domain: "${env_name}.pltf.internal"
-  cluster_name: "pltf-data-${env_name}"
 environments:
   dev:
     account: "556169302489"
