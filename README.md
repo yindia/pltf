@@ -1,6 +1,6 @@
 # pltf CLI 🚀
 
-pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable security/cost scans. Instead of hand-editing Terraform everywhere, keep your infrastructure knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate modules, providers, backend wiring, and secrets integration for every run. Its Kubernetes-native workflow (EKS, Helm, clusters, charts) keeps workloads aligned with k8s best practices while still relying on standard Terraform state and tooling.
+pltf (Platform Tools) transforms spec-driven infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable tfsec/cost scans. Define `Environment`, `Service`, and `Stack` specs once, and pltf materializes Terraform files, providers, backend wiring, secrets, and Helm-friendly modules while still running the host `terraform` binary so Kubernetes workloads can follow standard Terraform state and tooling.
 
 ## Why teams choose pltf
 

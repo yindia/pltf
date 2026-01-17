@@ -11,7 +11,6 @@ plugins:
   - search
   - excalidraw
   - mkdocstrings
-
 markdown_extensions:
   - admonition
   - fenced_code
@@ -38,6 +37,7 @@ extra_css:
   - stylesheets/extra.css
 extra_javascript:
   - javascripts/copy-code.js
+  - javascripts/mermaid.js
 watch:
   - docs/ 
 copyright: Copyright &copy; 2025 - pltf
