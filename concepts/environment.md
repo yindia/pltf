@@ -2,7 +2,7 @@
 
 The shared foundation for your stacks: cloud, account/project, region, and base modules (VPC, DNS, EKS/GKE/AKS, IAM).
 
-```mermaid
+<div class="mermaid">
 flowchart TB
     svc[(service.yaml)]
 
@@ -21,7 +21,7 @@ flowchart TB
 
     prod_service --> env
     stage_service --> env
-```
+</div>
 
 ## Definition (example)
 Based on `example/env.yaml`:
