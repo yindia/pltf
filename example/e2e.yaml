@@ -9,7 +9,7 @@ metadata:
     team: platform
     cost_center: shared
   stacks:
-    - ./stack-eks.yaml
+    - example-eks-stack
 variables:
   base_domain: "${env_name}.pltf.internal"
 environments:

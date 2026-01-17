@@ -161,7 +161,7 @@ func buildPRCommentBody(run RunSummary) string {
 		}
 	}
 	sb.WriteString("\n```\n")
-	sb.WriteString("\n_This comment updates automatically on pushes to the PR._\n")
+	sb.WriteString("\n_NOTE: This comment updates automatically on pushes to the PR._\n")
 	return sb.String()
 }
 
