@@ -16,7 +16,6 @@ type planSummary struct {
 	Adds        []string
 	Changes     []string
 	Deletes     []string
-	Text        string
 	RawPlanArgs []string
 	PlanJSON    string
 }
@@ -75,10 +74,6 @@ func collectPlanSummaryWithRunner(r *tfDaggerRunner, outDir, planArg, planPath s
 		}
 	} else {
 		fmt.Fprintf(stderr, "warn: %s show -json failed: %v\n", r.engineCmd(), err)
-	}
-
-	if text, _, err := r.exec([]string{r.engineCmd(), "show", "-no-color", planArg}, false); err == nil {
-		sum.Text = strings.TrimSpace(text)
 	}
 
 	return sum, nil

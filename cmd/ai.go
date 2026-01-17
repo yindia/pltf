@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"pltf/pkg/ai"
 	"strings"
 	"time"
-	"pltf/pkg/ai"
 )
 
 func maybeAICritique(run tfRunSummary) string {
@@ -49,11 +49,6 @@ func maybeAICritique(run tfRunSummary) string {
 			b.WriteString("- " + a + "\n")
 		}
 	}
-	if strings.TrimSpace(run.Plan.Text) != "" {
-		b.WriteString("\nplan text:\n")
-		b.WriteString(run.Plan.Text)
-	}
-
 	critique, err := provider.Critique(ctx, summary, b.String())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warn: AI critique failed: %v\n", err)

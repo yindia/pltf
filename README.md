@@ -26,7 +26,7 @@ High-level infrastructure specs that generate standard Terraform workflows.
 ## Requirements
 
 - Go 1.25.x
-- `git` and `terraform` on `PATH`
+- `git` and `terraform` (>= 1.6.6) on `PATH`
 - Dagger-enabled environment with host credentials mounted (`~/.aws`, `~/.docker`, etc.)
 
 ## Install

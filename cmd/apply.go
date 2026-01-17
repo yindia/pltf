@@ -708,12 +708,6 @@ func runTerraformPlan(runner *tfDaggerRunner, ctx stackContext, tfvarsArg string
 	} else {
 		fmt.Fprintf(stderr, "warn: failed to collect plan summary: %v\n", err)
 	}
-	if tempPlan {
-		_ = os.Remove(planPathOnDisk)
-		if planJSONPath != "" {
-			_ = os.Remove(planJSONPath)
-		}
-	}
 	res.planArgs = planArgs
 	return res, nil
 }

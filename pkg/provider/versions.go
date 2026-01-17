@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	RequiredTfVersion        = ">= 1.5.7"
+	RequiredTfVersion        = ">= 1.6.6"
 	AWSProviderVersion       = "~> 6.0"
 	GCPProviderVersion       = ">= 5.0.0"
 	K8sProviderVersion       = ">= 2.30.0"

@@ -71,11 +71,20 @@ func buildPRCommentBody(run tfRunSummary) string {
 
 	sb.WriteString("<details><summary>Expand for plan output details</summary>\n\n")
 	sb.WriteString("```\n")
-	if run.Plan != nil && strings.TrimSpace(run.Plan.Text) != "" {
-		sb.WriteString(run.Plan.Text)
-		if !strings.HasSuffix(run.Plan.Text, "\n") {
-			sb.WriteString("\n")
+	if run.Plan != nil {
+		writePlanLines := func(title string, items []string) {
+			sb.WriteString(title + ":\n")
+			if len(items) == 0 {
+				sb.WriteString("  (none)\n")
+				return
+			}
+			for _, item := range items {
+				sb.WriteString("  - " + item + "\n")
+			}
 		}
+		writePlanLines("Adds", run.Plan.Adds)
+		writePlanLines("Changes", run.Plan.Changes)
+		writePlanLines("Destroys", run.Plan.Deletes)
 	} else {
 		sb.WriteString("Plan output unavailable.\n")
 	}
