@@ -1,6 +1,6 @@
 # pltf CLI 🚀
 
-pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable security/cost scans. Instead of hand-editing Terraform everywhere, keep your infrastructure knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate modules, providers, backend wiring, and secrets integration for every run.
+pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable security/cost scans. Instead of hand-editing Terraform everywhere, keep your infrastructure knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate modules, providers, backend wiring, and secrets integration for every run. Its Kubernetes-native workflow (EKS, Helm, clusters, charts) keeps workloads aligned with k8s best practices while still relying on standard Terraform state and tooling.
 
 ## Why teams choose pltf
 
@@ -176,7 +176,7 @@ Environments describe the shared infrastructure (backends, stacks, provider mapp
 
 Services reference an environment via `metadata.ref` and declare workload-specific modules, metadata, secrets, and images. Each entry under `metadata.envRef` can target a different environment—services live in as many environments as the spec lists, with optional overrides per env. The diagram above shows how a single service spec can plug into both production and staging envs via their YAML definitions.
 
-Stacks bundle reusable modules with documented inputs, outputs, and provider requirements. Drop a `module.yaml` next to custom Terraform code, reference it, and pltf treats it like an embedded module during generation.
+Stacks bundle reusable modules with documented inputs, outputs, and provider requirements. Drop a `module.yaml` next to custom Terraform code, reference it, and pltf treats it like an embedded module during generation—this lets you bring your own modules in addition to the built-in catalog.
 
 Variables and secrets stay first-class at every level: stacks/environments hold shared runtime inputs while services layer on overrides and secrets. Secrets never land in Git—pltf injects them while materializing the workspace.
 
