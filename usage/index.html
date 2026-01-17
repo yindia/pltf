@@ -689,8 +689,16 @@
 <td>Renders Terraform workspaces without running Terraform</td>
 </tr>
 <tr>
-<td><code>pltf terraform plan/apply/destroy</code></td>
-<td>Builds images, generates, and executes Terraform via Dagger</td>
+<td><code>pltf terraform plan</code></td>
+<td>Builds spec images via Dagger (no push) and runs Terraform locally inside the generated workspace</td>
+</tr>
+<tr>
+<td><code>pltf terraform apply</code></td>
+<td>Builds and pushes spec images via Dagger and runs <code>terraform apply -auto-approve</code> locally</td>
+</tr>
+<tr>
+<td><code>pltf terraform destroy</code></td>
+<td>Runs <code>terraform destroy -auto-approve</code> locally without pushing images after the cached plan</td>
 </tr>
 <tr>
 <td><code>pltf terraform graph</code></td>
@@ -722,24 +730,24 @@
 <li><code>--out/-o</code>: Output directory (default <code>.pltf/&lt;env&gt;/workspace</code> or <code>.pltf/&lt;env&gt;/&lt;service&gt;/workspace</code>).</li>
 <li><code>--var/-v key=value</code>: CLI vars merge over spec variables and support strings, numbers, JSON, and lists.</li>
 <li><code>--target</code>, <code>--parallelism</code>, <code>--lock</code>, <code>--lock-timeout</code>, <code>--no-color</code>, <code>--input</code>, <code>--refresh</code>, <code>--plan-file</code>, <code>--detailed-exitcode</code>, <code>--json</code> (passed to Terraform).</li>
-<li>Set <code>DAGGER_HOST</code> to target a remote Dagger engine; <code>PLTF_DAGGER_LOG</code>, <code>PLTF_DEBUG</code>, or <code>PLTF_VERBOSE</code> enable verbose Dagger logging.</li>
+<li>(Advanced) If you run <code>pltf image ...</code> with a remote Dagger engine, set <code>DAGGER_HOST</code> and use <code>PLTF_DAGGER_LOG</code>, <code>PLTF_DEBUG</code>, or <code>PLTF_VERBOSE</code> to control verbosity.</li>
 </ul>
 <h2 id="terraform-helpers">Terraform helpers</h2>
 <h3 id="pltf-terraform-plan"><code>pltf terraform plan</code></h3>
 <ul>
-<li>Builds images defined in the spec (no push), generates the workspace, and runs <code>terraform plan</code>.</li>
+<li>Builds images defined in the spec via Dagger (no push), generates the workspace, and runs <code>terraform plan</code> locally.</li>
 <li>Supports <code>--scan</code>, <code>--cost</code>, <code>--rover</code>, <code>--detailed-exitcode</code>, <code>--plan-file</code>, and the shared flags above.</li>
 <li>Produces <code>.pltf-plan.tfplan</code>, optional plan JSON, tfsec/cost summaries, and reruns <code>terraform show -json</code> for Rover.</li>
 <li>Example: <code>pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan</code></li>
 </ul>
-<h3 id="pltf-terraform-apply"><code>pltf terraform apply</code></h3>
+<p>-### <code>pltf terraform apply</code></p>
 <ul>
-<li>Builds and pushes images (host registry auth from <code>~/.docker</code>), reuses the shared plugin cache, and runs <code>terraform apply -auto-approve</code> (no prompt).</li>
+<li>Builds and pushes images (host registry auth from <code>~/.docker</code>) via Dagger and runs <code>terraform apply -auto-approve</code> locally (no prompt).</li>
 <li>Example: <code>pltf terraform apply -f env.yaml -e prod</code></li>
 </ul>
 <h3 id="pltf-terraform-destroy"><code>pltf terraform destroy</code></h3>
 <ul>
-<li>Builds images (no push) and runs <code>terraform destroy -auto-approve</code>.</li>
+<li>Skips pushing images, runs <code>terraform destroy -auto-approve</code> locally, and shares the same generated workspace so provider downloads stay cached inside <code>.terraform</code>.</li>
 <li>Example: <code>pltf terraform destroy -f env.yaml -e prod</code></li>
 </ul>
 <h3 id="pltf-terraform-output"><code>pltf terraform output</code></h3>
@@ -1010,12 +1018,6 @@
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="3">
             pltf terraform plan
-        </a>
-        
-        <a href="#pltf-terraform-apply"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="3">
-            pltf terraform apply
         </a>
         
         <a href="#pltf-terraform-destroy"

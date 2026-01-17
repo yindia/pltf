@@ -4,18 +4,16 @@ pltf keeps both Docker image builds and Terraform provider downloads cached so r
 
 ## Docker / BuildKit caching
 
-- Image builds run via Dagger’s `Directory.DockerBuild`, and every build mounts the `pltf-image-cache` volume at `/dagger/image-cache`.
-- When specs reuse the same context, BuildKit layers are reused, and exported images push/preserve tags with the cache volume intact.
-- During `pltf terraform plan/apply`, we build every declared image (and `apply` pushes tags) before running Terraform; the cache volume lives for the whole command.
+- Image builds still run via Dagger’s `Directory.DockerBuild`, and every build mounts the `pltf-image-cache` volume at `/dagger/image-cache`.
+- When specs reuse the same context, BuildKit layers are reused and exported images continue to benefit from the cached layers.
+- During `pltf terraform plan/apply`, we build every declared image (and `apply` pushes tags) before running Terraform so the BuildKit cache keeps working across commands.
 
-## Terraform provider/plugin cache
+## Terraform provider cache
 
-- Terraform runs share a CacheVolume named `pltf-terraform-plugin-cache`. It’s mounted at `/work/.terraform-plugin-cache` inside every command container.
-- We generate `~/.terraformrc` pointing `plugin_cache_dir` to the cache so Terraform checks that directory first and writes new providers there.
-- `TF_PLUGIN_CACHE_DIR` also points at the same path so the CLI and Terraform agree.
-- Cache persistence spans commands and even project directories because the CacheVolume is stored by Dagger outside any single workspace.
+- Terraform runs rely on whichever cache Terraform stores inside `.terraform` within the generated workspace. Keep the workspace around to benefit from cached provider downloads, and share it across CI or machines if you like.
+- Inspect or archive the workspace to reuse provider binaries elsewhere; just ensure host credentials have access to the necessary artifacts.
 
 ## Tips
 
-- If you want to inspect the cache, export the Dagger volume via the CLI (`dagger cache export ...`) or mount a host directory by modifying the runner.
-- Ensure your host AWS/GCP credentials have permission to read any `.terraformrc` artifacts and plugin binaries if you share the cache across teams.
+- If you want to inspect the plugin cache, look inside the workspace directory and locate its cache folder or copy it elsewhere.
+- Ensure your host AWS/GCP credentials have permission to read the generated `.terraform` artifacts if you share the workspace across teams.

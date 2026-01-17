@@ -769,13 +769,13 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Follow this walkthrough to go from the checked-in samples (<code>example/env.yaml</code>, <code>example/service.yaml</code>) to a working AWS stack. The guide highlights the Dagger-backed workflow, provider caches, and image automation that pltf now provides.</p>
+    <p>Follow this walkthrough to go from the checked-in samples (<code>example/env.yaml</code>, <code>example/service.yaml</code>) to a working AWS stack. The guide highlights the provider caches and image automation (via Dagger) that pltf now provides.</p>
 <h2 id="1-prerequisites">1) Prerequisites</h2>
 <ul>
-<li>Terraform 1.5+ locally or in CI.  </li>
+<li>Terraform 1.6.6 locally (or any version satisfying <code>&gt;=1.6.6</code> in the workspace).  </li>
 <li>AWS credentials (from <code>aws configure</code>, env vars, or another provider).  </li>
 <li><code>pltf</code> installed (see <a href="../../installation/">Installation</a>).  </li>
-<li>Dagger environment with readable <code>~/.aws</code>/<code>~/.docker</code>/<code>~/.terraformrc</code> (pltf generates its own <code>~/.terraformrc</code> quoting the shared cache).</li>
+<li>Dagger installed (only required when building/pushing images via <code>pltf image ...</code> or when specs declare Docker images).</li>
 </ul>
 <h2 id="2-render-the-environment-vpc-eks-dns">2) Render the Environment (VPC + EKS + DNS)</h2>
 <p>The sample <code>example/env.yaml</code> already wires AWS base, DNS, and EKS modules into the <code>prod</code> environment. Copy it to <code>env.yaml</code> and adjust variables as needed.</p>
@@ -825,7 +825,7 @@
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w">  </span>-f<span class="w"> </span>example/env.yaml<span class="w"> </span>--env<span class="w"> </span>prod
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>apply<span class="w"> </span>-f<span class="w"> </span>example/env.yaml<span class="w"> </span>--env<span class="w"> </span>prod
 </span></code></pre></div>
-<p>Terraform runs use the shared plugin cache (<code>pltf-terraform-plugin-cache</code>) and the generated <code>~/.terraformrc</code>, so providers stay cached across commands and projects. <code>pltf terraform plan</code> builds Docker images (no push) before planning; <code>apply</code> builds + pushes them using <code>~/.docker</code> creds.</p>
+<p>Terraform runs operate inside <code>.pltf/&lt;env&gt;/workspace</code> so the standard <code>.terraform</code> cache keeps provider downloads per workspace. <code>pltf terraform plan</code> builds Docker images (no push) before planning; <code>apply</code> builds + pushes them using your host registry credentials.</p>
 <h2 id="3-add-a-service-postgres-s3-snssqs-iam">3) Add a Service (Postgres + S3 + SNS/SQS + IAM)</h2>
 <p>The sample <code>example/service.yaml</code> references <code>env.yaml</code> and shows how a service binds modules/variables/secrets.</p>
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">platform.io/v1</span>

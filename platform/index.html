@@ -687,7 +687,7 @@
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>force-unlock<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod<span class="w"> </span>--lock-id<span class="o">=</span>&lt;id&gt;
 </span></code></pre></div>
 <ul>
-<li>Every Terraform helper runs inside Dagger with the shared workspace/cache environment and mounts credentials (<code>~/.aws</code>, <code>~/.docker</code>, etc.).  </li>
+<li>Every Terraform helper runs locally in the generated workspace, picks up credentials (<code>~/.aws</code>, <code>~/.docker</code>, etc.) from the host, and benefits from the plain <code>.terraform</code> cache Terraform maintains inside the workspace.</li>
 <li>Plan/apply/destroy all run <code>terraform plan</code> first and keep <code>.pltf-plan.tfplan</code> plus optional tfsec/cost summaries or Rover output.  </li>
 <li>Apply/destroy append <code>-auto-approve</code> so there’s no interactive approval.  </li>
 <li><code>plan</code>/<code>destroy</code> build images without pushing; <code>apply</code> builds and then pushes with the host registry credentials.  </li>

@@ -716,22 +716,21 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>Every <code>pltf terraform ...</code> command uses the same Dagger session abstraction so Terraform runs and image builds execute inside a consistent container environment.</p>
+    <p><code>pltf terraform ...</code> commands share the same generated workspace: specs render first, images build via Dagger, and Terraform runs locally with cached plugins and forced plans (no Dagger layers for Terraform commands themselves).</p>
 <h2 id="shared-motivations">Shared motivations</h2>
 <ul>
 <li><strong>Auto generation</strong>: Specs render before each command. The CLI writes the env-specific <code>.tfvars</code> file, ensures the backend bucket, and rehydrates the workspace with modules from embedded/custom roots.</li>
-<li><strong>Plan first for all actions</strong>: <code>plan</code>, <code>apply</code>, and <code>destroy</code> all run <code>terraform plan</code> first and collect the <code>.pltf-plan.tfplan</code> alongside optional tfsec/rover/infracost summaries.</li>
-<li><strong>Apply/destroy are auto-approved</strong>: Both commands append <code>-auto-approve</code>, and no interactive approval prompt is shown inside Dagger.</li>
-<li><strong>Image build before Terraform</strong>: The same Dagger session builds (and for <code>apply</code>, pushes) the Docker images declared in the spec before calling Terraform. Image builds respect the optional spec-level <code>platforms</code> list (e.g., <code>["linux/amd64","linux/arm64"]</code>) and default to the host OS/ARCH when omitted.</li>
+<li><strong>Terraform runs locally with caching</strong>: <code>terraform init/plan/apply</code> run inside the generated workspace so the plain <code>.terraform</code> cache inside <code>.pltf/&lt;env&gt;/workspace</code> handles provider downloads.</li>
+<li><strong>Plan first and auto-approved apply/destroy</strong>: <code>plan</code>, <code>apply</code>, and <code>destroy</code> all run <code>terraform plan</code> first; apply/destroy continue automatically with <code>-auto-approve</code> so automation never stalls.</li>
+<li><strong>Image build before Terraform</strong>: Dagger builds (and for <code>apply</code>, pushes) the Docker images declared in the spec before invoking Terraform so builds benefit from BuildKit caches. Image builds respect the optional spec-level <code>platforms</code> list (<code>["linux/amd64","linux/arm64"]</code>) and default to the host OS/ARCH when omitted (<code>destroy</code> skips image builds entirely).</li>
 </ul>
 <h2 id="runtime-steps">Runtime steps</h2>
 <ol>
-<li><strong>Start Dagger session</strong> (logs sent to stderr unless <code>PLTF_DAGGER_*</code> opts are set).</li>
-<li><strong>Mount cached assets</strong>: workdir, AWS/GCP credentials, <code>.docker</code>, and the shared <code>pltf-terraform-plugin-cache</code> volume are mounted into <code>/work</code>.</li>
-<li><strong>Run <code>terraform init</code></strong>: Backends are configured (S3 etc) and plugins download into the cached volume.</li>
+<li><strong>Render the workspace</strong> (shared code ensures <code>.tfvars</code>, modules, and backend config are ready).</li>
+<li><strong>Build + push images</strong> via Dagger: plan/apply build once (apply pushes with host registry credentials); destroy skips the image build step.</li>
+<li><strong>Run <code>terraform init</code> locally</strong>: Terraform config keeps its downloads inside the workspace and reuses credentials mounted from your host (AWS, Docker, etc.).</li>
 <li><strong>Select or create workspace</strong> matching the env name.</li>
-<li><strong>Build + push images</strong>: plan/apply/destroy build, apply pushes via host credentials, plan/destroy only build locally.</li>
-<li><strong>Run <code>terraform plan</code></strong>: The planner uses <code>TF_PLUGIN_CACHE_DIR</code> and writes its plan; if the plan succeeds, <code>apply</code>/<code>destroy</code> follow immediately.</li>
+<li><strong>Run <code>terraform plan</code> locally</strong>; the planner writes <code>.pltf-plan.tfplan</code> and <code>.pltf-plan.json</code>, and if the plan succeeds, <code>apply</code>/<code>destroy</code> continue automatically.</li>
 </ol>
 <h2 id="offline-friendly-hooks">Offline-friendly hooks</h2>
 <ul>

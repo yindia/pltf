@@ -719,21 +719,19 @@
     <p>pltf keeps both Docker image builds and Terraform provider downloads cached so repeated runs stay fast.</p>
 <h2 id="docker-buildkit-caching">Docker / BuildKit caching</h2>
 <ul>
-<li>Image builds run via Dagger’s <code>Directory.DockerBuild</code>, and every build mounts the <code>pltf-image-cache</code> volume at <code>/dagger/image-cache</code>.</li>
-<li>When specs reuse the same context, BuildKit layers are reused, and exported images push/preserve tags with the cache volume intact.</li>
-<li>During <code>pltf terraform plan/apply</code>, we build every declared image (and <code>apply</code> pushes tags) before running Terraform; the cache volume lives for the whole command.</li>
+<li>Image builds still run via Dagger’s <code>Directory.DockerBuild</code>, and every build mounts the <code>pltf-image-cache</code> volume at <code>/dagger/image-cache</code>.</li>
+<li>When specs reuse the same context, BuildKit layers are reused and exported images continue to benefit from the cached layers.</li>
+<li>During <code>pltf terraform plan/apply</code>, we build every declared image (and <code>apply</code> pushes tags) before running Terraform so the BuildKit cache keeps working across commands.</li>
 </ul>
-<h2 id="terraform-providerplugin-cache">Terraform provider/plugin cache</h2>
+<h2 id="terraform-provider-cache">Terraform provider cache</h2>
 <ul>
-<li>Terraform runs share a CacheVolume named <code>pltf-terraform-plugin-cache</code>. It’s mounted at <code>/work/.terraform-plugin-cache</code> inside every command container.</li>
-<li>We generate <code>~/.terraformrc</code> pointing <code>plugin_cache_dir</code> to the cache so Terraform checks that directory first and writes new providers there.</li>
-<li><code>TF_PLUGIN_CACHE_DIR</code> also points at the same path so the CLI and Terraform agree.</li>
-<li>Cache persistence spans commands and even project directories because the CacheVolume is stored by Dagger outside any single workspace.</li>
+<li>Terraform runs rely on whichever cache Terraform stores inside <code>.terraform</code> within the generated workspace. Keep the workspace around to benefit from cached provider downloads, and share it across CI or machines if you like.</li>
+<li>Inspect or archive the workspace to reuse provider binaries elsewhere; just ensure host credentials have access to the necessary artifacts.</li>
 </ul>
 <h2 id="tips">Tips</h2>
 <ul>
-<li>If you want to inspect the cache, export the Dagger volume via the CLI (<code>dagger cache export ...</code>) or mount a host directory by modifying the runner.</li>
-<li>Ensure your host AWS/GCP credentials have permission to read any <code>.terraformrc</code> artifacts and plugin binaries if you share the cache across teams.</li>
+<li>If you want to inspect the plugin cache, look inside the workspace directory and locate its cache folder or copy it elsewhere.</li>
+<li>Ensure your host AWS/GCP credentials have permission to read the generated <code>.terraform</code> artifacts if you share the workspace across teams.</li>
 </ul>
   </div>
 </article>
@@ -971,10 +969,10 @@
         
 
         
-        <a href="#terraform-providerplugin-cache"
+        <a href="#terraform-provider-cache"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Terraform provider/plugin cache
+            Terraform provider cache
         </a>
         
 
