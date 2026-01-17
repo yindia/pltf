@@ -150,7 +150,27 @@ pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-
 
 ## Specs & Concepts
 
-![Environment vs Service](docs/images/hero.png)
+```mermaid
+flowchart TB
+    svc[(service.yaml)]
+
+    subgraph PROD[Production Env]
+        prod_service[Service A]
+    end
+
+    subgraph STAGE[Staging Env]
+        stage_service[Service A]
+    end
+
+    env[(env.yaml)]
+
+    svc --> prod_service
+    svc --> stage_service
+
+    prod_service --> env
+    stage_service --> env
+
+```
 
 Environments describe the shared infrastructure (backends, stacks, provider mappings, account/region inputs) that every deployment reuses. Use `variables` for shared inputs, `secrets` for sensitive data, and `metadata.stacks` to include reusable stacks before generation.
 
