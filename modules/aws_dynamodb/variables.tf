@@ -1,6 +1,9 @@
+# tflint-ignore: terraform_unused_declarations
 data "aws_caller_identity" "current" {}
+# tflint-ignore: terraform_unused_declarations
 data "aws_region" "current" {}
 
+# tflint-ignore: terraform_unused_declarations
 variable "env_name" {
   description = "Env name"
   type        = string
@@ -26,6 +29,7 @@ variable "write_capacity" {
   default = 20
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "billing_mode" {
   type    = string
   default = "PROVISIONED"

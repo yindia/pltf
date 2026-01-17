@@ -1,14 +1,19 @@
 package cmd
 
 import (
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"pltf/pkg/clihelper"
 )
 
 var (
 	autoValFile string
 	autoValEnv  string
+	autoValScan bool
+	autoValMods string
 )
 
 // validateCmd auto-detects Environment vs Service and validates accordingly.
@@ -22,13 +27,16 @@ and the service envRef (for services). Lint suggestions are run alongside valida
 	Example: `  pltf validate -f env.yaml
   pltf validate -f service.yaml -e dev`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		autoValFile = defaultString(autoValFile, "env.yaml")
-		autoValFile = cleanOptionalPath(autoValFile)
+		autoValFile = clihelper.DefaultString(autoValFile, "env.yaml")
+		autoValFile = clihelper.CleanOptionalPath(autoValFile)
 		autoValEnv = strings.TrimSpace(autoValEnv)
-		return ensureFile(autoValFile, "spec file")
+		return clihelper.EnsureFile(autoValFile, "spec file")
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return autoValidate(autoValFile, autoValEnv)
+		if autoValScan {
+			return clihelper.AutoValidateWithScan(os.Stdout, autoValFile, autoValEnv, autoValMods)
+		}
+		return clihelper.AutoValidate(autoValFile, autoValEnv, autoValMods)
 	},
 }
 
@@ -37,4 +45,6 @@ func init() {
 
 	validateCmd.Flags().StringVarP(&autoValFile, "file", "f", "env.yaml", "Path to the Environment or Service YAML file")
 	validateCmd.Flags().StringVarP(&autoValEnv, "env", "e", "", "Environment key to assert exists (dev, prod, etc.)")
+	validateCmd.Flags().BoolVar(&autoValScan, "scan", false, "Run tfsec security scan against generated Terraform")
+	validateCmd.Flags().StringVarP(&autoValMods, "modules", "m", "", "Override modules root; defaults to embedded modules")
 }

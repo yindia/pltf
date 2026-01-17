@@ -27,7 +27,6 @@ var (
 	moduleRefAnywhere    = regexp.MustCompile(`module\.([a-zA-Z0-9_.-]+)\.[a-zA-Z0-9_]+`)
 	curlyContentPattern  = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 	identifierPattern    = regexp.MustCompile(`^[A-Za-z0-9_]+$`)
-	outputNameCleaner    = regexp.MustCompile(`[^A-Za-z0-9_]`)
 )
 
 type moduleScope string
@@ -80,6 +79,9 @@ type Generator struct {
 
 	// module dependencies (module id -> set of module ids it depends on)
 	moduleDeps map[string]map[string]struct{}
+
+	// workspace mode: render locals/providers with var references
+	useWorkspace bool
 }
 
 // NewGenerator builds a Generator with loaded module metadata, output wiring, and env/service context.
@@ -218,17 +220,42 @@ func NewGenerator(
 		Provider:    envCfg.Metadata.Provider,
 		EnvName:     envName,
 		ServiceName: serviceName,
+		IsService:   g.isService,
 		Modules:     g.allModules,
 		Vars:        g.mergedVars,
+		ModuleMetas: g.moduleMetas,
+		ModuleScopes: func() map[string]string {
+			out := make(map[string]string, len(g.moduleScopes))
+			for id, scope := range g.moduleScopes {
+				out[id] = string(scope)
+			}
+			return out
+		}(),
 	})
 
 	return g, nil
 }
 
+// EnableWorkspaceMode switches the generator to workspace export behavior.
+func (g *Generator) EnableWorkspaceMode() {
+	g.useWorkspace = true
+}
+
 // Generate writes Terraform for the configured stack into g.outDir.
-func (g *Generator) Generate() error {
+func (g *Generator) Generate() (err error) {
 	if err := g.assertSafeOutDir(); err != nil {
 		return err
+	}
+	var restoreTerraform func() error
+	if restoreTerraform, err = preserveTerraformCache(g.outDir); err != nil {
+		return err
+	}
+	if restoreTerraform != nil {
+		defer func() {
+			if restoreErr := restoreTerraform(); restoreErr != nil && err == nil {
+				err = restoreErr
+			}
+		}()
 	}
 	// 1. Create output directory
 	if err := os.RemoveAll(g.outDir); err != nil {
@@ -239,7 +266,71 @@ func (g *Generator) Generate() error {
 	}
 
 	// 2. Write shared files (versions.tf, providers.tf, secrets.tf)
-	if err := g.writeBaseFiles(); err != nil {
+	if err := g.writeBaseFiles(false, ""); err != nil {
+		return err
+	}
+
+	// 3. Write a file for each module
+	modulesToGen := g.envCfg.Modules
+	if g.isService {
+		modulesToGen = g.svcCfg.Modules
+	}
+
+	usedModuleTypes := make(map[string]bool)
+	for _, m := range modulesToGen {
+		meta := g.moduleMetas[m.ID]
+		usedModuleTypes[meta.Type] = true
+
+		mWithFiles, err := g.materializeFileInputs(g.applyAugmentations(m))
+		if err != nil {
+			return err
+		}
+		if err := g.writeModuleFile(mWithFiles, meta); err != nil {
+			return err
+		}
+	}
+
+	// 4. Copy module sources
+	if err := copyUsedModules(g.outDir, usedModuleTypes, g.moduleRootByType); err != nil {
+		return fmt.Errorf("failed to copy modules: %w", err)
+	}
+
+	// 5. Emit outputs.tf for all module outputs
+	if err := g.writeOutputsFile(modulesToGen); err != nil {
+		return fmt.Errorf("failed to write outputs.tf: %w", err)
+	}
+
+	return nil
+}
+
+// GenerateWorkspace writes Terraform using var-based locals for workspace exports.
+func (g *Generator) GenerateWorkspace(workspaceKeyPrefix string) (err error) {
+	if err := g.assertSafeOutDir(); err != nil {
+		return err
+	}
+	var restoreTerraform func() error
+	if restoreTerraform, err = preserveTerraformCache(g.outDir); err != nil {
+		return err
+	}
+	if restoreTerraform != nil {
+		defer func() {
+			if restoreErr := restoreTerraform(); restoreErr != nil && err == nil {
+				err = restoreErr
+			}
+		}()
+	}
+	// 1. Create output directory
+	if err := os.RemoveAll(g.outDir); err != nil {
+		return fmt.Errorf("failed to clear output dir %s: %w", g.outDir, err)
+	}
+	if err := os.MkdirAll(g.outDir, 0o755); err != nil {
+		return fmt.Errorf("failed to create output dir %s: %w", g.outDir, err)
+	}
+
+	g.EnableWorkspaceMode()
+
+	// 2. Write shared files (versions.tf, providers.tf, secrets.tf)
+	if err := g.writeBaseFiles(true, workspaceKeyPrefix); err != nil {
 		return err
 	}
 
@@ -308,14 +399,20 @@ func (g *Generator) writeModuleFile(m config.Module, meta *config.ModuleMetadata
 	for key, val := range m.Inputs {
 		if !inputDeclared(meta, key) {
 			g.collectDepsFromValue(m.ID, val)
-			if err := g.setAttribute(modBody, key, val); err != nil {
+			if err := g.setAttribute(modBody, key, val, true); err != nil {
 				return fmt.Errorf("module %q extra input %q: %w", m.ID, key, err)
 			}
 		}
 	}
 
 	if deps := g.sortedDeps(m.ID); len(deps) > 0 {
-		modBody.SetAttributeRaw("depends_on", g.dependsTokens(deps))
+		if g.isService {
+			serviceDeps, _ := g.splitByScope(deps)
+			deps = serviceDeps
+		}
+		if len(deps) > 0 {
+			modBody.SetAttributeRaw("depends_on", g.dependsTokens(deps))
+		}
 	}
 
 	modPath := filepath.Join(g.outDir, fmt.Sprintf("%s.tf", m.ID))
@@ -454,7 +551,7 @@ func (g *Generator) writeOutputsFile(mods []config.Module) error {
 			continue
 		}
 		for _, out := range meta.Outputs {
-			base := sanitizeOutputName(out.Name)
+			base := outputLabelBase(out.Name)
 			baseCounts[base]++
 		}
 	}
@@ -470,12 +567,7 @@ func (g *Generator) writeOutputsFile(mods []config.Module) error {
 
 			block := body.AppendNewBlock("output", []string{name})
 			b := block.Body()
-			trav := hcl.Traversal{
-				hcl.TraverseRoot{Name: "module"},
-				hcl.TraverseAttr{Name: m.ID},
-				hcl.TraverseAttr{Name: out.Name},
-			}
-			b.SetAttributeRaw("value", hclwrite.TokensForTraversal(trav))
+			b.SetAttributeRaw("value", hclwrite.TokensForTraversal(moduleOutputTraversal(m.ID, out.Name)))
 			if desc := strings.TrimSpace(out.Description); desc != "" {
 				b.SetAttributeValue("description", cty.StringVal(desc))
 			}
@@ -490,112 +582,104 @@ func (g *Generator) writeOutputsFile(mods []config.Module) error {
 }
 
 func (g *Generator) processInput(modBody *hclwrite.Body, m config.Module, inSpec config.InputSpec) error {
-	var (
-		val interface{}
-		has bool
-	)
-
-	// 1. Direct input from YAML
-	if raw, ok := m.Inputs[inSpec.Name]; ok {
-		val = raw
-		has = true
-	} else {
-		// 2. Auto-fill platform fields
-		switch inSpec.Name {
-		case "env_name":
-			val = g.envName
-			has = true
-		case "layer_name":
-			layer := g.envName
-			if g.isService {
-				layer = g.svcCfg.Metadata.Name
-			}
-			val = layer
-			has = true
-		case "module_name":
-			val = m.ID
-			has = true
-		}
-	}
-
-	// 3. Auto-wire from another module's output
-	if !has {
-		if providers, ok := g.outputProviders[inSpec.Name]; ok {
-			// Filter out the current module from the list of providers
-			var candidates []string
-			for _, p := range providers {
-				if p != m.ID {
-					candidates = append(candidates, p)
-				}
-			}
-
-			if g.isService {
-				serviceProviders, envProviders := g.splitByScope(candidates)
-				if len(serviceProviders) > 1 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple service modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, serviceProviders,
-					)
-				}
-				if len(envProviders) > 1 && len(serviceProviders) == 0 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple environment modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, envProviders,
-					)
-				}
-
-				switch {
-				case len(serviceProviders) == 1:
-					g.addDep(m.ID, serviceProviders[0])
-					setAttrModuleOutputRef(modBody, inSpec.Name, serviceProviders[0], inSpec.Name)
-					return nil
-				case len(envProviders) == 1:
-					setParentOutputRef(modBody, inSpec.Name, envProviders[0], inSpec.Name)
-					return nil
-				}
-			} else {
-				if len(candidates) > 1 {
-					return fmt.Errorf(
-						"module %q input %q can be satisfied by multiple modules: %v. Please specify which to use in your YAML.",
-						m.ID, inSpec.Name, candidates,
-					)
-				}
-				if len(candidates) == 1 {
-					g.addDep(m.ID, candidates[0])
-					setAttrModuleOutputRef(modBody, inSpec.Name, candidates[0], inSpec.Name)
-					return nil
-				}
-			}
-		}
-	}
-
-	// 3b. Wire from merged locals/vars if available
-	if !has {
-		if _, ok := g.mergedVars[inSpec.Name]; ok {
-			return g.setVarReference(modBody, inSpec.Name, inSpec.Name)
-		}
-	}
-
-	// 4. Handle required/default logic
-	if !has {
-		if inSpec.Required && inSpec.Default == nil {
-			return fmt.Errorf("module %q (type=%s) missing required input %q", m.ID, m.Type, inSpec.Name)
-		}
-		if inSpec.Default == nil {
-			return nil // Skip if no value and no default
-		}
-		val = inSpec.Default
+	val, err := g.resolveInput(modBody, m, inSpec)
+	if err != nil {
+		return err
 	}
 
 	g.collectDepsFromValue(m.ID, val)
-	return g.setAttribute(modBody, inSpec.Name, val)
+	return g.setAttribute(modBody, inSpec.Name, val, true)
 }
 
-func (g *Generator) setAttribute(body *hclwrite.Body, name string, value interface{}) error {
+func (g *Generator) resolveInput(modBody *hclwrite.Body, m config.Module, inSpec config.InputSpec) (interface{}, error) {
+	// 1. Direct input from YAML
+	if raw, ok := m.Inputs[inSpec.Name]; ok {
+		return raw, nil
+	}
+
+	// 2. Auto-fill platform fields
+	switch inSpec.Name {
+	case "env_name":
+		return g.envKey, nil
+	case "layer_name":
+		layer := g.envName
+		if g.isService {
+			layer = g.svcCfg.Metadata.Name
+		}
+		return layer, nil
+	case "module_name":
+		return m.ID, nil
+	}
+
+	// 3. Auto-wire from another module's output
+	if providers, ok := g.outputProviders[inSpec.Name]; ok {
+		// Filter out the current module from the list of providers
+		var candidates []string
+		for _, p := range providers {
+			if p != m.ID {
+				candidates = append(candidates, p)
+			}
+		}
+
+		if g.isService {
+			serviceProviders, envProviders := g.splitByScope(candidates)
+			if len(serviceProviders) > 1 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple service modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, serviceProviders,
+				)
+			}
+			if len(envProviders) > 1 && len(serviceProviders) == 0 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple environment modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, envProviders,
+				)
+			}
+
+			switch {
+			case len(serviceProviders) == 1:
+				g.addDep(m.ID, serviceProviders[0])
+				setAttrModuleOutputRef(modBody, inSpec.Name, serviceProviders[0], inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			case len(envProviders) == 1:
+				setAttrParentOutputRef(modBody, inSpec.Name, inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			}
+		} else {
+			if len(candidates) > 1 {
+				return nil, fmt.Errorf(
+					"module %q input %q can be satisfied by multiple modules: %v. Please specify which to use in your YAML.",
+					m.ID, inSpec.Name, candidates,
+				)
+			}
+			if len(candidates) == 1 {
+				g.addDep(m.ID, candidates[0])
+				setAttrModuleOutputRef(modBody, inSpec.Name, candidates[0], inSpec.Name)
+				return nil, nil // Attribute is set directly, so we return nil
+			}
+		}
+	}
+
+	// 4. Wire from merged locals/vars if available
+	if _, ok := g.mergedVars[inSpec.Name]; ok {
+		return nil, g.setVarReference(modBody, inSpec.Name, inSpec.Name)
+	}
+
+	// 5. Handle required/default logic
+	if inSpec.Required && inSpec.Default == nil {
+		return nil, fmt.Errorf("module %q (type=%s) missing required input %q", m.ID, m.Type, inSpec.Name)
+	}
+	if inSpec.Default == nil {
+		return nil, nil // Skip if no value and no default
+	}
+	return inSpec.Default, nil
+}
+
+func (g *Generator) setAttribute(body *hclwrite.Body, name string, value interface{}, replaceEnvLayer bool) error {
 	if value == nil {
 		return nil
 	}
-	value = g.replaceIntrinsicPlaceholdersInValue(value)
+	value = g.replaceIntrinsicPlaceholdersInValue(value, replaceEnvLayer)
 	tokens, err := g.valueToTokens(value)
 	if err != nil {
 		return fmt.Errorf("could not convert value for %q to HCL tokens: %w", name, err)
@@ -636,28 +720,28 @@ func (g *Generator) valueToTokens(value interface{}) (hclwrite.Tokens, error) {
 	}
 }
 
-func (g *Generator) replaceIntrinsicPlaceholdersInValue(value interface{}) interface{} {
+func (g *Generator) replaceIntrinsicPlaceholdersInValue(value interface{}, replaceEnvLayer bool) interface{} {
 	switch v := value.(type) {
 	case string:
-		return g.replaceIntrinsicPlaceholders(v)
+		return g.replaceIntrinsicPlaceholders(v, replaceEnvLayer)
 	case fmt.Stringer:
-		return g.replaceIntrinsicPlaceholders(v.String())
+		return g.replaceIntrinsicPlaceholders(v.String(), replaceEnvLayer)
 	case []string:
 		out := make([]string, len(v))
 		for i, item := range v {
-			out[i] = g.replaceIntrinsicPlaceholders(item)
+			out[i] = g.replaceIntrinsicPlaceholders(item, replaceEnvLayer)
 		}
 		return out
 	case []interface{}:
 		out := make([]interface{}, len(v))
 		for i, item := range v {
-			out[i] = g.replaceIntrinsicPlaceholdersInValue(item)
+			out[i] = g.replaceIntrinsicPlaceholdersInValue(item, replaceEnvLayer)
 		}
 		return out
 	case []map[string]interface{}:
 		out := make([]map[string]interface{}, len(v))
 		for i, item := range v {
-			if converted, ok := g.replaceIntrinsicPlaceholdersInValue(item).(map[string]interface{}); ok {
+			if converted, ok := g.replaceIntrinsicPlaceholdersInValue(item, replaceEnvLayer).(map[string]interface{}); ok {
 				out[i] = converted
 			}
 		}
@@ -665,13 +749,13 @@ func (g *Generator) replaceIntrinsicPlaceholdersInValue(value interface{}) inter
 	case map[string]interface{}:
 		out := make(map[string]interface{}, len(v))
 		for key, val := range v {
-			out[key] = g.replaceIntrinsicPlaceholdersInValue(val)
+			out[key] = g.replaceIntrinsicPlaceholdersInValue(val, replaceEnvLayer)
 		}
 		return out
 	case map[string]string:
 		out := make(map[string]string, len(v))
 		for key, val := range v {
-			out[key] = g.replaceIntrinsicPlaceholders(val)
+			out[key] = g.replaceIntrinsicPlaceholders(val, replaceEnvLayer)
 		}
 		return out
 	default:
@@ -746,23 +830,18 @@ func tokensForObjectKey(key string) hclwrite.Tokens {
 	return hclwrite.TokensForValue(cty.StringVal(key))
 }
 
-func sanitizeOutputName(outName string) string {
-	base := outName
-	clean := outputNameCleaner.ReplaceAllString(base, "_")
-	clean = strings.Trim(clean, "_")
-	if clean == "" {
-		clean = "output"
+func outputLabelBase(outName string) string {
+	base := strings.TrimSpace(outName)
+	if base == "" {
+		base = "output"
 	}
-	if clean[0] >= '0' && clean[0] <= '9' {
-		clean = "o_" + clean
-	}
-	return clean
+	return base
 }
 
 func (g *Generator) uniqueOutputName(modID, outName string, baseCounts map[string]int, seen map[string]struct{}) string {
-	base := sanitizeOutputName(outName)
+	base := outputLabelBase(outName)
 	if baseCounts[base] > 1 {
-		base = sanitizeOutputName(fmt.Sprintf("%s_%s", modID, outName))
+		base = fmt.Sprintf("%s_%s", modID, base)
 	}
 
 	name := base
@@ -777,7 +856,6 @@ func (g *Generator) uniqueOutputName(modID, outName string, baseCounts map[strin
 }
 
 func (g *Generator) stringToTokens(s string) hclwrite.Tokens {
-	s = g.replaceIntrinsicPlaceholders(s)
 	normalized := templatePattern.ReplaceAllString(s, `${$1}`)
 
 	// If the whole string is a single interpolation like ${...} or ${{...}}, render as pure expression (no quotes).
@@ -793,6 +871,9 @@ func (g *Generator) stringToTokens(s string) hclwrite.Tokens {
 		return g.expressionToTokens(normalized)
 	}
 	if sm := parentRefPattern.FindStringSubmatch(normalized); sm != nil {
+		return g.expressionToTokens(normalized)
+	}
+	if strings.HasPrefix(normalized, "module.") || strings.HasPrefix(normalized, "parent.") || strings.HasPrefix(normalized, "var.") {
 		return g.expressionToTokens(normalized)
 	}
 
@@ -1000,7 +1081,7 @@ func (g *Generator) applyAugmentations(m config.Module) config.Module {
 	return m
 }
 
-func (g *Generator) replaceIntrinsicPlaceholders(val string) string {
+func (g *Generator) replaceIntrinsicPlaceholders(val string, replaceEnvLayer bool) string {
 	// Normalize legacy {foo} style to ${foo} so the rest of the pipeline can treat them as expressions.
 	val = normalizeCurlyPlaceholders(val)
 
@@ -1009,15 +1090,26 @@ func (g *Generator) replaceIntrinsicPlaceholders(val string) string {
 		layerName = g.svcCfg.Metadata.Name
 	}
 	accountOrProject := g.envEntry.Account
+	envNameReplacement := g.envKey
+	accountReplacement := accountOrProject
+	regionReplacement := g.envEntry.Region
+	if g.useWorkspace {
+		envNameReplacement = "${var.environment}"
+		accountReplacement = "${var.account_id}"
+		regionReplacement = "${var.region}"
+	}
 
-	repl := strings.NewReplacer(buildPlaceholderPairs(map[string]string{
-		"env_name":    g.envName,
-		"layer_name":  layerName,
-		"parent_name": layerName,
-		"account_id":  accountOrProject,
-		"project_id":  accountOrProject,
-		"region":      g.envEntry.Region,
-	})...)
+	placeholders := map[string]string{
+		"account_id": accountReplacement,
+		"project_id": accountReplacement,
+		"region":     regionReplacement,
+	}
+	if replaceEnvLayer {
+		placeholders["env_name"] = envNameReplacement
+		placeholders["layer_name"] = layerName
+		placeholders["parent_name"] = layerName
+	}
+	repl := strings.NewReplacer(buildPlaceholderPairs(placeholders)...)
 	return repl.Replace(val)
 }
 
@@ -1026,11 +1118,7 @@ func (g *Generator) expressionToTokens(expr string) hclwrite.Tokens {
 	normalized := templatePattern.ReplaceAllString(expr, `${$1}`)
 
 	if sm := moduleRefPattern.FindStringSubmatch(normalized); sm != nil {
-		return hclwrite.TokensForTraversal(hcl.Traversal{
-			hcl.TraverseRoot{Name: "module"},
-			hcl.TraverseAttr{Name: sm[1]},
-			hcl.TraverseAttr{Name: sm[2]},
-		})
+		return hclwrite.TokensForTraversal(moduleOutputTraversal(sm[1], sm[2]))
 	}
 	if sm := varRefPattern.FindStringSubmatch(normalized); sm != nil {
 		return hclwrite.TokensForTraversal(hcl.Traversal{
@@ -1039,13 +1127,19 @@ func (g *Generator) expressionToTokens(expr string) hclwrite.Tokens {
 		})
 	}
 	if sm := parentRefPattern.FindStringSubmatch(normalized); sm != nil {
-		return hclwrite.TokensForTraversal(hcl.Traversal{
-			hcl.TraverseRoot{Name: "data"},
-			hcl.TraverseAttr{Name: "terraform_remote_state"},
-			hcl.TraverseAttr{Name: "env"},
-			hcl.TraverseAttr{Name: "outputs"},
-			hcl.TraverseAttr{Name: sm[1]},
-		})
+		return hclwrite.TokensForTraversal(parentOutputTraversal(sm[1]))
+	}
+	if strings.HasPrefix(normalized, "module.") {
+		parts := strings.SplitN(normalized, ".", 3)
+		if len(parts) == 3 {
+			return hclwrite.TokensForTraversal(moduleOutputTraversal(parts[1], parts[2]))
+		}
+	}
+	if strings.HasPrefix(normalized, "parent.") {
+		name := strings.TrimPrefix(normalized, "parent.")
+		if name != "" && !strings.Contains(name, ".") {
+			return hclwrite.TokensForTraversal(parentOutputTraversal(name))
+		}
 	}
 	// Fallback to string literal if unknown pattern
 	return hclwrite.TokensForValue(cty.StringVal(normalized))
@@ -1056,17 +1150,21 @@ func (g *Generator) findModulesByType(moduleType string) map[string]struct{} {
 }
 
 func (g *Generator) findModulesByTypes(moduleTypes []string) map[string]struct{} {
-	out := map[string]struct{}{}
-	set := map[string]struct{}{}
+	typeSet := make(map[string]struct{}, len(moduleTypes))
 	for _, t := range moduleTypes {
-		set[t] = struct{}{}
+		if t == "" {
+			continue
+		}
+		typeSet[t] = struct{}{}
 	}
+
+	matches := map[string]struct{}{}
 	for _, m := range g.allModules {
-		if _, ok := set[m.Type]; ok {
-			out[m.ID] = struct{}{}
+		if _, ok := typeSet[m.Type]; ok {
+			matches[m.ID] = struct{}{}
 		}
 	}
-	return out
+	return matches
 }
 
 func (g *Generator) findFirstModuleByType(moduleType string) string {
@@ -1078,84 +1176,36 @@ func (g *Generator) findFirstModuleByType(moduleType string) string {
 	return ""
 }
 
-type backendDetails struct {
-	bucket        string
-	container     string
-	resourceGroup string
-	region        string
-	backendType   string
-	profile       string
-}
-
-func backendConfig(provider string, envCfg *config.EnvironmentConfig, envEntry config.EnvironmentEntry) (backendDetails, error) {
-	bType := envCfg.Backend.Type
-	if strings.TrimSpace(bType) == "" {
-		bType = provider
-	}
-	bType = strings.ToLower(bType)
-
-	// Defaults
-	bucket := envCfg.Backend.Bucket
-	container := envCfg.Backend.Container
-	resourceGroup := envCfg.Backend.ResourceGroup
-	bRegion := envCfg.Backend.Region
-	if bRegion == "" {
-		bRegion = envEntry.Region
-	}
-	bProfile := envCfg.Backend.Profile
-
-	switch bType {
-	case "aws", "s3", "":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "gcp", "google", "gcs":
-		if bucket == "" {
-			bucket = fmt.Sprintf("%s-%s-%s", envCfg.Metadata.Name, envCfg.Metadata.Org, envEntry.Region)
-		}
-	case "azure", "azurerm":
-		if bucket == "" {
-			return backendDetails{}, fmt.Errorf("backend.bucket (storage account name) is required for azure backend")
-		}
-		if container == "" {
-			container = "tfstate"
-		}
-		if resourceGroup == "" {
-			resourceGroup = fmt.Sprintf("%s-tfstate-rg", envCfg.Metadata.Name)
-		}
-	default:
-		return backendDetails{}, fmt.Errorf("unsupported backend type %q", bType)
-	}
-
-	return backendDetails{
-		bucket:        bucket,
-		container:     container,
-		resourceGroup: resourceGroup,
-		region:        bRegion,
-		backendType:   bType,
-		profile:       bProfile,
-	}, nil
-}
-
-func (g *Generator) writeBaseFiles() error {
+func (g *Generator) writeBaseFiles(useVarRefs bool, workspaceKeyPrefix string) error {
 	provider := g.envCfg.Metadata.Provider
 	providerRegion := g.envEntry.Region
 	account := g.envEntry.Account
-	needsK8s := g.hasModuleType("aws_k8s_service") || g.hasModuleType("gcp_k8s_service")
-	needsHelm := g.hasModuleType("aws_k8s_base") || g.hasModuleType("gcp_k8s_base") || g.hasModuleType("helm_chart")
-	cluster := g.clusterRefs()
+	needsHelm := g.envCfg.Providers.Helm
+	needsKustomize := g.envCfg.Providers.Kustomize
+	needsK8s := g.envCfg.Providers.Kubernetes || needsHelm || needsKustomize
+	if g.svcCfg != nil {
+		needsHelm = needsHelm || g.svcCfg.Providers.Helm
+		needsKustomize = needsKustomize || g.svcCfg.Providers.Kustomize
+		needsK8s = needsK8s || g.svcCfg.Providers.Kubernetes || needsHelm || needsKustomize
+	}
+	cluster, err := g.clusterRefs()
+	if err != nil {
+		return err
+	}
 
 	// Collect locals and secrets
 	locals := g.mergedVars
 	secretNames := g.getSecretNames()
 
 	var backendKey string
-	backendCfg, err := backendConfig(provider, g.envCfg, g.envEntry)
+	backendCfg, err := ResolveBackendConfig(provider, g.envCfg, g.envEntry)
 	if err != nil {
 		return err
 	}
-	bucket := backendCfg.bucket
-	if g.isService {
+	bucket := backendCfg.Bucket
+	if useVarRefs {
+		backendKey = "terraform.tfstate"
+	} else if g.isService {
 		backendKey = fmt.Sprintf("service/%s/%s/terraform.tfstate", g.svcCfg.Metadata.Name, g.envKey)
 	} else {
 		backendKey = fmt.Sprintf("env/%s/%s/terraform.tfstate", g.envCfg.Metadata.Name, g.envKey)
@@ -1165,11 +1215,11 @@ func (g *Generator) writeBaseFiles() error {
 		return fmt.Errorf("backend bucket is not specified in the configuration")
 	}
 
-	if err := writeVersionsTF(g.outDir, bucket, backendKey, backendCfg.region, provider, backendCfg.backendType, locals, needsK8s, needsHelm, backendCfg.container, backendCfg.resourceGroup, backendCfg.profile); err != nil {
+	if err := writeVersionsTF(g.outDir, bucket, backendKey, backendCfg.Region, provider, backendCfg.BackendType, locals, needsK8s, needsHelm, needsKustomize, backendCfg.Container, backendCfg.ResourceGroup, backendCfg.Profile, useVarRefs, workspaceKeyPrefix); err != nil {
 		return fmt.Errorf("failed to write versions.tf: %w", err)
 	}
 
-	if err := writeProvidersTF(g.outDir, provider, providerRegion, account, needsK8s, needsHelm, cluster); err != nil {
+	if err := writeProvidersTF(g.outDir, provider, providerRegion, account, needsK8s, needsHelm, needsKustomize, cluster, useVarRefs); err != nil {
 		return fmt.Errorf("failed to write providers.tf: %w", err)
 	}
 
@@ -1180,7 +1230,12 @@ func (g *Generator) writeBaseFiles() error {
 	// For services, write remote state to access env outputs
 	if g.isService {
 		envStateKey := fmt.Sprintf("env/%s/%s/terraform.tfstate", g.envCfg.Metadata.Name, g.envKey)
-		if err := writeRemoteStateTF(g.outDir, backendCfg.backendType, backendCfg.bucket, envStateKey, backendCfg.region, backendCfg.container, backendCfg.resourceGroup, backendCfg.profile); err != nil {
+		workspacePrefix := ""
+		if useVarRefs {
+			envStateKey = "terraform.tfstate"
+			workspacePrefix = fmt.Sprintf("env/%s", g.envCfg.Metadata.Name)
+		}
+		if err := writeRemoteStateTF(g.outDir, backendCfg.BackendType, backendCfg.Bucket, envStateKey, backendCfg.Region, backendCfg.Container, backendCfg.ResourceGroup, backendCfg.Profile, workspacePrefix, useVarRefs); err != nil {
 			return fmt.Errorf("failed to write service state.tf: %w", err)
 		}
 	}
@@ -1193,7 +1248,7 @@ func (g *Generator) getMergedVars() map[string]interface{} {
 	merged := map[string]interface{}{}
 	merged["account_id"] = g.envEntry.Account
 	merged["region"] = g.envEntry.Region
-	merged["environment"] = g.envName
+	merged["environment"] = g.envKey
 	if g.globalLabels == nil {
 		merged["global_tags"] = map[string]string{}
 	} else {
@@ -1328,4 +1383,44 @@ func (g *Generator) dependsTokens(deps []string) hclwrite.Tokens {
 	}
 	tokens = append(tokens, &hclwrite.Token{Type: hclsyntax.TokenCBrack, Bytes: []byte{']'}})
 	return tokens
+}
+
+func preserveTerraformCache(outDir string) (func() error, error) {
+	tfDir := filepath.Join(outDir, ".terraform")
+	info, err := os.Stat(tfDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to stat terraform cache %s: %w", tfDir, err)
+	}
+	if !info.IsDir() {
+		if err := os.Remove(tfDir); err != nil {
+			return nil, fmt.Errorf("failed to remove stale terraform cache %s: %w", tfDir, err)
+		}
+		return nil, nil
+	}
+
+	tmpDir, err := os.MkdirTemp("", "pltf-terraform-cache-")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create terraform cache temp dir: %w", err)
+	}
+	cached := filepath.Join(tmpDir, ".terraform")
+	if err := os.Rename(tfDir, cached); err != nil {
+		os.RemoveAll(tmpDir)
+		return nil, fmt.Errorf("failed to relocate terraform cache: %w", err)
+	}
+	return func() error {
+		if err := os.MkdirAll(outDir, 0o755); err != nil {
+			return fmt.Errorf("failed to ensure output dir %s exists: %w", outDir, err)
+		}
+		target := filepath.Join(outDir, ".terraform")
+		if err := os.RemoveAll(target); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to clean terraform cache destination %s: %w", target, err)
+		}
+		if err := os.Rename(cached, target); err != nil {
+			return fmt.Errorf("failed to restore terraform cache: %w", err)
+		}
+		return os.RemoveAll(tmpDir)
+	}, nil
 }

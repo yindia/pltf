@@ -53,15 +53,18 @@ variable "values_files" {
   default = []
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "values_file" {
   type    = string
   default = null
 }
 
 variable "values" {
+  type    = any
   default = {}
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "env_name" {
   description = "Env name"
   type        = string
@@ -88,10 +91,11 @@ variable "dependency_update" {
 }
 
 variable "max_history" {
-  type = number
+  type    = number
   default = 20
 }
 
 variable "release_name" {
+  type    = string
   default = null
 }

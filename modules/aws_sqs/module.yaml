@@ -2,6 +2,14 @@ name: aws_sqs
 type: aws_sqs
 provider: aws
 version: 1.0.0
+resources:
+    - aws_kms_key.key
+    - aws_sqs_queue.terraform_queue
+    - aws_sqs_queue_policy.default
+data:
+    - data.aws_caller_identity.current
+    - data.aws_iam_policy_document.kms_policy
+    - data.aws_iam_policy_document.sqs_queue_policy
 inputs:
     - default: false
       name: content_based_deduplication

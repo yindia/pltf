@@ -2,6 +2,15 @@ name: aws_dynamodb
 type: aws_dynamodb
 provider: aws
 version: 1.0.0
+resources:
+    - aws_dynamodb_table.table_no_range
+    - aws_dynamodb_table.table_with_range
+    - aws_kms_key.key
+    - random_string.db_name_hash
+data:
+    - data.aws_caller_identity.current
+    - data.aws_iam_policy_document.kms_policy
+    - data.aws_region.current
 inputs:
     - name: attributes
       required: true

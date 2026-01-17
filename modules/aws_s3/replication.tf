@@ -23,7 +23,7 @@ data "aws_iam_policy_document" "replication" {
       "s3:GetReplicationConfiguration",
       "s3:ListBucket"
     ]
-    resources = ["${aws_s3_bucket.bucket.arn}"]
+    resources = [aws_s3_bucket.bucket.arn]
     sid       = "ReadSourceBucket"
   }
 

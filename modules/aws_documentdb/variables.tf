@@ -13,14 +13,17 @@ variable "module_name" {
   type        = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "private_subnet_ids" {
   type = list(string)
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "vpc_id" {
   type = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "kms_account_key_arn" {
   type = string
 }
@@ -47,10 +50,9 @@ variable "deletion_protection" {
 }
 
 variable "documentdb_aws_security_group" {
-   type    = string
+  type = string
 }
 
 variable "kms_key_alias" {
-   type    = string
+  type = string
 }
-

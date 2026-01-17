@@ -1,9 +1,15 @@
 name: goreleaser-dryrun
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   dryrun:
@@ -28,9 +34,9 @@ jobs:
       - name: Run tests
         run: go test ./...
       - name: GoReleaser dry-run
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          version: latest
-          args: release --snapshot --skip=publish --clean
+          version: '~> v2'
+          args: release --snapshot --skip=publish --clean 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

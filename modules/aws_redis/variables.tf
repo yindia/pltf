@@ -37,11 +37,11 @@ variable "snapshot_retention_limit" {
 
 
 variable "elasticache_aws_security_group" {
-  type     = string
+  type = string
 
 }
 
 variable "kms_key_alias" {
-  type     = string
+  type = string
 
 }

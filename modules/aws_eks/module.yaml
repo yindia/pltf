@@ -2,6 +2,31 @@ name: aws_eks
 type: aws_eks
 provider: aws
 version: 1.0.0
+cluster: true
+resources:
+    - aws_cloudwatch_log_group.cluster_logs
+    - aws_eks_cluster.cluster
+    - aws_eks_node_group.node_group
+    - aws_iam_openid_connect_provider.cluster
+    - aws_iam_policy.minimal_ebs_kms_create_and_attach
+    - aws_iam_role.cluster_role
+    - aws_iam_role.node_group
+    - aws_iam_role_policy_attachment.cluster_AmazonEKSClusterPolicy
+    - aws_iam_role_policy_attachment.cluster_minimal_ebs_kms_create_and_attache
+    - aws_iam_role_policy_attachment.node_group_AmazonEC2ContainerRegistryReadOnly
+    - aws_iam_role_policy_attachment.node_group_AmazonEKSWorkerNodePolicy
+    - aws_iam_role_policy_attachment.node_group_AmazonEKS_CNI_Policy
+    - aws_launch_template.eks_node
+    - aws_security_group.eks
+    - aws_security_group_rule.control_plane_access
+    - random_id.key_suffix
+data:
+    - data.aws_iam_policy_document.minimal_ebs_kms_create_and_attach
+    - data.aws_iam_policy_document.node_group
+    - data.aws_iam_policy_document.trust_policy
+    - data.aws_kms_key.env_key
+    - data.aws_region.current
+    - data.external.thumbprint
 inputs:
     - default: AL2023_x86_64_STANDARD
       name: ami_type
@@ -85,4 +110,6 @@ outputs:
     - name: k8s_openid_provider_url
       type: string
     - name: k8s_version
+      type: string
+    - name: plt_cluster_type
       type: string

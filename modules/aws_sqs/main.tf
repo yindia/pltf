@@ -24,9 +24,14 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
 
   statement {
     actions = [
-      # Accept the risk
-      #tfsec:ignore:aws-sqs-no-wildcards-in-policy-documents
-      "SQS:*"
+      "SQS:ChangeMessageVisibility",
+      "SQS:DeleteMessage",
+      "SQS:GetQueueAttributes",
+      "SQS:GetQueueUrl",
+      "SQS:PurgeQueue",
+      "SQS:ReceiveMessage",
+      "SQS:SendMessage",
+      "SQS:SetQueueAttributes"
     ]
 
     effect = "Allow"
@@ -44,10 +49,8 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
   }
 
   statement {
-    # Accept the risk
-    #tfsec:ignore:aws-sqs-no-wildcards-in-policy-documents
     actions = [
-      "SQS:*"
+      "SQS:SendMessage"
     ]
     effect = "Allow"
 
@@ -64,10 +67,8 @@ data "aws_iam_policy_document" "sqs_queue_policy" {
   }
 
   statement {
-    # Accept the risk
-    #tfsec:ignore:aws-sqs-no-wildcards-in-policy-documents
     actions = [
-      "SQS:*"
+      "SQS:SendMessage"
     ]
     effect = "Allow"
 

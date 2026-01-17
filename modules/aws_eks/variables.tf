@@ -16,6 +16,7 @@ variable "vpc_id" {
   type = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "env_name" {
   description = "Env name"
   type        = string
@@ -30,10 +31,12 @@ variable "cluster_name" {
   type = string
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "enable_metrics" {
   type = bool
 }
 
+# tflint-ignore: terraform_unused_declarations
 variable "module_name" {
   description = "Module name"
   type        = string
