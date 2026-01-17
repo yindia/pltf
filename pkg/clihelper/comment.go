@@ -125,6 +125,22 @@ func buildPRCommentBody(run RunSummary) string {
 		}
 	}
 
+	sb.WriteString("\n---\n\n")
+	sb.WriteString("To apply all these changes, comment:\n\n")
+	sb.WriteString("```\n")
+	sb.WriteString(fmt.Sprintf("pltf terraform apply -f %s --auto-approve", run.Spec))
+	if strings.TrimSpace(run.Env) != "" {
+		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
+	}
+	if run.Plan != nil && len(run.Plan.RawPlanArgs) > 0 {
+		sb.WriteString("\nplan")
+		for _, a := range run.Plan.RawPlanArgs {
+			sb.WriteString(" ")
+			sb.WriteString(a)
+		}
+	}
+	sb.WriteString("\n```\n")
+
 	if strings.TrimSpace(run.AI) != "" || run.Scan != nil {
 		sb.WriteString("\n---\n\n")
 		sb.WriteString("**Approval Requirements**\n\n")
@@ -147,20 +163,6 @@ func buildPRCommentBody(run RunSummary) string {
 		}
 	}
 
-	sb.WriteString("\n---\n\n")
-	sb.WriteString("To apply all these changes, comment:\n\n")
-	sb.WriteString("```\n")
-	sb.WriteString(fmt.Sprintf("pltf terraform apply -f %s --auto-approve", run.Spec))
-	if strings.TrimSpace(run.Env) != "" {
-		sb.WriteString(fmt.Sprintf(" --env %s", run.Env))
-	}
-	if run.Plan != nil && len(run.Plan.RawPlanArgs) > 0 {
-		for _, a := range run.Plan.RawPlanArgs {
-			sb.WriteString(" ")
-			sb.WriteString(a)
-		}
-	}
-	sb.WriteString("\n```\n")
 	sb.WriteString("\n_NOTE: This comment updates automatically on pushes to the PR._\n")
 	return sb.String()
 }

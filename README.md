@@ -1,43 +1,26 @@
 # pltf CLI 🚀
 
-pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, instant validation, and inline security/cost scans. Instead of hand-editing Terraform everywhere, keep your cloud knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate the modules, providers, backends, and secrets wiring for you.
+pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable security/cost scans. Instead of hand-editing Terraform everywhere, keep your infrastructure knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate modules, providers, backend wiring, and secrets integration for every run.
 
 ## Why teams choose pltf
 
-- **Spec-first workflows** – describe your desired environments, services, and stacks once in YAML; pltf materializes the Terraform code, backend config, and provider mappings automatically.
-- **Consistent Terraform runs** – every `pltf terraform …` command generates the workspace first, runs the host Terraform binary (no hidden runtime layers), and streamlines approvals (`plan` can include tfsec/cost/rover, `apply`/`destroy` always auto-approve).
-- **Image-aware operations** – Docker images declared in specs are built once per plan/apply via Dagger, reusing the shared cache, and only `apply` pushes the tags so CI/CD remains in control.
-- **Security and cost transparency** – builtin tfsec reporting and optional Infracost summaries show up alongside the Terraform logs so you don’t miss risky findings before you deploy.
-- **Versioned, portable tooling** – the CLI stays Go-native, works alongside your existing git/terraform installs, and documents workflows for every team member.
-
-## Specs & Concepts
-
-- **Environment spec** (e.g., `env.yaml`) declares the cloud provider, backend, account/region entries, and the modules/variables that define the base infrastructure (VPCs, clusters, backend buckets) shared across dev, prod, and other deployments. Put shared inputs in `variables` and sensitive data in `secrets` so the base stack stays consistent without leaking secrets into Git.
-- **Service spec** references an Environment via `metadata.ref` and adds workload-specific Terraform (modules, metadata, secrets, images, overrides) that run within that environment. `metadata.envRef` maps a service into any of the environment entries so a single service can target multiple environments while tuning behavior per env.
-- **Stack spec** bundles reusable modules, inputs, and outputs with documented provider requirements. Environments include stacks with `metadata.stacks`, and stacks merge before generation so downstream specs can’t silently override their contracts.
-- **Modules** can be the embedded modules shipped with pltf or your own custom Terraform modules. Place a `module.yaml` next to a custom module, refer to it in your spec, and pltf treats it the same as an embedded module during generation.
-- **Variables & secrets** are first-class at every level. Shared values live in stacks/environments, while service-specific overrides and secrets stay in the service spec. Secrets never land in Git: pltf injects them when building the workspace.
-
-Use services anytime you need to deploy workload-specific Terraform on top of the base environment (see the billing service in the Quickstart example). The service shares the common infra, builds its own images, and applies per-environment tweaks while reusing the generated workspace.
+- **Spec-first workflows** – capture environments, services, and stacks once in YAML and let pltf materialize Terraform, backend, and provider plumbing for every run.
+- **Consistent Terraform runs** – `pltf terraform …` commands render the workspace, call the host `terraform` binary directly, stream tfsec/cost/rover output during execution, and auto-approve apply/destroy steps for deterministic CI/CD.
+- **Image-aware operations** – Docker images declared in specs build through Dagger once per plan/apply with shared caches; apply pushes the tags while plan stops locally.
+- **Security, cost, and drift guardrails** – builtin tfsec summaries (with problem lists) and optional Infracost reports pair with Terraform logs so risky changes are visible before deployment.
+- **Composable toolchains** – mix the built-in modules with your own by placing `module.yaml` beside custom Terraform code; pltf treats every module the same when generating workspaces.
 
 ## Table of Contents
 
 - [Install](#install)
 - [Quickstart](#quickstart)
-- [Terraform Workflows](#terraform-workflows)
 - [Specs & Concepts](#specs--concepts)
+- [Terraform Workflows](#terraform-workflows)
 - [Image & Terraform Caching](#image--terraform-caching)
 - [Commands](#commands)
 - [Behavior & Rules](#behavior--rules)
 - [Provider Support](#provider-support)
 - [Contributing](#contributing)
-
-## Install
-
-```bash
-go build -o pltf ./main.go
-go install ./...
-```
 
 ## Quickstart
 
@@ -122,7 +105,7 @@ go install ./...
 
    Point to your own Terraform modules by dropping a `module.yaml` next to them and referencing them alongside the embedded modules in your spec.
 
-3. **Add a service** (`service.yaml`) that plugs into the environment and runs workload-specific modules/secrets across multiple envs:
+3. **Add a service** (`service.yaml`) that reuses the environment stack, runs workload-specific modules, and deploys across any listed envs:
 
    ```yaml
    apiVersion: platform.io/v1
@@ -165,13 +148,26 @@ go install ./...
    ./pltf terraform apply -f env.yaml -e prod
    ```
 
+## Specs & Concepts
+
+![Environment vs Service](docs/images/hero.png)
+
+Environments describe the shared infrastructure (backends, stacks, provider mappings, account/region inputs) that every deployment reuses. Use `variables` for shared inputs, `secrets` for sensitive data, and `metadata.stacks` to include reusable stacks before generation.
+
+Services reference an environment via `metadata.ref` and declare workload-specific modules, metadata, secrets, and images. Each entry under `metadata.envRef` can target a different environment—services live in as many environments as the spec lists, with optional overrides per env. The diagram above shows how a single service spec can plug into both production and staging envs via their YAML definitions.
+
+Stacks bundle reusable modules with documented inputs, outputs, and provider requirements. Drop a `module.yaml` next to custom Terraform code, reference it, and pltf treats it like an embedded module during generation.
+
+Variables and secrets stay first-class at every level: stacks/environments hold shared runtime inputs while services layer on overrides and secrets. Secrets never land in Git—pltf injects them while materializing the workspace.
+
+Use services whenever you need workload-specific Terraform on top of a base environment. The billing service in the Quickstart example deploys a Helm chart (with module inputs such as `cluster` and `replicas`) into every linked environment while preserving the shared infra and generated workspace.
 
 ## Terraform Workflows
 
-- Terraform commands execute locally in the generated workspace; the CLI simply materializes Terraform files, copies `.tfvars`, and calls the host `terraform` binary (no special plugin cache or wrappers required).
-- `pltf terraform plan` and `apply` build the declared Docker images via Dagger, reusing the `pltf-image-cache`. `apply` pushes the selected tags while `plan` stops after building locally. `destroy` skips image builds entirely.
-- Commands like `plan` can still include optional helpers such as `--scan` (tfsec), `--cost` (Infracost), and `--rover`. `apply`/`destroy` always append `-auto-approve` so CI/CD can run unattended.
-- Every command reuses the generated workspace in `.pltf/<spec-name>/<env>/workspace`, so plan/apply operate on the same graph and Terraform state.
+- Terraform commands run directly on the host inside the generated workspace; pltf materializes `.tf`, `.tfvars`, and wiring files before handing control to the host `terraform` binary (no additional wrapper layers).
+- `pltf terraform plan` and `apply` build the declared Docker images through Dagger using the shared `pltf-image-cache` (plan stops after the build, apply pushes tagged images). `destroy` skips image builds entirely.
+- Commands such as `plan` can include helpers like `--scan` (tfsec), `--cost` (Infracost), and `--rover`. `apply`/`destroy` always append `-auto-approve` so CI/CD pipelines run unattended.
+- Every command reuses the generated workspace under `.pltf/<spec-name>/<env>/workspace`, ensuring plan/apply operate on the same graph and Terraform state.
 
 ## Image & Terraform Caching
 
