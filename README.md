@@ -2,6 +2,7 @@
 
 pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, instant validation, and inline security/cost scans. Instead of hand-editing Terraform everywhere, keep your cloud knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate the modules, providers, backends, and secrets wiring for you.
 
+
 ## Why teams choose pltf
 
 - **Spec-first workflows** – describe your desired environments, services, and stacks once in YAML; pltf materializes the Terraform code, backend config, and provider mappings automatically.
