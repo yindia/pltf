@@ -9,7 +9,6 @@ metadata:
     team: platform
     cost_center: shared
   stacks:
-    - ./stack.yaml
     - ./stack-eks.yaml
 variables:
   base_domain: "${env_name}.pltf.internal"
