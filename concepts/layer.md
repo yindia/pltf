@@ -5,7 +5,26 @@ A deployable unit composed of modules, wired into an Environment.
 ## What is a Layer/Service?
 Services let you manage app-specific resources separately from the shared foundation. They reference an Environment and define the modules they need (databases, queues, buckets, IAM, charts), with per-environment overrides.
 
-![Layer](../images/hero.png)
+```mermaid
+flowchart TB
+    svc[(service.yaml)]
+
+    subgraph PROD[Production Env]
+        prod_service[Service A]
+    end
+
+    subgraph STAGE[Staging Env]
+        stage_service[Service A]
+    end
+
+    env[(env.yaml)]
+
+    svc --> prod_service
+    svc --> stage_service
+
+    prod_service --> env
+    stage_service --> env
+```
 
 ## Definition (example)
 Based on `example/service.yaml`:

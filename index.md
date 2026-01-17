@@ -2,7 +2,26 @@
 
 pltf is a Kubernetes-native CLI that turns your high-level infrastructure intent into ready-to-run Terraform workspaces. Define reusable stacks, reuse environment wiring, and deploy services that consume Helm charts or cloud modules while staying close to Terraform best practices; the generated workspaces run the host `terraform` binary so you never trade portability for automation.
 
-![Environment vs Service](images/hero.png)
+```mermaid
+flowchart TB
+    svc[(service.yaml)]
+
+    subgraph PROD[Production Env]
+        prod_service[Service A]
+    end
+
+    subgraph STAGE[Staging Env]
+        stage_service[Service A]
+    end
+
+    env[(env.yaml)]
+
+    svc --> prod_service
+    svc --> stage_service
+
+    prod_service --> env
+    stage_service --> env
+```
 
 ## Why teams use pltf
 - **Kubernetes-native IaC** – embed EKS clusters, Helm charts, and service modules while keeping Terraform state and providers under host control.

@@ -2,7 +2,26 @@
 
 The shared foundation for your stacks: cloud, account/project, region, and base modules (VPC, DNS, EKS/GKE/AKS, IAM).
 
-![Environment](../images/hero.png)
+```mermaid
+flowchart TB
+    svc[(service.yaml)]
+
+    subgraph PROD[Production Env]
+        prod_service[Service A]
+    end
+
+    subgraph STAGE[Staging Env]
+        stage_service[Service A]
+    end
+
+    env[(env.yaml)]
+
+    svc --> prod_service
+    svc --> stage_service
+
+    prod_service --> env
+    stage_service --> env
+```
 
 ## Definition (example)
 Based on `example/env.yaml`:
