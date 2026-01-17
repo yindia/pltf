@@ -1,6 +1,6 @@
 # Spec Guide
 
-pltf reads YAML specs with `kind: Environment`, `kind: Service`, or `kind: Stack`. The CLI validates structure and wires modules based on names and templated references.
+pltf reads YAML specs with `kind: Environment`, `kind: Service`, or `kind: Stack`. The CLI validates structure, merges stacks, wires modules/outputs, and renders provider/backends/config before calling the host `terraform` binary (no embedded Terraform layers).
 
 ## Stack spec (kind: Stack)
 Minimal shape:
@@ -14,7 +14,6 @@ metadata:
 providers:
   kubernetes: true
   helm: true
-  kustomize: false
 variables:
   cluster_name: ""
   base_domain: ""
@@ -29,12 +28,10 @@ modules:
     type: aws_observability
 ```
 Notes:
-- Stack specs define reusable module templates.
-- Reference stacks from Environment or Service with `metadata.stacks`.
-- Modules defined in the spec cannot override stack modules with the same `id`.
-- Stack variables provide default inputs and are auto-applied at runtime.
-- Environment and Service specs can define top-level `variables` for custom logic only; they must not use stack variable names.
-- `providers` declares required providers (`kubernetes`, `helm`, `kustomize`) without relying on module types.
+- Stack specs bundle reusable module templates. Reference them from environments or services with `metadata.stacks`.
+- Stack variables provide defaults that merge before environment/service values; duplicates are rejected.
+- Modules in stacks cannot be redefined by downstream specs with the same `id`.
+- Bring your own modules by placing a `module.yaml` next to custom Terraform code. Reference them exactly as you would the built-in modules; pltf treats both identically during generation.
 
 ## Environment spec (kind: Environment)
 Minimal shape:
@@ -49,33 +46,10 @@ metadata:
     team: platform
   stacks:
     - ./stacks/eks-observability.yaml
-providers:
-  kubernetes: true
-  helm: true
-  kustomize: false
-secrets:
-  db_password: {}
-images:
-  - name: platform-tools
-    context: ./images/tools
-    dockerfile: Dockerfile
-    include:
-      - "**/*"
-    exclude:
-      - "**/.git/**"
-      - "**/node_modules/**"
-    tags:
-      - ghcr.io/example/platform-tools:${env_name}
-    buildArgs:
-      ENV: ${env_name}
 backend:
   type: s3
-  bucket: example-tfstate   # optional; auto-named if omitted
+  bucket: example-tfstate
   region: us-east-1
-environments:
-  dev:
-    account: "111111111111"
-    region: us-east-1
 modules:
   - id: base
     type: aws_base
@@ -83,13 +57,39 @@ modules:
     type: aws_dns
     inputs:
       domain: var.base_domain
+variables:
+  cluster_name: example-cluster
+  base_domain: example.com
+secrets:
+  db_password: {}
+environments:
+  dev:
+    account: "111111111111"
+    region: us-east-1
+    variables:
+      log_bucket: dev-logs
+  prod:
+    account: "222222222222"
+    region: us-west-2
+    secrets:
+      db_password: {}
+images:
+  - name: platform-tools
+    context: ./images/tools
+    dockerfile: Dockerfile
+    tags:
+      - ghcr.io/example/platform-tools:${env_name}
+    buildArgs:
+      ENV: ${env_name}
+    platforms:
+      - linux/amd64
+      - linux/arm64
 ```
 Notes:
-- `environments` map holds per-env accounts/regions (no per-env variables or secrets).
-- `modules` list holds shared modules; `id`/`type` required; `inputs` optional; `links` supported.
-- Backend: `backend.type` can be `s3|gcs|azurerm` (independent of provider). `backend.profile` supports cross-account S3; `container/resource_group` for azurerm.
-- Modules can set `source: custom` to force resolution from your custom modules root (`--modules` or profile `modules_root`); others fall back to the embedded catalog.
-- `images` defines Docker build configs; tags are optional.
+- `environments` describe cloud/account/region entries and can override `variables`/`secrets` per entry.
+- `modules` merge with stacks (referenced via `metadata.stacks`), `id` and `type` are mandatory, and `inputs`/`links` work the same as Terraform module blocks.
+- Backends (S3/GCS/Azure) stay stable after generation; when you change backend config rerun `terraform init -reconfigure`.
+- `images` describe Docker builds. Plan builds them using Dagger cache, apply builds + pushes tagged images using host registry credentials, and destroy skips the image step. Omitting `platforms` uses the host OS/ARCH.
 
 ## Service spec (kind: Service)
 Minimal shape:
@@ -98,50 +98,41 @@ apiVersion: platform.io/v1
 kind: Service
 metadata:
   name: payments-api
-  ref: ./env.yaml       # path to Environment spec
-  stacks:
-    - ./stacks/eks-observability.yaml
+  ref: ./env.yaml
   envRef:
     dev: {}
-providers:
-  kubernetes: true
-  helm: true
+    prod:
+      variables:
+        replica_count: 3
+      secrets:
+        api_key: {}
+modules:
+  - id: api
+    type: helm_chart
+    inputs:
+      chart: ./services/payments/chart
+      repo: ./services/payments
+      values:
+        cluster: module.eks.cluster_name
+        replicas: var.replica_count
+  - id: db
+    type: aws_postgres
+variables:
+  replica_count: 2
 secrets:
-  api_key: {}
+  db_password: {}
 images:
   - name: payments-api
     context: ./services/payments
-    include:
-      - "**/*"
-    exclude:
-      - "**/.git/**"
-      - "**/node_modules/**"
     tags:
       - ghcr.io/acme/payments:${env_name}
-    buildArgs:
-      SERVICE: payments
-      ENV: ${env_name}
-modules:
-  - id: app
-    type: aws_k8s_service
-    inputs:
-      cluster_name: var.cluster_name
-      public_uri: "/payments"
-      image: "ghcr.io/acme/payments:latest"
-    links:
-      readwrite:
-        - db
-  - id: db
-    type: aws_postgres
 ```
 Notes:
-- `metadata.ref` points to the Environment file (relative paths allowed).
-- `metadata.envRef` selects envs only (no per-env variables or secrets).
-- Modules can reference environment outputs via `${parent.<output>}`.
-- Git refs are supported for `metadata.ref` and `metadata.stacks` using the format `https://host/org/repo.git//path/to/spec.yaml?ref=main`.
-- `images` can also be defined in Service specs for app images.
+- `metadata.ref` points to the environment spec; `metadata.envRef` lists every env the service runs in, optionally overriding `variables`, `secrets`, or even `images` per env.
+- Services reuse the generated workspace of their referenced environment, so Terraform runs share state and graph data.
+- Modules in services can reference environment outputs via `${parent.<output>}` templates.
 
-### Image config
+## Image config
 ```yaml
 images:
   - name: app
@@ -156,25 +147,22 @@ images:
       - linux/arm64
 ```
 Notes:
-- `tags` are optional; when pushing images, at least one tag is required.
-- Authenticate to registries outside of pltf (e.g., `docker login`) before running `pltf image build` or `pltf terraform apply`.
-- `pltf terraform plan` builds images; `pltf terraform apply` builds + pushes them.
-- Use `include`/`exclude` to filter the build context sent to Dagger.
-- Use `platforms` to declare the target OS/ARCH combos (`linux/amd64`, `linux/arm64`, etc.); when absent, the host OS/ARCH is used.
-- For Dockerfile build secrets, set `PLTF_IMG_SECRET_<NAME>` or `PLTF_IMG_SECRET_FILE_<NAME>` and use `RUN --mount=type=secret,id=<NAME>` in the Dockerfile.
+- `tags` are optional but required when pushing.
+- Authenticate via `docker login` before running `pltf terraform apply`; plan builds only, apply also pushes.
+- Supply Docker secrets through `PLTF_IMG_SECRET_<NAME>` or `PLTF_IMG_SECRET_FILE_<NAME>` and reference them via `RUN --mount=type=secret,id=<NAME>` in your Dockerfile.
 
 ## Variable precedence
-1) Stack variables  
-2) Environment `variables`  
-3) Service `variables`  
-4) CLI `--var key=value`
+1. Stack variables  
+2. Environment `variables`  
+3. Service `variables`  
+4. CLI `--var key=value`
 
-## Secrets vs locals
-- Secrets remain as Terraform variables (`var.<name>`).
-- Non-secrets become locals; `var.<name>` resolves to locals unless marked secret.
+## Secrets vs. locals
+- Secrets remain Terraform variables (`var.<name>`).
+- Non-secret inputs become locals; `var.<name>` resolves to locals unless marked secret explicitly.
 
 ## Templated references
-- `${module.<module>.<output>}` — module output in current scope
-- `${var.<name>}` — logical variable; wires to locals/secrets when names match
-- `${parent.<output>}` — environment output via remote state (service only)
-- `${env_name}` / `${layer_name}` — intrinsic placeholders; for services, `layer_name` is the service name
+- `${module.<module>.<output>}` — module output in the current scope.  
+- `${var.<name>}` — logical variable; wires to locals/secrets when names match.  
+- `${parent.<output>}` — environment output available to services via remote state.  
+- `${env_name}` / `${layer_name}` — intrinsic placeholders; for services, `layer_name` equals the service name.

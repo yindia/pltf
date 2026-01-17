@@ -1,19 +1,20 @@
-# Image & Plugin Caching
+# Image & Caching
 
-pltf keeps both Docker image builds and Terraform provider downloads cached so repeated runs stay fast.
+pltf keeps Docker builds fast via Dagger cache layers and lets Terraform reuse its own provider cache inside the generated workspace.
 
-## Docker / BuildKit caching
+## Docker / BuildKit
 
-- Image builds still run via Dagger’s `Directory.DockerBuild`, and every build mounts the `pltf-image-cache` volume at `/dagger/image-cache`.
-- When specs reuse the same context, BuildKit layers are reused and exported images continue to benefit from the cached layers.
-- During `pltf terraform plan/apply`, we build every declared image (and `apply` pushes tags) before running Terraform so the BuildKit cache keeps working across commands.
+- Image builds run through Dagger’s `Directory.DockerBuild` with a shared `pltf-image-cache` volume at `/dagger/image-cache`.
+- `pltf terraform plan` builds every declared image locally; `pltf terraform apply` builds the images, pushes the tags using host registry credentials, and then runs Terraform; `destroy` skips image builds entirely.
+- Reusing the same context and Dockerfile lets BuildKit layers persist across commands and sessions, so both plan and apply benefit from cached layers.
 
-## Terraform provider cache
+## Terraform cache
 
-- Terraform runs rely on whichever cache Terraform stores inside `.terraform` within the generated workspace. Keep the workspace around to benefit from cached provider downloads, and share it across CI or machines if you like.
-- Inspect or archive the workspace to reuse provider binaries elsewhere; just ensure host credentials have access to the necessary artifacts.
+- Terraform executes on the host inside `.pltf/<spec>/<env>/workspace`, and its `.terraform` directory caches providers/plugins there.
+- Keep the workspace between runs (or share it across CI agents) to benefit from cached downloads; no extra `.terraform-plugin-cache` file or wrapper is required.
+- The workspace also stores plan artifacts (`.pltf-plan.tfplan`, `.pltf-plan.json`) for downstream workflows or `terraform show` references.
 
 ## Tips
 
-- If you want to inspect the plugin cache, look inside the workspace directory and locate its cache folder or copy it elsewhere.
-- Ensure your host AWS/GCP credentials have permission to read the generated `.terraform` artifacts if you share the workspace across teams.
+- Inspect or archive the workspace directory if you need to copy provider binaries or debug plugin downloads.
+- Ensure your host credentials (AWS, GCP, Azure, Docker) can read the generated workspace when sharing caches across teams.

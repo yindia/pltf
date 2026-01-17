@@ -1,26 +1,26 @@
 # Terraform Workflows
 
-`pltf terraform ...` commands share the same generated workspace: specs render first, images build via Dagger, and Terraform runs locally with cached plugins and forced plans (no Dagger layers for Terraform commands themselves).
+pltf terraform commands target the generated workspace, run the host `terraform` binary, and only use Dagger for building/pushing Docker images declared in the specs. This keeps toolchains transparent while still giving you predictable, k8s-native deployments.
 
 ## Shared motivations
 
-- **Auto generation**: Specs render before each command. The CLI writes the env-specific `.tfvars` file, ensures the backend bucket, and rehydrates the workspace with modules from embedded/custom roots.
-- **Terraform runs locally with caching**: `terraform init/plan/apply` run inside the generated workspace so the plain `.terraform` cache inside `.pltf/<env>/workspace` handles provider downloads.
-- **Plan first and auto-approved apply/destroy**: `plan`, `apply`, and `destroy` all run `terraform plan` first; apply/destroy continue automatically with `-auto-approve` so automation never stalls.
-- **Image build before Terraform**: Dagger builds (and for `apply`, pushes) the Docker images declared in the spec before invoking Terraform so builds benefit from BuildKit caches. Image builds respect the optional spec-level `platforms` list (`["linux/amd64","linux/arm64"]`) and default to the host OS/ARCH when omitted (`destroy` skips image builds entirely).
+- **Auto generation**: Specs always render before Terraform runs. The CLI materializes `.tf`, `.tfvars`, backend config, and provider wiring for every env.
+- **Terraform runs locally with caching**: `terraform init/plan/apply` execute inside `.pltf/<spec>/<env>/workspace`, so Terraform’s native `.terraform` cache downloads providers there without extra wrappers.
+- **Two-step plan/apply/destroy**: `plan` runs first (streaming tfsec, cost, Rover logs if enabled), then `apply`/`destroy` automatically continue with `-auto-approve` against the same plan file.
+- **Image builds via Dagger**: Plan/apply trigger Dagger builds of the declared images using shared caches; apply pushes the resulting tags with host registry creds, while destroy skips image builds altogether. `platforms` drive multi-arch builds and default to the host OS/ARCH.
 
 ## Runtime steps
 
-1. **Render the workspace** (shared code ensures `.tfvars`, modules, and backend config are ready).
-2. **Build + push images** via Dagger: plan/apply build once (apply pushes with host registry credentials); destroy skips the image build step.
-3. **Run `terraform init` locally**: Terraform config keeps its downloads inside the workspace and reuses credentials mounted from your host (AWS, Docker, etc.).
-4. **Select or create workspace** matching the env name.
-5. **Run `terraform plan` locally**; the planner writes `.pltf-plan.tfplan` and `.pltf-plan.json`, and if the plan succeeds, `apply`/`destroy` continue automatically.
+1. **Render the workspace** (modules, `.tfvars`, backend, and provider config).
+2. **Build images via Dagger** (plan builds locally, apply builds + pushes, destroy skips this step).
+3. **Run `terraform init` locally**; provider plugins are cached inside the workspace and reuse host credentials (AWS, GCP, Azure, Docker).
+4. **Select/create the workspace** matching the env name.
+5. **Run `terraform plan` (and apply/destroy)** inside the workspace; the plan writes `.pltf-plan.tfplan`/`.json`, and `apply`/`destroy` continue automatically with that plan.
 
-## Offline-friendly hooks
+## Observability hooks
 
-- Write artifacts (`.pltf-plan.tfplan`, plan JSON) to the workspace so CI can ship them elsewhere.
-- Enable tfsec scans (`--scan`), cost breakdowns (`--cost`), and Rover output (`--rover`) from the same run.
-- `pltf terraform graph` can reuse generated Terraform or take an existing plan with `--plan-file`.
+- Write artifacts (`.pltf-plan.tfplan`, `.pltf-plan.json`) to the workspace so downstream CI or comment bots re-use the data.
+- Enable tfsec (`--scan`), Infracost (`--cost`), and Rover (`--rover`) during plan runs; the CLI streams their output alongside Terraform logs.
+- `pltf terraform graph` can reuse the generated workspace or an existing plan via `--plan-file`.
 
 For full CLI reference see [CLI Usage](usage.md).

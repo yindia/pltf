@@ -1,6 +1,6 @@
 # Getting Started: AWS
 
-Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `example/service.yaml`) to a working AWS stack. The guide highlights the provider caches and image automation (via Dagger) that pltf now provides.
+Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `example/service.yaml`) to a working Kubernetes-native AWS stack. The guide shows how services reference envs, how Docker images build via Dagger, and how Terraform runs natively on the host.
 
 ## 1) Prerequisites
 

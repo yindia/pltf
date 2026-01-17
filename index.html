@@ -607,7 +607,7 @@
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
 
         
-        Image & Plugin Caching
+        Image & Caching
         
 
         
@@ -691,42 +691,32 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>The next generation of Infrastructure-as-Code. Describe high-level constructs; ship Terraform you can own.</p>
-<p>pltf turns concise YAML into ready-to-run Terraform for AWS, GCP, and Azure. You model three things:</p>
-<ul>
-<li><strong>Stack</strong>: reusable module bundles (EKS + nodegroups + observability).</li>
-<li><strong>Environment</strong>: cloud, account/project, region, shared modules (VPC, DNS, EKS/GKE/AKS, IAM).</li>
-<li><strong>Service</strong>: an app’s resources (databases, queues, buckets, roles, charts) wired into an Environment.</li>
-</ul>
-<p>The CLI validates your specs, renders providers/backends/locals/remote state, and can run <code>terraform plan/apply</code> end-to-end. Because the output is plain Terraform, you keep portability—extend it or take it with you.</p>
-<blockquote>
-<p>Status: active development; review generated Terraform before applying to production.</p>
-</blockquote>
+    <p>pltf is a Kubernetes-native CLI that turns your high-level infrastructure intent into ready-to-run Terraform workspaces. Define reusable stacks, reuse environment wiring, and deploy services that consume Helm charts or cloud modules while staying close to Terraform best practices; the generated workspaces run the host <code>terraform</code> binary so you never trade portability for automation.</p>
+<p><img alt="Environment vs Service" src="images/hero.png" /></p>
 <h2 id="why-teams-use-pltf">Why teams use pltf</h2>
 <ul>
-<li><strong>Faster IaC</strong>: generate consistent Terraform from YAML instead of hand-rolling cloud glue.</li>
-<li><strong>Cloud agnostic outputs</strong>: state backends <code>s3|gcs|azurerm</code>, provider wiring, and locals are emitted for you.</li>
-<li><strong>Module catalog + custom modules</strong>: ship with AWS modules and accept your own <code>module.yaml</code> definitions.</li>
-<li><strong>Safe automation</strong>: <code>pltf terraform plan/apply/destroy/output/graph</code> re-renders code every run to keep drift in check.</li>
-<li><strong>Validation</strong>: structural checks catch missing refs, bad wiring, and secrets placement early.</li>
+<li><strong>Kubernetes-native IaC</strong> – embed EKS clusters, Helm charts, and service modules while keeping Terraform state and providers under host control.</li>
+<li><strong>Spec-first deployments</strong> – capture stacks, environments, and services in YAML/JSON, and let pltf generate provider/backends, locals, and wiring for every run.</li>
+<li><strong>Image builds without surprises</strong> – Docker images in your specs build through Dagger with shared caches, but Terraform commands run natively (no embedded Dagger layers).</li>
+<li><strong>Fast feedback loops</strong> – <code>pltf terraform plan</code> produces tfsec/cost summaries, and <code>apply</code>/<code>destroy</code> always pass <code>-auto-approve</code> so CI/CD stays deterministic.</li>
+<li><strong>Bring-your-own modules</strong> – use the built-in catalog or drop a <code>module.yaml</code> beside your Terraform code; pltf treats every module equally.</li>
 </ul>
 <h2 id="grounded-example">Grounded example</h2>
-<p>Use the repo samples as a blueprint:</p>
 <ul>
 <li><code>example/stack.yaml</code> (and <code>example/stacks/*</code>) define reusable cluster building blocks.</li>
-<li><code>example/env.yaml</code> defines an AWS environment (<code>example-aws</code>) and references stacks for EKS and observability.</li>
-<li><code>example/service.yaml</code> defines a service (<code>payments-api</code>) that binds to the environment and shows how to pass variables/secrets and link modules.</li>
+<li><code>example/env.yaml</code> defines an AWS environment (<code>example-aws</code>) and references stacks for EKS, DNS, and observability.</li>
+<li><code>example/service.yaml</code> defines a Helm-based service that binds to the environment, pedals secrets, and builds images for each referenced env.</li>
 </ul>
 <h2 id="typical-workflow">Typical workflow</h2>
 <ol>
-<li>Create or edit your stack, environment, and service specs.</li>
-<li>Validate and preview wiring:</li>
+<li>Define or update your stack, environment, and service specs.</li>
+<li>Validate, preview, and lint wiring:</li>
 <li><code>pltf validate -f example/env.yaml</code></li>
 <li><code>pltf preview -f example/service.yaml --env prod</code></li>
-<li>Generate or run Terraform:</li>
-<li><code>pltf terraform plan -f example/service.yaml --env prod</code></li>
+<li>Run Terraform:</li>
+<li><code>pltf terraform plan -f example/service.yaml --env prod --scan</code></li>
 <li><code>pltf terraform apply -f example/service.yaml --env prod</code></li>
-<li>Inspect outputs and graphs:</li>
+<li>Inspect outputs/graphs:</li>
 <li><code>pltf terraform output -f example/service.yaml --env prod</code></li>
 <li><code>pltf terraform graph -f example/service.yaml --env prod | dot -Tpng &gt; graph.png</code></li>
 </ol>
@@ -802,7 +792,7 @@
                     
                     <a class="text-2xl font-medium" href="caching/">
                         
-                        Image & Plugin Caching
+                        Image & Caching
                         
                     </a>
                     
