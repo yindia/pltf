@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"crypto/rand"
@@ -25,7 +25,7 @@ type localRunMeta struct {
 
 const localRunRetention = 50
 
-func startLocalRun(action, spec, env, outDir string) (string, func(error)) {
+func StartLocalRun(action, spec, env, outDir string) (string, func(error)) {
 	meta := localRunMeta{
 		ID:        newLocalRunID(),
 		Action:    action,

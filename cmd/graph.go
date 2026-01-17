@@ -11,8 +11,9 @@ import (
 	"strings"
 
 	"pltf/pkg/backend"
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
-	"pltf/pkg/daggerx"
+	terraform "pltf/pkg/terraform"
 )
 
 func runGraph(mode, file, env, modules, out string, vars []string, outFile string, planFile string) error {
@@ -32,7 +33,7 @@ func runGraph(mode, file, env, modules, out string, vars []string, outFile strin
 }
 
 func runTerraformGraph(file, env, modules, out string, vars []string, outFile string, planFile string) (retErr error) {
-	if err := autoGenerateQuiet(file, env, modules, out, vars); err != nil {
+	if err := clihelper.AutoGenerateQuiet(file, env, modules, out, vars); err != nil {
 		return err
 	}
 
@@ -41,7 +42,7 @@ func runTerraformGraph(file, env, modules, out string, vars []string, outFile st
 		return err
 	}
 
-	_, finishRun := startLocalRun("graph", file, ctx.env, ctx.outDir)
+	_, finishRun := clihelper.StartLocalRun("graph", file, ctx.env, ctx.outDir)
 	defer func() {
 		finishRun(retErr)
 	}()
@@ -55,26 +56,23 @@ func runTerraformGraph(file, env, modules, out string, vars []string, outFile st
 		return fmt.Errorf("failed to ensure backend: %w", err)
 	}
 
-	session, err := daggerx.NewSession(daggerLogOutput(os.Stderr))
+	tfRunner, err := terraform.NewRunner(ctx.outDir, io.Discard, os.Stderr)
 	if err != nil {
 		return err
 	}
-	defer session.Close()
-	tfPluginCache := session.Client.CacheVolume("pltf-terraform-plugin-cache")
-	tfRunner := newTfDaggerRunner(session, ctx.outDir, io.Discard, os.Stderr, tfPluginCache)
 
-	if err := runTerraformInitWithRetryDagger(tfRunner); err != nil {
+	if err := runTerraformInitWithRetry(tfRunner); err != nil {
 		return fmt.Errorf("terraform init failed: %w", err)
 	}
 
-	args := []string{tfRunner.engineCmd(), "graph"}
+	args := []string{"graph"}
 	tfvarsName := fmt.Sprintf("%s.tfvars", ctx.env)
 	args = append(args, "-var-file="+tfvarsName)
 	if strings.TrimSpace(planFile) != "" {
 		args = append(args, "-plan="+planFile)
 	}
 
-	output, _, err := tfRunner.exec(args, false)
+	output, _, err := tfRunner.Exec(args)
 	if err != nil {
 		return fmt.Errorf("terraform graph failed: %w", err)
 	}
@@ -95,7 +93,7 @@ func writeGraphOutput(data []byte, outFile string) error {
 }
 
 func buildSpecGraphFromFile(file, env string) (string, error) {
-	file = defaultString(file, "env.yaml")
+	file = clihelper.DefaultString(file, "env.yaml")
 	kind, err := config.DetectKind(file)
 	if err != nil {
 		return "", err
@@ -107,7 +105,7 @@ func buildSpecGraphFromFile(file, env string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return "", err
 		}
@@ -118,7 +116,7 @@ func buildSpecGraphFromFile(file, env string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return "", err
 		}

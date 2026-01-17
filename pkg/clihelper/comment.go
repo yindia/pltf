@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"errors"
@@ -11,20 +11,20 @@ import (
 
 const prCommentMarker = "<!-- pltf:terraform-run -->"
 
-type tfRunSummary struct {
+type RunSummary struct {
 	Action string
 	Status string
 	Spec   string
 	Env    string
 	OutDir string
 	Err    string
-	Plan   *planSummary
+	Plan   *PlanSummary
 	AI     string
-	Scan   *tfsecSummary
-	Cost   *costSummary
+	Scan   *TfsecSummary
+	Cost   *CostSummary
 }
 
-func maybeUpsertPRComment(run tfRunSummary) error {
+func MaybeUpsertPRComment(run RunSummary) error {
 	body := buildPRCommentBody(run)
 	commenter, err := git.NewCommenter("")
 	if err != nil {
@@ -48,7 +48,7 @@ func maybeUpsertPRComment(run tfRunSummary) error {
 	return nil
 }
 
-func buildPRCommentBody(run tfRunSummary) string {
+func buildPRCommentBody(run RunSummary) string {
 	statusEmoji := "✅"
 	statusText := run.Status
 	if strings.ToLower(run.Status) != "succeeded" {
@@ -136,9 +136,9 @@ func buildPRCommentBody(run tfRunSummary) string {
 			}
 		}
 		if run.Scan != nil {
-			report := run.Scan.Report
-			if strings.TrimSpace(report) == "" {
-				report = formatTfsecReport(run.Scan)
+			report := strings.TrimSpace(run.Scan.Report)
+			if report == "" {
+				report = FormatTfsecReport(run.Scan)
 			}
 			sb.WriteString("\n<details><summary>Security scan (tfsec)</summary>\n\n")
 			sb.WriteString("```\n")
@@ -171,40 +171,6 @@ func truncateForComment(s string) string {
 		return s
 	}
 	return s[:max] + "..."
-}
-
-func formatTfsecInsightsForComment(s *tfsecSummary) string {
-	if strings.TrimSpace(s.Report) != "" {
-		return s.Report
-	}
-	var b strings.Builder
-	b.WriteString("timings\n")
-	b.WriteString("──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "disk i/o             %s\n", formatDurationMs(s.Timings.DiskIO))
-	fmt.Fprintf(&b, "parsing              %s\n", formatDurationMs(s.Timings.Parsing))
-	fmt.Fprintf(&b, "adaptation           %s\n", formatDurationMs(s.Timings.Adaptation))
-	fmt.Fprintf(&b, "checks               %s\n", formatDurationMs(s.Timings.Checks))
-	fmt.Fprintf(&b, "total                %s\n\n", formatDurationMs(s.Timings.Total))
-
-	b.WriteString("counts\n")
-	b.WriteString("──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "modules downloaded   %d\n", s.Counts.ModulesDownloaded)
-	fmt.Fprintf(&b, "modules processed    %d\n", s.Counts.ModulesProcessed)
-	fmt.Fprintf(&b, "blocks processed     %d\n", s.Counts.BlocksProcessed)
-	fmt.Fprintf(&b, "files read           %d\n\n", s.Counts.FilesRead)
-
-	b.WriteString("results\n")
-	b.WriteString("──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "passed               %d\n", s.Counts.Passed)
-	fmt.Fprintf(&b, "ignored              %d\n", s.Counts.Ignored)
-	fmt.Fprintf(&b, "critical             %d\n", s.Critical)
-	fmt.Fprintf(&b, "high                 %d\n", s.High)
-	fmt.Fprintf(&b, "medium               %d\n", s.Medium)
-	fmt.Fprintf(&b, "low                  %d\n\n", s.Low)
-
-	totalProblems := s.Failed
-	fmt.Fprintf(&b, "%d passed, %d ignored, %d potential problem(s) detected.\n", s.Counts.Passed, s.Counts.Ignored, totalProblems)
-	return b.String()
 }
 
 func titleCase(s string) string {

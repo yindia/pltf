@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func maybeAICritique(run tfRunSummary) string {
+func MaybeAICritique(run RunSummary) string {
 	if run.Plan == nil || strings.ToLower(run.Action) != "plan" {
 		return ""
 	}

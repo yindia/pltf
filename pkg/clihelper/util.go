@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ import (
 	"pltf/pkg/runner"
 )
 
-func parseVarFlags(pairs []string) (map[string]string, error) {
+func ParseVarFlags(pairs []string) (map[string]string, error) {
 	out := make(map[string]string)
 	for _, p := range pairs {
 		// allow key=value
@@ -35,7 +35,7 @@ func parseVarFlags(pairs []string) (map[string]string, error) {
 	return out, nil
 }
 
-func parseVarEnv() map[string]string {
+func ParseVarEnv() map[string]string {
 	out := make(map[string]string)
 	for _, entry := range os.Environ() {
 		parts := strings.SplitN(entry, "=", 2)
@@ -55,7 +55,7 @@ func parseVarEnv() map[string]string {
 	return out
 }
 
-func mergeVarMaps(base, override map[string]string) map[string]string {
+func MergeVarMaps(base, override map[string]string) map[string]string {
 	if len(base) == 0 && len(override) == 0 {
 		return nil
 	}
@@ -69,21 +69,21 @@ func mergeVarMaps(base, override map[string]string) map[string]string {
 	return merged
 }
 
-func defaultString(value, fallback string) string {
+func DefaultString(value, fallback string) string {
 	if strings.TrimSpace(value) == "" {
 		return fallback
 	}
 	return value
 }
 
-func cleanOptionalPath(path string) string {
+func CleanOptionalPath(path string) string {
 	if path == "" {
 		return path
 	}
 	return filepath.Clean(path)
 }
 
-func ensureFile(path, description string) error {
+func EnsureFile(path, description string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -97,7 +97,7 @@ func ensureFile(path, description string) error {
 	return nil
 }
 
-func ensureDir(path, description string) error {
+func EnsureDir(path, description string) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -111,7 +111,7 @@ func ensureDir(path, description string) error {
 	return nil
 }
 
-func backupIfExists(path string, overwrite bool) error {
+func BackupIfExists(path string, overwrite bool) error {
 	info, err := os.Stat(path)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -141,19 +141,19 @@ var (
 	embeddedModulesErr  error
 
 	profileOnce sync.Once
-	profileData *profileConfig
+	profileData *ProfileConfig
 	profileErr  error
 )
 
 // resolveModulesRoot returns the modules root to use. If userPath is set, it is validated.
 // Otherwise, embedded modules are materialized to a temp dir and used as default.
-func resolveModulesRoot(userPath string) (string, error) {
+func ResolveModulesRoot(userPath string) (string, error) {
 	if strings.TrimSpace(userPath) != "" {
-		return resolveModulesRootFromRef(userPath)
+		return ResolveModulesRootFromRef(userPath)
 	}
 
-	if prof := loadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
-		root, err := resolveModulesRootFromRef(prof.ModulesRoot)
+	if prof := LoadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
+		root, err := ResolveModulesRootFromRef(prof.ModulesRoot)
 		if err == nil {
 			return root, nil
 		}
@@ -169,20 +169,20 @@ func resolveModulesRoot(userPath string) (string, error) {
 }
 
 // resolveModulesRootWithLabel returns the modules root and a human-friendly label.
-func resolveModulesRootWithLabel(userPath string) (string, string, error) {
+func ResolveModulesRootWithLabel(userPath string) (string, string, error) {
 	if strings.TrimSpace(userPath) != "" {
-		root, err := resolveModulesRootFromRef(userPath)
+		root, err := ResolveModulesRootFromRef(userPath)
 		return root, userPath, err
 	}
 
-	if prof := loadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
-		root, err := resolveModulesRootFromRef(prof.ModulesRoot)
+	if prof := LoadProfile(); prof != nil && strings.TrimSpace(prof.ModulesRoot) != "" {
+		root, err := ResolveModulesRootFromRef(prof.ModulesRoot)
 		if err == nil {
 			return root, prof.ModulesRoot, nil
 		}
 	}
 
-	root, err := resolveModulesRoot("")
+	root, err := ResolveModulesRoot("")
 	if err != nil {
 		return "", "", err
 	}
@@ -190,19 +190,19 @@ func resolveModulesRootWithLabel(userPath string) (string, string, error) {
 }
 
 // resolveModuleRoots returns embedded root plus optional custom root.
-func resolveModuleRoots(userPath string) (embedded string, custom string, err error) {
-	embedded, err = resolveModulesRoot("")
+func ResolveModuleRoots(userPath string) (embedded string, custom string, err error) {
+	embedded, err = ResolveModulesRoot("")
 	if err != nil {
 		return "", "", err
 	}
 	// Profile can set default modules_root; CLI flag wins.
 	if strings.TrimSpace(userPath) == "" {
-		if p := loadProfile(); p != nil && strings.TrimSpace(p.ModulesRoot) != "" {
+		if p := LoadProfile(); p != nil && strings.TrimSpace(p.ModulesRoot) != "" {
 			userPath = p.ModulesRoot
 		}
 	}
 	if strings.TrimSpace(userPath) != "" {
-		custom, err = resolveModulesRootFromRef(userPath)
+		custom, err = ResolveModulesRootFromRef(userPath)
 		if err != nil {
 			return "", "", err
 		}
@@ -210,7 +210,7 @@ func resolveModuleRoots(userPath string) (embedded string, custom string, err er
 	return embedded, custom, nil
 }
 
-func resolveModulesRootFromRef(ref string) (string, error) {
+func ResolveModulesRootFromRef(ref string) (string, error) {
 	ref = strings.TrimSpace(ref)
 	if ref == "" {
 		return "", nil
@@ -225,13 +225,13 @@ func resolveModulesRootFromRef(ref string) (string, error) {
 		resolved = path
 	}
 	resolved = filepath.Clean(resolved)
-	if err := ensureDir(resolved, "modules root"); err != nil {
+	if err := EnsureDir(resolved, "modules root"); err != nil {
 		return "", err
 	}
 	return resolved, nil
 }
 
-func selectModuleMeta(module config.Module, embeddedMetas, customMetas map[string]*config.ModuleMetadata, embeddedRoot string) (*config.ModuleMetadata, error) {
+func SelectModuleMeta(module config.Module, embeddedMetas, customMetas map[string]*config.ModuleMetadata, embeddedRoot string) (*config.ModuleMetadata, error) {
 	if strings.EqualFold(module.Source, "custom") {
 		if len(customMetas) == 0 {
 			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but no custom modules root provided", module.ID, module.Type)
@@ -255,7 +255,7 @@ func selectModuleMeta(module config.Module, embeddedMetas, customMetas map[strin
 	return meta, nil
 }
 
-func runCmdOutputWithIO(dir, name string, stderr io.Writer, args ...string) (string, error) {
+func RunCmdOutputWithIO(dir, name string, stderr io.Writer, args ...string) (string, error) {
 	return runner.Default.RunOutput(runner.Cmd{
 		Name:   name,
 		Args:   args,
@@ -264,7 +264,7 @@ func runCmdOutputWithIO(dir, name string, stderr io.Writer, args ...string) (str
 	})
 }
 
-func runWithRetry(attempts int, baseDelay time.Duration, fn func() error) error {
+func RunWithRetry(attempts int, baseDelay time.Duration, fn func() error) error {
 	if attempts < 1 {
 		attempts = 1
 	}
@@ -284,7 +284,7 @@ func runWithRetry(attempts int, baseDelay time.Duration, fn func() error) error 
 	return lastErr
 }
 
-func isTransientInitError(err error) bool {
+func IsTransientInitError(err error) bool {
 	if err == nil {
 		return false
 	}
@@ -311,39 +311,11 @@ func isTransientInitError(err error) bool {
 	return false
 }
 
-func runCmdOutput(dir, name string, args ...string) (string, error) {
-	return runCmdOutputWithIO(dir, name, os.Stderr, args...)
+func RunCmdOutput(dir, name string, args ...string) (string, error) {
+	return RunCmdOutputWithIO(dir, name, os.Stderr, args...)
 }
 
-func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
-	if opts.noColor {
-		args = append(args, "-no-color")
-	}
-	if !opts.input {
-		args = append(args, "-input=false")
-	}
-	if !opts.lock {
-		args = append(args, "-lock=false")
-	}
-	if opts.lockTimeout != "" {
-		args = append(args, "-lock-timeout="+opts.lockTimeout)
-	}
-	if opts.parallelism > 0 {
-		args = append(args, fmt.Sprintf("-parallelism=%d", opts.parallelism))
-	}
-	for _, t := range opts.targets {
-		args = append(args, "-target="+t)
-	}
-	if opts.refresh != nil {
-		args = append(args, fmt.Sprintf("-refresh=%t", *opts.refresh))
-	}
-	if opts.autoApprove {
-		args = append(args, "-auto-approve")
-	}
-	return args
-}
-
-func daggerLogOutput(stderr io.Writer) io.Writer {
+func DaggerLogOutput(stderr io.Writer) io.Writer {
 	if stderr == nil {
 		return os.Stderr
 	}
@@ -353,10 +325,10 @@ func daggerLogOutput(stderr io.Writer) io.Writer {
 // selectEnvName chooses an environment name from input, env var, or config context.
 // For Environment specs: if env is empty, fall back to PLTF_DEFAULT_ENV, then to the only environment defined.
 // For Service specs: env must exist in both envCfg and svcCfg; fallbacks mirror above.
-func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, svcCfg *config.ServiceConfig) (string, error) {
+func SelectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, svcCfg *config.ServiceConfig) (string, error) {
 	candidate := strings.TrimSpace(env)
 	if candidate == "" {
-		if prof := loadProfile(); prof != nil && strings.TrimSpace(prof.DefaultEnv) != "" {
+		if prof := LoadProfile(); prof != nil && strings.TrimSpace(prof.DefaultEnv) != "" {
 			candidate = strings.TrimSpace(prof.DefaultEnv)
 		}
 	}
@@ -372,7 +344,7 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 			if _, ok := envCfg.Environments[candidate]; ok {
 				return candidate, nil
 			}
-			return "", fmt.Errorf("environment %q not found in spec; available: %s", candidate, strings.Join(sortedKeys(envCfg.Environments), ","))
+			return "", fmt.Errorf("environment %q not found in spec; available: %s", candidate, strings.Join(SortedKeys(envCfg.Environments), ","))
 		}
 		if len(envCfg.Environments) == 1 {
 			for k := range envCfg.Environments {
@@ -383,10 +355,10 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 	case "Service":
 		if candidate != "" {
 			if _, ok := envCfg.Environments[candidate]; !ok {
-				return "", fmt.Errorf("environment %q not found in Environment; available: %s", candidate, strings.Join(sortedKeys(envCfg.Environments), ","))
+				return "", fmt.Errorf("environment %q not found in Environment; available: %s", candidate, strings.Join(SortedKeys(envCfg.Environments), ","))
 			}
 			if _, ok := svcCfg.Metadata.EnvRef[candidate]; !ok {
-				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(sortedKeys(svcCfg.Metadata.EnvRef), ","))
+				return "", fmt.Errorf("environment %q not found in service envRef; available: %s", candidate, strings.Join(SortedKeys(svcCfg.Metadata.EnvRef), ","))
 			}
 			return candidate, nil
 		}
@@ -408,7 +380,7 @@ func selectEnvName(kind string, env string, envCfg *config.EnvironmentConfig, sv
 	}
 }
 
-func sortedKeys[T any](m map[string]T) []string {
+func SortedKeys[T any](m map[string]T) []string {
 	keys := make([]string, 0, len(m))
 	for k := range m {
 		keys = append(keys, k)
@@ -417,14 +389,14 @@ func sortedKeys[T any](m map[string]T) []string {
 	return keys
 }
 
-type profileConfig struct {
+type ProfileConfig struct {
 	ModulesRoot string `yaml:"modules_root"`
 	DefaultEnv  string `yaml:"default_env"`
 	DefaultOut  string `yaml:"default_out"`
 	Telemetry   bool   `yaml:"telemetry"`
 }
 
-func loadProfile() *profileConfig {
+func LoadProfile() *ProfileConfig {
 	profileOnce.Do(func() {
 		path := os.Getenv("PLTF_PROFILE")
 		if strings.TrimSpace(path) == "" {
@@ -442,7 +414,7 @@ func loadProfile() *profileConfig {
 			}
 			return
 		}
-		var cfg profileConfig
+		var cfg ProfileConfig
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
 			profileErr = fmt.Errorf("failed to parse profile %s: %w", path, err)
 			return

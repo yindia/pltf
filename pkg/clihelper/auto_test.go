@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"bytes"
@@ -57,7 +57,7 @@ func TestAutoValidateRequiresEnvSelection(t *testing.T) {
 	writeYAML(t, envPath, envCfg)
 
 	var buf bytes.Buffer
-	err := autoValidateWithOutput(&buf, envPath, "", "")
+	err := AutoValidateWithOutput(&buf, envPath, "", "")
 	if err == nil || !strings.Contains(err.Error(), "--env is required") {
 		t.Fatalf("expected env selection error, got %v (output=%s)", err, buf.String())
 	}
@@ -93,7 +93,7 @@ func TestAutoValidateEmitsLintSuggestions(t *testing.T) {
 	writeYAML(t, envPath, envCfg)
 
 	var buf bytes.Buffer
-	if err := autoValidateWithOutput(&buf, envPath, "dev", ""); err != nil {
+	if err := AutoValidateWithOutput(&buf, envPath, "dev", ""); err != nil {
 		t.Fatalf("autoValidateWithOutput returned error: %v", err)
 	}
 

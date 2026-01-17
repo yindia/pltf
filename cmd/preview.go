@@ -14,6 +14,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"pltf/pkg/backend"
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
 )
 
@@ -36,8 +37,8 @@ var previewCmd = &cobra.Command{
 }
 
 func runPreview(file, env string) error {
-	file = defaultString(file, "env.yaml")
-	if err := ensureFile(file, "spec file"); err != nil {
+	file = clihelper.DefaultString(file, "env.yaml")
+	if err := clihelper.EnsureFile(file, "spec file"); err != nil {
 		return err
 	}
 	kind, err := config.DetectKind(file)
@@ -51,11 +52,11 @@ func runPreview(file, env string) error {
 		if err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return err
 		}
-		embeddedRoot, customRoot, err := resolveModuleRoots(previewMods)
+		embeddedRoot, customRoot, err := clihelper.ResolveModuleRoots(previewMods)
 		if err != nil {
 			return err
 		}
@@ -74,11 +75,11 @@ func runPreview(file, env string) error {
 		if err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return err
 		}
-		embeddedRoot, customRoot, err := resolveModuleRoots(previewMods)
+		embeddedRoot, customRoot, err := clihelper.ResolveModuleRoots(previewMods)
 		if err != nil {
 			return err
 		}
@@ -97,7 +98,7 @@ func runPreview(file, env string) error {
 		if err != nil {
 			return err
 		}
-		embeddedRoot, customRoot, err := resolveModuleRoots(previewMods)
+		embeddedRoot, customRoot, err := clihelper.ResolveModuleRoots(previewMods)
 		if err != nil {
 			return err
 		}
@@ -353,7 +354,7 @@ func buildPreviewOutputs(mods []config.Module, embeddedRoot, customRoot string) 
 
 	results := make([]previewModuleOutputs, 0, len(mods))
 	for _, m := range mods {
-		meta, err := selectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
+		meta, err := clihelper.SelectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
 		if err != nil {
 			return nil, err
 		}

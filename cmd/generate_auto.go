@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"pltf/pkg/clihelper"
 )
 
 var (
@@ -25,22 +27,22 @@ default; can override modules root and output directory.`,
 	Example: `  pltf generate -f env.yaml -e dev
   pltf generate -f service.yaml -e prod -m ./modules -o .pltf/my-env/my-svc/workspace`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		autoGenFile = defaultString(autoGenFile, "env.yaml")
-		autoGenFile = cleanOptionalPath(autoGenFile)
+		autoGenFile = clihelper.DefaultString(autoGenFile, "env.yaml")
+		autoGenFile = clihelper.CleanOptionalPath(autoGenFile)
 		autoGenEnv = strings.TrimSpace(autoGenEnv)
-		autoGenModulesDir = cleanOptionalPath(autoGenModulesDir)
-		autoGenOut = cleanOptionalPath(autoGenOut)
+		autoGenModulesDir = clihelper.CleanOptionalPath(autoGenModulesDir)
+		autoGenOut = clihelper.CleanOptionalPath(autoGenOut)
 
-		if err := ensureFile(autoGenFile, "spec file"); err != nil {
+		if err := clihelper.EnsureFile(autoGenFile, "spec file"); err != nil {
 			return err
 		}
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if strings.TrimSpace(autoGenEnv) == "" {
-			return autoGenerateAll(autoGenFile, autoGenModulesDir, autoGenOut, autoGenVars)
+			return clihelper.AutoGenerateAll(autoGenFile, autoGenModulesDir, autoGenOut, autoGenVars)
 		}
-		return autoGenerate(autoGenFile, autoGenEnv, autoGenModulesDir, autoGenOut, autoGenVars)
+		return clihelper.AutoGenerate(autoGenFile, autoGenEnv, autoGenModulesDir, autoGenOut, autoGenVars)
 	},
 }
 

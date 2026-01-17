@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"os"
@@ -12,7 +12,7 @@ import (
 func TestLoadProfileFromEnv(t *testing.T) {
 	dir := t.TempDir()
 	profilePath := filepath.Join(dir, "profile.yaml")
-	prof := profileConfig{ModulesRoot: dir, DefaultEnv: "dev"}
+	prof := ProfileConfig{ModulesRoot: dir, DefaultEnv: "dev"}
 	data, err := yaml.Marshal(prof)
 	if err != nil {
 		t.Fatalf("marshal: %v", err)
@@ -28,7 +28,7 @@ func TestLoadProfileFromEnv(t *testing.T) {
 	profileData = nil
 	profileErr = nil
 
-	p := loadProfile()
+	p := LoadProfile()
 	if p == nil {
 		t.Fatalf("expected profile loaded")
 	}

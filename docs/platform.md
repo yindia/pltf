@@ -26,7 +26,7 @@ pltf terraform output  -f service.yaml -e dev --json
 pltf terraform force-unlock -f env.yaml -e prod --lock-id=<id>
 ```
 
-- Every Terraform helper runs inside Dagger with the shared workspace/cache environment and mounts credentials (`~/.aws`, `~/.docker`, etc.).  
+- Every Terraform helper runs locally in the generated workspace, picks up credentials (`~/.aws`, `~/.docker`, etc.) from the host, and benefits from the plain `.terraform` cache Terraform maintains inside the workspace.
 - Plan/apply/destroy all run `terraform plan` first and keep `.pltf-plan.tfplan` plus optional tfsec/cost summaries or Rover output.  
 - Apply/destroy append `-auto-approve` so there’s no interactive approval.  
 - `plan`/`destroy` build images without pushing; `apply` builds and then pushes with the host registry credentials.  

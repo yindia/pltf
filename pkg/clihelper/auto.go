@@ -1,4 +1,4 @@
-package cmd
+package clihelper
 
 import (
 	"fmt"
@@ -12,11 +12,11 @@ import (
 	"pltf/pkg/generate"
 )
 
-func autoValidate(file, env, modulesRoot string) error {
-	return autoValidateWithOutput(os.Stdout, file, env, modulesRoot)
+func AutoValidate(file, env, modulesRoot string) error {
+	return AutoValidateWithOutput(os.Stdout, file, env, modulesRoot)
 }
 
-func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error {
+func AutoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error {
 	var (
 		envCfg *config.EnvironmentConfig
 		svcCfg *config.ServiceConfig
@@ -34,7 +34,7 @@ func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error 
 		if err != nil {
 			return err
 		}
-		_, err = selectEnvName(kind, env, cfg, nil)
+		_, err = SelectEnvName(kind, env, cfg, nil)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error 
 		if err != nil {
 			return err
 		}
-		_, err = selectEnvName(kind, env, envConfig, svc)
+		_, err = SelectEnvName(kind, env, envConfig, svc)
 		if err != nil {
 			return err
 		}
@@ -68,7 +68,7 @@ func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error 
 			return err
 		}
 		fmt.Fprintf(out, "Stack %q is valid\n", stackCfg.Metadata.Name)
-		embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+		embeddedRoot, customRoot, err := ResolveModuleRoots(modulesRoot)
 		if err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error 
 		return fmt.Errorf("unknown or missing kind in %s (expected Environment, Service, or Stack)", file)
 	}
 
-	embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+	embeddedRoot, customRoot, err := ResolveModuleRoots(modulesRoot)
 	if err != nil {
 		return err
 	}
@@ -105,7 +105,7 @@ func autoValidateWithOutput(out io.Writer, file, env, modulesRoot string) error 
 	return nil
 }
 
-func autoValidateWithScan(out io.Writer, file, env, modules string) error {
+func AutoValidateWithScan(out io.Writer, file, env, modules string) error {
 	absFile, err := filepath.Abs(file)
 	if err != nil {
 		return err
@@ -117,7 +117,7 @@ func autoValidateWithScan(out io.Writer, file, env, modules string) error {
 		return err
 	}
 
-	embeddedRoot, customRoot, err := resolveModuleRoots(modules)
+	embeddedRoot, customRoot, err := ResolveModuleRoots(modules)
 	if err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func autoValidateWithScan(out io.Writer, file, env, modules string) error {
 		if err := validateProviderSupport(envCfg, nil); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return err
 		}
@@ -170,7 +170,7 @@ func autoValidateWithScan(out io.Writer, file, env, modules string) error {
 		if err := validateProviderSupport(envCfg, svcCfg); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return err
 		}
@@ -201,13 +201,13 @@ func autoValidateWithScan(out io.Writer, file, env, modules string) error {
 		return fmt.Errorf("unknown or missing kind in %s (expected Environment, Service, or Stack)", file)
 	}
 
-	if _, err := runTfsecScan(outDir); err != nil {
+	if _, err := RunTfsecScan(outDir); err != nil {
 		return fmt.Errorf("tfsec scan failed: %w", err)
 	}
 	return nil
 }
 
-func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
+func AutoGenerate(file, env, modulesRoot, out string, vars []string) error {
 	absFile, err := filepath.Abs(file)
 	if err != nil {
 		return err
@@ -219,13 +219,13 @@ func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
 		return err
 	}
 
-	cliVars, err := parseVarFlags(vars)
+	cliVars, err := ParseVarFlags(vars)
 	if err != nil {
 		return err
 	}
-	cliVars = mergeVarMaps(parseVarEnv(), cliVars)
+	cliVars = MergeVarMaps(ParseVarEnv(), cliVars)
 
-	embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+	embeddedRoot, customRoot, err := ResolveModuleRoots(modulesRoot)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
 		if err := validateCustomModules(envCfg, nil, customRoot); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return err
 		}
@@ -269,7 +269,7 @@ func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
 		if err := validateDuplicateOutputs(envCfg, svcCfg, embeddedRoot, customRoot); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return err
 		}
@@ -293,7 +293,7 @@ func autoGenerate(file, env, modulesRoot, out string, vars []string) error {
 	}
 }
 
-func autoGenerateAll(file, modulesRoot, out string, vars []string) error {
+func AutoGenerateAll(file, modulesRoot, out string, vars []string) error {
 	absFile, err := filepath.Abs(file)
 	if err != nil {
 		return err
@@ -305,13 +305,13 @@ func autoGenerateAll(file, modulesRoot, out string, vars []string) error {
 		return err
 	}
 
-	cliVars, err := parseVarFlags(vars)
+	cliVars, err := ParseVarFlags(vars)
 	if err != nil {
 		return err
 	}
-	cliVars = mergeVarMaps(parseVarEnv(), cliVars)
+	cliVars = MergeVarMaps(ParseVarEnv(), cliVars)
 
-	embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+	embeddedRoot, customRoot, err := ResolveModuleRoots(modulesRoot)
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,7 @@ func autoGenerateAll(file, modulesRoot, out string, vars []string) error {
 }
 
 // autoGenerateQuiet renders Terraform without printing status messages. Used by graph command to keep DOT output clean.
-func autoGenerateQuiet(file, env, modulesRoot, out string, vars []string) error {
+func AutoGenerateQuiet(file, env, modulesRoot, out string, vars []string) error {
 	absFile, err := filepath.Abs(file)
 	if err != nil {
 		return err
@@ -382,13 +382,13 @@ func autoGenerateQuiet(file, env, modulesRoot, out string, vars []string) error 
 		return err
 	}
 
-	cliVars, err := parseVarFlags(vars)
+	cliVars, err := ParseVarFlags(vars)
 	if err != nil {
 		return err
 	}
-	cliVars = mergeVarMaps(parseVarEnv(), cliVars)
+	cliVars = MergeVarMaps(ParseVarEnv(), cliVars)
 
-	embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+	embeddedRoot, customRoot, err := ResolveModuleRoots(modulesRoot)
 	if err != nil {
 		return err
 	}
@@ -402,7 +402,7 @@ func autoGenerateQuiet(file, env, modulesRoot, out string, vars []string) error 
 		if err := validateCustomModules(envCfg, nil, customRoot); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return err
 		}
@@ -424,7 +424,7 @@ func autoGenerateQuiet(file, env, modulesRoot, out string, vars []string) error 
 		if err := validateCustomModules(envCfg, svcCfg, customRoot); err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return err
 		}
@@ -514,7 +514,7 @@ func validateDuplicateOutputsForModules(modules []config.Module, embeddedRoot, c
 
 	outputProviders := map[string][]string{}
 	for _, m := range modules {
-		meta, err := selectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
+		meta, err := SelectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
 		if err != nil {
 			return err
 		}
@@ -575,7 +575,7 @@ func validateClusterModulesForModules(modules []config.Module, embeddedRoot, cus
 
 	var clusterModules []string
 	for _, m := range modules {
-		meta, err := selectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
+		meta, err := SelectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
 		if err != nil {
 			return err
 		}

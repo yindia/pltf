@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	"pltf/pkg/clihelper"
 )
 
 var (
@@ -25,16 +27,16 @@ and the service envRef (for services). Lint suggestions are run alongside valida
 	Example: `  pltf validate -f env.yaml
   pltf validate -f service.yaml -e dev`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		autoValFile = defaultString(autoValFile, "env.yaml")
-		autoValFile = cleanOptionalPath(autoValFile)
+		autoValFile = clihelper.DefaultString(autoValFile, "env.yaml")
+		autoValFile = clihelper.CleanOptionalPath(autoValFile)
 		autoValEnv = strings.TrimSpace(autoValEnv)
-		return ensureFile(autoValFile, "spec file")
+		return clihelper.EnsureFile(autoValFile, "spec file")
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if autoValScan {
-			return autoValidateWithScan(os.Stdout, autoValFile, autoValEnv, autoValMods)
+			return clihelper.AutoValidateWithScan(os.Stdout, autoValFile, autoValEnv, autoValMods)
 		}
-		return autoValidate(autoValFile, autoValEnv, autoValMods)
+		return clihelper.AutoValidate(autoValFile, autoValEnv, autoValMods)
 	},
 }
 

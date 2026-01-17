@@ -1,13 +1,13 @@
 # Getting Started: AWS
 
-Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `example/service.yaml`) to a working AWS stack. The guide highlights the Dagger-backed workflow, provider caches, and image automation that pltf now provides.
+Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `example/service.yaml`) to a working AWS stack. The guide highlights the provider caches and image automation (via Dagger) that pltf now provides.
 
 ## 1) Prerequisites
 
-- Terraform 1.5+ locally or in CI.  
+- Terraform 1.6.6 locally (or any version satisfying `>=1.6.6` in the workspace).  
 - AWS credentials (from `aws configure`, env vars, or another provider).  
 - `pltf` installed (see [Installation](../installation.md)).  
-- Dagger environment with readable `~/.aws`/`~/.docker`/`~/.terraformrc` (pltf generates its own `~/.terraformrc` quoting the shared cache).
+- Dagger installed (only required when building/pushing images via `pltf image ...` or when specs declare Docker images).
 
 ## 2) Render the Environment (VPC + EKS + DNS)
 
@@ -64,7 +64,7 @@ pltf terraform plan  -f example/env.yaml --env prod
 pltf terraform apply -f example/env.yaml --env prod
 ```
 
-Terraform runs use the shared plugin cache (`pltf-terraform-plugin-cache`) and the generated `~/.terraformrc`, so providers stay cached across commands and projects. `pltf terraform plan` builds Docker images (no push) before planning; `apply` builds + pushes them using `~/.docker` creds.
+ Terraform runs operate inside `.pltf/<env>/workspace` so the standard `.terraform` cache keeps provider downloads per workspace. `pltf terraform plan` builds Docker images (no push) before planning; `apply` builds + pushes them using your host registry credentials.
 
 ## 3) Add a Service (Postgres + S3 + SNS/SQS + IAM)
 

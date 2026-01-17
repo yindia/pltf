@@ -1,33 +1,33 @@
 # pltf CLI 🚀
 
-High-level infrastructure specs that generate standard Terraform workflows.
+pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, instant validation, and inline security/cost scans. Instead of hand-editing Terraform everywhere, keep your cloud knowledge in reusable specs (`Environment`, `Service`, `Stack`) and let pltf generate the modules, providers, backends, and secrets wiring for you.
+
+## Why teams choose pltf
+
+- **Spec-first workflows** – describe your desired environments, services, and stacks once in YAML; pltf materializes the Terraform code, backend config, and provider mappings automatically.
+- **Consistent Terraform runs** – every `pltf terraform …` command generates the workspace first, runs the host Terraform binary (no hidden runtime layers), and streamlines approvals (`plan` can include tfsec/cost/rover, `apply`/`destroy` always auto-approve).
+- **Image-aware operations** – Docker images declared in specs are built once per plan/apply via Dagger, reusing the shared cache, and only `apply` pushes the tags so CI/CD remains in control.
+- **Security and cost transparency** – builtin tfsec reporting and optional Infracost summaries show up alongside the Terraform logs so you don’t miss risky findings before you deploy.
+- **Versioned, portable tooling** – the CLI stays Go-native, works alongside your existing git/terraform installs, and documents workflows for every team member.
+
+## Key concepts
+
+- **Environment** (e.g., `env.yaml`) describes cloud providers, backend/state configuration, account/region entries, and the modules/variables that belong to a physical deployment (dev, prod, etc.). Use `variables` for values that vary per environment and `secrets` to reference vaults or secret files.
+- **Service** references an Environment spec and wires additional modules or metadata for a specific workload. Use `metadata.envRef` to map service-specific overrides or secrets to the environments defined upstream.
+- **Stack** is a reusable collection of modules with predefined inputs/outputs, labels, and provider requirements. Environments can include one or more stacks via `metadata.stacks`, which merge before generation.
+- **Variables/secrets** follow the spectype structure: `variables` is a simple map of key/value pairs available to modules, while `secrets` reference secret providers, file paths, or template-based values that get injected into Terraform without checking them into Git.
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Requirements](#requirements)
 - [Install](#install)
 - [Quickstart](#quickstart)
 - [Terraform Workflows](#terraform-workflows)
-- [Image & Plugin Caching](#image--plugin-caching)
+- [Specs](#specs)
+- [Image & Terraform Caching](#image--terraform-caching)
 - [Commands](#commands)
 - [Behavior & Rules](#behavior--rules)
 - [Provider Support](#provider-support)
-- [Kubernetes Deployment Support](#kubernetes-deployment-support)
 - [Contributing](#contributing)
-
-## Overview
-
-- Validate Environment, Service, and Stack YAML specs.
-- Generate Terraform modules/backends/providers/secrets/outputs automatically.
-- Wrap Terraform commands with auto-generation, plan/apply/destroy/output helpers, and spec graphs.
-- Keep generated Terraform in your repo to avoid lock-in.
-
-## Requirements
-
-- Go 1.25.x
-- `git` and `terraform` (>= 1.6.6) on `PATH`
-- Dagger-enabled environment with host credentials mounted (`~/.aws`, `~/.docker`, etc.)
 
 ## Install
 
@@ -45,9 +45,8 @@ go install ./...
    kind: Stack
    metadata:
      name: k8s-cluster
-   providers:
-     kubernetes: true
-     helm: true
+     labels:
+       workload: infra
    modules:
      - id: base
        type: aws_base
@@ -57,7 +56,7 @@ go install ./...
          cluster_name: var.cluster_name
    ```
 
-2. **Reference the stack from an environment** (`env.yaml`):
+2. **Declare the base environment** (`env.yaml`):
 
    ```yaml
    apiVersion: platform.io/v1
@@ -76,68 +75,86 @@ go install ./...
      dev:
        account: "111111111111"
        region: us-east-1
+       variables:
+         base_domain: example.com
+   variables:
+     cluster_name: example-dev
    modules:
      - id: dns
        type: aws_dns
        inputs:
          domain: var.base_domain
+   images:
+     - name: platform-tools
+       context: .
+       dockerfile: Dockerfile
+       tags:
+         - ghcr.io/example/example-aws:${env_name}
+       platforms:
+         - linux/amd64
+         - linux/arm64
+   secrets:
+     s3_creds:
+       type: file
+       path: ~/.aws/credentials
    ```
 
-3. **Preview and validate**:
+3. **Preview, validate, and run Terraform**:
 
    ```bash
    ./pltf preview -f env.yaml -e dev
-   ./pltf validate -f env.yaml -e dev
-   ```
-
-4. **Generate and apply**:
-
-   ```bash
+   ./pltf validate -f env.yaml -e dev --scan
    ./pltf generate -f env.yaml -e dev
-   ./pltf terraform plan -f env.yaml -e dev --scan
+   ./pltf terraform plan -f env.yaml -e dev --scan --cost
    ./pltf terraform apply -f env.yaml -e dev
    ```
 
-5. **Optional**: Add a service (`service.yaml`) that references the environment spec and wires new modules.
+4. **Add services** (`service.yaml`) that reference the environment and define workloads without duplicating account-level definitions.
 
 ## Terraform Workflows
 
-- Every Terraform command runs inside Dagger so it shares the workspace, cached providers/plugins, and environment credentials while keeping `.pltf-plan.tfplan` artifacts for plan/apply.
-- `pltf terraform plan/apply/destroy` build the Docker images from the spec; apply pushes them using the host’s registry auth while plan/destroy only build locally.
-- Apply/destroy always run `--auto-approve`, `terraform plan` produces detailed summaries, and optional flags like `--scan`, `--cost`, and `--rover` extend the plan output.
-- Logs include `[pltf] …` progress prefixes, and you can enable Dagger verbosity via `PLTF_DAGGER_LOG`, `PLTF_DEBUG`, or `PLTF_VERBOSE`.
+- Terraform commands execute locally in the generated workspace; the CLI simply materializes Terraform files, copies `.tfvars`, and calls the host `terraform` binary (no special plugin cache or wrappers required).
+- `pltf terraform plan` and `apply` build the declared Docker images via Dagger, reusing the `pltf-image-cache`. `apply` pushes the selected tags while `plan` stops after building locally. `destroy` skips image builds entirely.
+- Commands like `plan` can still include optional helpers such as `--scan` (tfsec), `--cost` (Infracost), and `--rover`. `apply`/`destroy` always append `-auto-approve` so CI/CD can run unattended.
+- Every command reuses the generated workspace in `.pltf/<spec-name>/<env>/workspace`, so plan/apply operate on the same graph and Terraform state.
 
-## Image & Plugin Caching
+## Specs
 
-- Docker builds mount a Dagger cache volume (`pltf-image-cache`) so BuildKit reuse layers between executions.
-- Terraform providers/plugins are cached in `pltf-terraform-plugin-cache`, mounted at `/work/.terraform-plugin-cache` and referenced in the generated `~/.terraformrc`, so the same provider binaries are reused across projects.
-- Image builds honor the spec-level `platforms` list (`["linux/amd64","linux/arm64"]` style); if unspecified, the host OS/ARCH is used for the build and push.
+- **Environment** specs describe the cloud account/provider/backends as well as the core modules, variables, stacks, and secrets that apply to *every* instance of that environment (dev, prod, etc.). Think of an environment as the account-level declaration of infrastructure shape plus shared wiring for all workloads.
+- **Service** specs live on top of an Environment reference (`metadata.ref`) and capture the workload‑specific Terraform (modules, metadata, secrets, images, extra variables) that runs within that environment. Think of the environment as the base infrastructure (VPC, clusters, shared backends) and the service as the workload that deploys on top of it – a service can be deployed into any of the Environment’s entries, and `metadata.envRef` describes how this service maps to one or more env names.
+- **Stack** specs declare reusable bundles of modules, inputs, and outputs with documented provider requirements; environments include stacks via `metadata.stacks`, and stacks merge before generation so downstream specs cannot override them.
+- Use `variables` anywhere (stack, environment, service) to provide values to your modules. Place sensitive values inside `secrets` so pltf can inject them into generated Terraform without storing the raw secrets in Git. Service-level secrets/variables apply only to that workload, while environment scopes are shared across all services built on top of that environment.
+
+## Image & Terraform Caching
+
+- Image builds run through Dagger’s `Directory.DockerBuild`, mounting `pltf-image-cache` so BuildKit layers persist across commands. `platforms` lists drive multi-arch builds and default to the host OS/ARCH when unspecified.
+- Terraform runs use the host binary and keep generated artifacts inside the workspace, so init/plan/apply/destroy all work against feature-parity Terraform state without extra caching layers.
 
 ## Commands
 
-| Command                       | Description                                                                                             |
-|------------------------------|---------------------------------------------------------------------------------------------------------|
-| `pltf generate`               | Generate Terraform from an Environment or Service spec.                                                   |
-| `pltf validate`               | Validate a spec (`--scan` runs tfsec).                                                                   |
-| `pltf preview`                | Preview provider/backend/vars/module wiring.                                                            |
-| `pltf version`                | Show pltf, Terraform, and provider versions.                                                              |
-| `pltf module init`            | Inspect a Terraform module and write `module.yaml`.                                                     |
-| `pltf module list`            | List available modules (embedded or custom).                                                            |
-| `pltf module get`             | Show module inputs/outputs.                                                                              |
-| `pltf terraform plan`         | Generate and run `plan`. Supports `--scan`, `--cost`, `--rover`.                                          |
-| `pltf terraform apply`        | Build/push images and run `apply` (auto-approved).                                                       |
-| `pltf terraform destroy`      | Build images (no push) and run `destroy`.                                                                |
-| `pltf terraform output`       | Display Terraform outputs (`--json` for machine-readable).                                              |
-| `pltf terraform graph`        | Terraform/spec graph or terravision output (`--format`, `--outfile`).                                    |
-| `pltf terraform force-unlock` | Force unlock Terraform state (requires `--lock-id`).                                                     |
+| Command                       | Description                                                                                           |
+|-------------------------------|-------------------------------------------------------------------------------------------------------|
+| `pltf generate`               | Materialize Terraform from an Environment or Service spec.                                           |
+| `pltf validate`               | Lint a spec (`--scan` runs tfsec and prints findings).                                                |
+| `pltf preview`                | Summarize provider/backend/stack/module wiring without executing Terraform.                         |
+| `pltf version`                | Report pltf, Terraform, and key provider versions.                                                    |
+| `pltf module init`            | Inspect a Terraform module and emit `module.yaml`.                                                   |
+| `pltf module list`            | List embedded or custom modules available to specs.                                                  |
+| `pltf module get`             | Show module inputs/outputs.                                                                          |
+| `pltf terraform plan`         | Generate the workspace, build images, and run `terraform plan`. Supports `--scan`, `--cost`, `--rover`.|
+| `pltf terraform apply`        | Build/push images and run `terraform apply` (auto-approved).                                          |
+| `pltf terraform destroy`      | Skip image builds and execute `terraform destroy` (auto-approved).                                   |
+| `pltf terraform output`       | Display Terraform outputs (`--json` for machine-readable output).                                    |
+| `pltf terraform graph`        | Export dependency graphs (`--format`, `--outfile`).                                                   |
+| `pltf terraform force-unlock` | Unlock a workspace state file (requires `--lock-id`).                                                 |
 
 ## Behavior & Rules
 
-- Stacks merge before generation; stack modules cannot be overridden by environment/service modules.
-- Stack variables apply automatically; env/service `variables` only control custom logic and must not reuse stack names already defined in stacks.
-- Providers are explicit via the `providers` block—there’s no implicit module-type inference.
-- Auto-wiring uses output name matching from the merged module set; duplicate outputs raise errors.
-- Git refs work for `metadata.ref` and `metadata.stacks` (example: `https://host/org/repo.git//path/to/spec.yaml?ref=main`).
+- Stacks merge before generation; stack modules and outputs cannot be overridden by environments/services.
+- Environment/service variables only cover overrides after stacks merge; duplicate variable names throw errors.
+- Providers are explicit; use the `providers` block to document requirements instead of inferring from module type.
+- Auto-wiring matches outputs among the merged module set; conflicting outputs result in clear errors.
+- Git refs in `metadata.ref` and `metadata.stacks` support remote specs (e.g., `https://host/org/repo.git//path/to/spec.yaml?ref=main`).
 
 ## Provider Support
 
@@ -148,19 +165,10 @@ go install ./...
 | Azure    | ❌ Not Supported |
 | Oracle   | ❌ Not Supported |
 
-## Kubernetes Deployment Support
-
-| Method              | Supported |
-|---------------------|-----------|
-| Helm                | ✅        |
-| Kustomize           | ✅        |
-| Kubernetes Provider | ✅        |
-| Raw Manifests       | ✅        |
-
 ## Contributing
 
 - Open issues/PRs for bugs, features, or module/provider additions.
-- Include repro steps, sample specs/module metadata, and `go test ./...` output when possible.
-- Keep changes small and portable across shells/platforms.
+- Provide reproducible steps, sample specs/module metadata, and `go test ./...` output when applicable.
+- Keep diffs focused and cross-platform friendly.
 
-_Note: running `go test ./...` in this workspace currently fails because `/Users/evalsocket/Library/Caches/go-build/...` is not writable and the Go toolchain is 1.25.5 while the module uses `go 1.25.3`; these are environment/tooling limitations and are unrelated to the codebase._
+_Note: running `go test ./...` here currently fails because `/Users/evalsocket/Library/Caches/go-build/...` is not writable and the Go toolchain version differs from `go 1.25.3`; these issues are environmental and unrelated to the repository._

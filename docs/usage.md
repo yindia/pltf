@@ -9,7 +9,9 @@
 | `pltf validate`                     | Structural validation for specs and wiring                              |
 | `pltf preview`                      | Summarizes providers, backend, variables, and module wiring             |
 | `pltf generate`                     | Renders Terraform workspaces without running Terraform                  |
-| `pltf terraform plan/apply/destroy` | Builds images, generates, and executes Terraform via Dagger              |
+| `pltf terraform plan`             | Builds spec images via Dagger (no push) and runs Terraform locally inside the generated workspace |
+| `pltf terraform apply`            | Builds and pushes spec images via Dagger and runs `terraform apply -auto-approve` locally |
+| `pltf terraform destroy`          | Runs `terraform destroy -auto-approve` locally without pushing images after the cached plan |
 | `pltf terraform graph`             | Terraform/spec DOT graphs (supports `--mode`)                          |
 | `pltf terraform output`            | Shows outputs (JSON support)                                            |
 | `pltf terraform force-unlock`      | Removes stale Terraform locks (`--lock-id` required)                   |
@@ -24,25 +26,25 @@
 - `--out/-o`: Output directory (default `.pltf/<env>/workspace` or `.pltf/<env>/<service>/workspace`).
 - `--var/-v key=value`: CLI vars merge over spec variables and support strings, numbers, JSON, and lists.
 - `--target`, `--parallelism`, `--lock`, `--lock-timeout`, `--no-color`, `--input`, `--refresh`, `--plan-file`, `--detailed-exitcode`, `--json` (passed to Terraform).
-- Set `DAGGER_HOST` to target a remote Dagger engine; `PLTF_DAGGER_LOG`, `PLTF_DEBUG`, or `PLTF_VERBOSE` enable verbose Dagger logging.
+- (Advanced) If you run `pltf image ...` with a remote Dagger engine, set `DAGGER_HOST` and use `PLTF_DAGGER_LOG`, `PLTF_DEBUG`, or `PLTF_VERBOSE` to control verbosity.
 
 ## Terraform helpers
 
 ### `pltf terraform plan`
 
-- Builds images defined in the spec (no push), generates the workspace, and runs `terraform plan`.
+- Builds images defined in the spec via Dagger (no push), generates the workspace, and runs `terraform plan` locally.
 - Supports `--scan`, `--cost`, `--rover`, `--detailed-exitcode`, `--plan-file`, and the shared flags above.
 - Produces `.pltf-plan.tfplan`, optional plan JSON, tfsec/cost summaries, and reruns `terraform show -json` for Rover.
 - Example: `pltf terraform plan -f service.yaml -e dev --detailed-exitcode --plan-file=/tmp/plan.tfplan`
 
-### `pltf terraform apply`
+-### `pltf terraform apply`
 
-- Builds and pushes images (host registry auth from `~/.docker`), reuses the shared plugin cache, and runs `terraform apply -auto-approve` (no prompt).
+- Builds and pushes images (host registry auth from `~/.docker`) via Dagger and runs `terraform apply -auto-approve` locally (no prompt).
 - Example: `pltf terraform apply -f env.yaml -e prod`
 
 ### `pltf terraform destroy`
 
-- Builds images (no push) and runs `terraform destroy -auto-approve`.
+- Skips pushing images, runs `terraform destroy -auto-approve` locally, and shares the same generated workspace so provider downloads stay cached inside `.terraform`.
 - Example: `pltf terraform destroy -f env.yaml -e prod`
 
 ### `pltf terraform output`

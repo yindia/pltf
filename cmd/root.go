@@ -5,6 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+
+	"pltf/pkg/clihelper"
 )
 
 // Global flags (if you want them later)
@@ -61,7 +63,7 @@ func Execute() {
 func init() {
 	// Global flags for all subcommands
 	defaultTelemetry := false
-	if p := loadProfile(); p != nil {
+	if p := clihelper.LoadProfile(); p != nil {
 		defaultTelemetry = p.Telemetry
 	}
 	rootCmd.PersistentFlags().BoolVarP(

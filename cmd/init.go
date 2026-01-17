@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
 )
 
@@ -32,7 +33,7 @@ var moduleListCmd = &cobra.Command{
 	Short: "List available modules (reads module.yaml inventory)",
 	Long:  "Scan a modules root for module.yaml files and list the module types, providers, and descriptions.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, err := resolveModulesRoot(moduleListRoot)
+		root, err := clihelper.ResolveModulesRoot(moduleListRoot)
 		if err != nil {
 			return err
 		}
@@ -51,7 +52,7 @@ var moduleGetCmd = &cobra.Command{
 	Short: "Show details for a module (inputs/outputs)",
 	Long:  "Display module metadata from module.yaml including provider, version, inputs, and outputs.",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		root, label, err := resolveModulesRootWithLabel(moduleListRoot)
+		root, label, err := clihelper.ResolveModulesRootWithLabel(moduleListRoot)
 		if err != nil {
 			return err
 		}
@@ -154,10 +155,10 @@ Provider defaults to aws and version to 1.0.0.`,
   # Write to a custom location and override name/type
   pltf module init --path ./modules/db --name postgres --type aws_postgres --out ./modules/db/module.yaml`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		moduleInitPath = defaultString(moduleInitPath, ".")
-		moduleInitPath = cleanOptionalPath(moduleInitPath)
-		moduleInitOut = cleanOptionalPath(moduleInitOut)
-		if err := ensureDir(moduleInitPath, "module path"); err != nil {
+		moduleInitPath = clihelper.DefaultString(moduleInitPath, ".")
+		moduleInitPath = clihelper.CleanOptionalPath(moduleInitPath)
+		moduleInitOut = clihelper.CleanOptionalPath(moduleInitOut)
+		if err := clihelper.EnsureDir(moduleInitPath, "module path"); err != nil {
 			return err
 		}
 		return nil
@@ -185,7 +186,7 @@ Provider defaults to aws and version to 1.0.0.`,
 		if outFile == "" {
 			outFile = filepath.Join(abs, "module.yaml")
 		}
-		if err := backupIfExists(outFile, moduleInitOverwrite); err != nil {
+		if err := clihelper.BackupIfExists(outFile, moduleInitOverwrite); err != nil {
 			return err
 		}
 

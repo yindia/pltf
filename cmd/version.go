@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"pltf/modules"
+	"pltf/pkg/clihelper"
 	"pltf/pkg/provider"
 	"pltf/pkg/version"
 )
@@ -78,7 +79,7 @@ func cliVersion() string {
 }
 
 func terraformVersions() (string, map[string]string, error) {
-	out, err := runCmdOutput(".", "terraform", "version", "-json")
+	out, err := clihelper.RunCmdOutput(".", "terraform", "version", "-json")
 	if err != nil {
 		// Still return defaults if terraform is missing
 		return provider.RequiredTfVersion, providerDefaults(), err

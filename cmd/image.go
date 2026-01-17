@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
 	"pltf/pkg/daggerx"
 )
@@ -43,10 +44,10 @@ var imageBuildCmd = &cobra.Command{
 	Long: `Build Docker images defined in the spec with Dagger. Tags can include placeholders like
 ${env_name}, ${layer_name}, ${account_id}, ${region}.`,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
-		imageFile = defaultString(imageFile, "env.yaml")
-		imageFile = cleanOptionalPath(imageFile)
+		imageFile = clihelper.DefaultString(imageFile, "env.yaml")
+		imageFile = clihelper.CleanOptionalPath(imageFile)
 		imageEnv = strings.TrimSpace(imageEnv)
-		if err := ensureFile(imageFile, "spec file"); err != nil {
+		if err := clihelper.EnsureFile(imageFile, "spec file"); err != nil {
 			return err
 		}
 		return nil
@@ -67,7 +68,7 @@ func init() {
 }
 
 func autoImageBuild(file, env string, push bool, filter []string) error {
-	session, err := daggerx.NewSession(daggerLogOutput(os.Stderr))
+	session, err := daggerx.NewSession(clihelper.DaggerLogOutput(os.Stderr))
 	if err != nil {
 		return err
 	}
@@ -94,7 +95,7 @@ func autoImageBuildWithSession(session *daggerx.Session, file, env string, push 
 		if err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, nil)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return err
 		}
@@ -104,7 +105,7 @@ func autoImageBuildWithSession(session *daggerx.Session, file, env string, push 
 		if err != nil {
 			return err
 		}
-		envName, err := selectEnvName(kind, env, envCfg, svcCfg)
+		envName, err := clihelper.SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return err
 		}
@@ -140,7 +141,7 @@ func buildImages(session *daggerx.Session, images []config.ImageBuild, baseDir, 
 		selected = append(selected, img)
 	}
 	if len(filterSet) > 0 && len(selected) == 0 {
-		return fmt.Errorf("no matching images found for: %s", strings.Join(sortedKeys(filterSet), ", "))
+		return fmt.Errorf("no matching images found for: %s", strings.Join(clihelper.SortedKeys(filterSet), ", "))
 	}
 	if len(selected) == 0 {
 		return fmt.Errorf("no images selected for build")

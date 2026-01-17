@@ -11,15 +11,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aquasecurity/defsec/pkg/extrafs"
+	"dagger.io/dagger"
 	tfscanner "github.com/aquasecurity/defsec/pkg/scanners/terraform"
 	defsecTypes "github.com/aquasecurity/defsec/pkg/types"
 	"github.com/spf13/cobra"
 
 	"pltf/pkg/backend"
+	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
 	"pltf/pkg/daggerx"
 	"pltf/pkg/generate"
+	terraform "pltf/pkg/terraform"
 	rover "rover"
 )
 
@@ -245,6 +247,34 @@ type tfExecOpts struct {
 	stderr       io.Writer
 }
 
+func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
+	if opts.noColor {
+		args = append(args, "-no-color")
+	}
+	if !opts.input {
+		args = append(args, "-input=false")
+	}
+	if !opts.lock {
+		args = append(args, "-lock=false")
+	}
+	if opts.lockTimeout != "" {
+		args = append(args, "-lock-timeout="+opts.lockTimeout)
+	}
+	if opts.parallelism > 0 {
+		args = append(args, fmt.Sprintf("-parallelism=%d", opts.parallelism))
+	}
+	for _, t := range opts.targets {
+		args = append(args, "-target="+t)
+	}
+	if opts.refresh != nil {
+		args = append(args, fmt.Sprintf("-refresh=%t", *opts.refresh))
+	}
+	if opts.autoApprove {
+		args = append(args, "-auto-approve")
+	}
+	return args
+}
+
 type stackContext struct {
 	kind   string
 	env    string
@@ -253,10 +283,20 @@ type stackContext struct {
 	outDir string
 }
 
+func hasImageBuilds(ctx stackContext) bool {
+	if ctx.envCfg != nil && len(ctx.envCfg.Images) > 0 {
+		return true
+	}
+	if ctx.svcCfg != nil && len(ctx.svcCfg.Images) > 0 {
+		return true
+	}
+	return false
+}
+
 func prepareWorkspaceContext(file, env, out string) (stackContext, error) {
 	var ctx stackContext
 
-	kind, err := config.DetectKind(defaultString(file, "env.yaml"))
+	kind, err := config.DetectKind(clihelper.DefaultString(file, "env.yaml"))
 	if err != nil {
 		return ctx, err
 	}
@@ -264,11 +304,11 @@ func prepareWorkspaceContext(file, env, out string) (stackContext, error) {
 
 	switch kind {
 	case "Environment":
-		envCfg, err := config.LoadEnvironmentConfig(defaultString(file, "env.yaml"))
+		envCfg, err := config.LoadEnvironmentConfig(clihelper.DefaultString(file, "env.yaml"))
 		if err != nil {
 			return ctx, err
 		}
-		env, err = selectEnvName(kind, env, envCfg, nil)
+		env, err = clihelper.SelectEnvName(kind, env, envCfg, nil)
 		if err != nil {
 			return ctx, err
 		}
@@ -280,11 +320,11 @@ func prepareWorkspaceContext(file, env, out string) (stackContext, error) {
 			ctx.outDir = out
 		}
 	case "Service":
-		svcCfg, envCfg, err := config.LoadService(defaultString(file, "service.yaml"))
+		svcCfg, envCfg, err := config.LoadService(clihelper.DefaultString(file, "service.yaml"))
 		if err != nil {
 			return ctx, err
 		}
-		env, err = selectEnvName(kind, env, envCfg, svcCfg)
+		env, err = clihelper.SelectEnvName(kind, env, envCfg, svcCfg)
 		if err != nil {
 			return ctx, err
 		}
@@ -311,16 +351,16 @@ func autoGenerateWorkspace(file, env, modulesRoot, out string, vars []string) (s
 	if err != nil {
 		return ctx, "", err
 	}
-	cliVars, err := parseVarFlags(vars)
+	cliVars, err := clihelper.ParseVarFlags(vars)
 	if err != nil {
 		return ctx, "", err
 	}
-	cliVars = mergeVarMaps(parseVarEnv(), cliVars)
-	embeddedRoot, customRoot, err := resolveModuleRoots(modulesRoot)
+	cliVars = clihelper.MergeVarMaps(clihelper.ParseVarEnv(), cliVars)
+	embeddedRoot, customRoot, err := clihelper.ResolveModuleRoots(modulesRoot)
 	if err != nil {
 		return ctx, "", err
 	}
-	specPath := defaultString(file, "env.yaml")
+	specPath := clihelper.DefaultString(file, "env.yaml")
 	specDir := filepath.Dir(specPath)
 	if ctx.kind == "Environment" {
 		if err := generate.ExportEnvironmentWorkspaceForEnv(ctx.envCfg, embeddedRoot, customRoot, ctx.outDir, specDir, ctx.env, cliVars); err != nil {
@@ -342,10 +382,10 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 	tfvarsArg := ""
 	if tfvarsPath != "" {
-		tfvarsArg = filepath.Join("/work", filepath.Base(tfvarsPath))
+		tfvarsArg = filepath.Base(tfvarsPath)
 	}
 
-	_, finishRun := startLocalRun(action, file, ctx.env, ctx.outDir)
+	_, finishRun := clihelper.StartLocalRun(action, file, ctx.env, ctx.outDir)
 	defer func() {
 		finishRun(retErr)
 	}()
@@ -368,30 +408,40 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		stderr = os.Stderr
 	}
 
-	session, err := daggerx.NewSession(daggerLogOutput(stderr))
-	if err != nil {
-		return err
-	}
-	defer session.Close()
-
-	imageCache := session.Client.CacheVolume("pltf-image-cache")
-	tfPluginCache := session.Client.CacheVolume("pltf-terraform-plugin-cache")
-	tfRunner := newTfDaggerRunner(session, ctx.outDir, stdout, stderr, tfPluginCache)
-
 	log := func(format string, args ...interface{}) {
 		if stdout == nil {
 			return
 		}
 		fmt.Fprintf(stdout, "[pltf] "+format+"\n", args...)
 	}
+
+	var session *daggerx.Session
+	var imageCache *dagger.CacheVolume
+	needImages := (action == "plan" || action == "apply") && hasImageBuilds(ctx)
+	if needImages {
+		session, err = daggerx.NewSession(clihelper.DaggerLogOutput(stderr))
+		if err != nil {
+			return err
+		}
+		defer session.Close()
+		imageCache = session.Client.CacheVolume("pltf-image-cache")
+		log("building images (push=%t)", action == "apply")
+		if err := autoImageBuildWithSession(session, file, ctx.env, action == "apply", nil, imageCache); err != nil {
+			return err
+		}
+	}
+	tfRunner, err := terraform.NewRunner(ctx.outDir, stdout, stderr)
+	if err != nil {
+		return err
+	}
 	log("using workspace %s at %s", ctx.env, ctx.outDir)
 
 	// Optional security scan happens before init/plan to fail fast.
 
-	var scanSum *tfsecSummary
+	var scanSum *clihelper.TfsecSummary
 	if action == "plan" && opts.scan {
 		var err error
-		scanSum, err = runTfsecScan(ctx.outDir)
+		scanSum, err = clihelper.RunTfsecScan(ctx.outDir)
 		if err != nil {
 			return fmt.Errorf("tfsec scan failed: %w", err)
 		}
@@ -407,11 +457,11 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	log("running %s init", engine)
-	if err := runTerraformInitWithRetryDagger(tfRunner); err != nil {
+	if err := runTerraformInitWithRetry(tfRunner); err != nil {
 		return fmt.Errorf("%s init failed: %w", engine, err)
 	}
 	log("ensuring workspace %s", ctx.env)
-	if err := selectOrCreateWorkspaceDagger(tfRunner, ctx.env); err != nil {
+	if err := selectOrCreateWorkspace(tfRunner, ctx.env); err != nil {
 		return err
 	}
 
@@ -421,17 +471,12 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	var runErr error
-	var planSum *planSummary
+	var planSum *clihelper.PlanSummary
 	runStatus := "succeeded"
 	var planResult planExecutionResult
 	var planJSONPath string
-	var costSum *costSummary
+	var costSum *clihelper.CostSummary
 	if action == "plan" || action == "apply" || action == "destroy" {
-		log("building images (push=%t)", action == "apply")
-		pushImages := action == "apply"
-		if err := autoImageBuildWithSession(session, file, ctx.env, pushImages, nil, imageCache); err != nil {
-			return err
-		}
 		var errPlan error
 		log("running %s plan", engine)
 		planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, common)
@@ -485,42 +530,42 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	switch action {
 	case "apply":
 		log("running %s apply", engine)
-		args := []string{tfRunner.engineCmd(), "apply"}
+		args := []string{"apply"}
 		if tfvarsArg != "" {
 			args = append(args, "-var-file="+tfvarsArg)
 		}
-		if _, _, err := tfRunner.exec(common(args), true); err != nil {
+		if _, _, err := tfRunner.Exec(common(args)); err != nil {
 			runErr = fmtTfError(engine, "apply", err)
 		}
 	case "destroy":
 		log("running %s destroy", engine)
-		args := []string{tfRunner.engineCmd(), "destroy"}
+		args := []string{"destroy"}
 		if tfvarsArg != "" {
 			args = append(args, "-var-file="+tfvarsArg)
 		}
-		if _, _, err := tfRunner.exec(common(args), true); err != nil {
+		if _, _, err := tfRunner.Exec(common(args)); err != nil {
 			runErr = fmtTfError(engine, "destroy", err)
 		}
 	case "output":
-		args := []string{tfRunner.engineCmd(), "output"}
+		args := []string{"output"}
 		if opts.jsonOutput {
 			args = append(args, "-json")
 		}
 		if lockID != "" {
 			args = append(args, lockID)
 		}
-		if _, _, err := tfRunner.exec(args, false); err != nil {
+		if _, _, err := tfRunner.Exec(args); err != nil {
 			runErr = fmt.Errorf("%s output failed: %w", engine, err)
 		}
 	case "force-unlock":
-		args := []string{tfRunner.engineCmd(), "force-unlock", "-force", lockID}
-		if _, _, err := tfRunner.exec(args, false); err != nil {
+		args := []string{"force-unlock", "-force", lockID}
+		if _, _, err := tfRunner.Exec(args); err != nil {
 			runErr = fmt.Errorf("%s force-unlock failed: %w", engine, err)
 		}
 	}
 
 	if action == "plan" || action == "apply" {
-		status := tfRunSummary{
+		status := clihelper.RunSummary{
 			Action: action,
 			Spec:   file,
 			Env:    env,
@@ -536,9 +581,9 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 			status.Status = runStatus
 		}
 		if status.Plan != nil {
-			status.AI = maybeAICritique(status)
+			status.AI = clihelper.MaybeAICritique(status)
 		}
-		if err := maybeUpsertPRComment(status); err != nil {
+		if err := clihelper.MaybeUpsertPRComment(status); err != nil {
 			fmt.Fprintf(stderr, "warn: failed to update PR comment: %v\n", err)
 		}
 	}
@@ -546,115 +591,18 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	return runErr
 }
 
-type tfsecFinding struct {
-	Severity    string
-	Rule        string
-	Location    string
-	Description string
-	Impact      string
-	Resolution  string
-	Links       []string
-	Snippet     string
-}
-
-type tfsecSummary struct {
-	ExitCode int
-	Failed   int
-	Low      int
-	Medium   int
-	High     int
-	Critical int
-	Findings []tfsecFinding
-	Report   string
-	Timings  struct {
-		DiskIO     time.Duration
-		Parsing    time.Duration
-		Adaptation time.Duration
-		Checks     time.Duration
-		Total      time.Duration
-	}
-	Counts struct {
-		ModulesDownloaded int
-		ModulesProcessed  int
-		BlocksProcessed   int
-		FilesRead         int
-		Passed            int
-		Ignored           int
-	}
-}
-
-type costSummary struct {
-	TotalMonthly string
-	Breakdown    string
-	Raw          string
-}
-
-func runTfsecScan(dir string) (*tfsecSummary, error) {
-	root := filepath.Clean(dir)
-	scnr := tfscanner.New()
-	results, metrics, err := scnr.ScanFSWithMetrics(context.Background(), extrafs.OSDir(root), ".")
-	if err != nil {
-		return nil, err
-	}
-	exit := tfsecExitCode(metrics)
-	summary := &tfsecSummary{
-		ExitCode: exit,
-		Failed:   metrics.Executor.Counts.Failed,
-		Low:      metrics.Executor.Counts.Low,
-		Medium:   metrics.Executor.Counts.Medium,
-		High:     metrics.Executor.Counts.High,
-		Critical: metrics.Executor.Counts.Critical,
-	}
-	summary.Counts.ModulesDownloaded = metrics.Parser.Counts.ModuleDownloads
-	summary.Counts.ModulesProcessed = metrics.Parser.Counts.Modules
-	summary.Counts.BlocksProcessed = metrics.Parser.Counts.Blocks
-	summary.Counts.FilesRead = metrics.Parser.Counts.Files
-	summary.Counts.Passed = metrics.Executor.Counts.Passed
-	summary.Counts.Ignored = metrics.Executor.Counts.Ignored
-	summary.Timings.DiskIO = metrics.Parser.Timings.DiskIODuration
-	summary.Timings.Parsing = metrics.Parser.Timings.ParseDuration
-	summary.Timings.Adaptation = metrics.Executor.Timings.Adaptation
-	summary.Timings.Checks = metrics.Executor.Timings.RunningChecks
-	summary.Timings.Total = metrics.Timings.Total
-	for _, res := range results {
-		status := strings.ToLower(fmt.Sprint(res.Status()))
-		if !strings.Contains(status, "fail") {
-			continue
-		}
-		f := tfsecFinding{
-			Severity:    string(res.Severity()),
-			Rule:        res.Rule().LongID(),
-			Location:    res.Range().String(),
-			Description: res.Description(),
-			Impact:      res.Rule().Impact,
-			Resolution:  res.Rule().Resolution,
-			Links:       res.Rule().Links,
-			Snippet:     renderSnippet(root, res.Range()),
-		}
-		summary.Findings = append(summary.Findings, f)
-	}
-	summary.Report = formatTfsecReport(summary)
-
-	if exit != 0 {
-		fmt.Fprintf(os.Stderr, "warn: tfsec reported issues (exit=%d, failed=%d low=%d medium=%d high=%d critical=%d)\n",
-			exit, summary.Failed, summary.Low, summary.Medium, summary.High, summary.Critical)
-	}
-	fmt.Fprint(os.Stderr, summary.Report)
-	return summary, nil
-}
-
 type planExecutionResult struct {
-	summary        *planSummary
+	summary        *clihelper.PlanSummary
 	planArgs       []string
 	exitCode       int
 	planPathOnDisk string
 }
 
-func runTerraformPlan(runner *tfDaggerRunner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, common func([]string) []string) (planExecutionResult, error) {
+func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, common func([]string) []string) (planExecutionResult, error) {
 	var res planExecutionResult
-	args := []string{runner.engineCmd(), "plan"}
+	args := []string{"plan"}
 	if tfvarsArg != "" {
-		args = append(args, "-var-file="+tfvarsArg)
+		args = append(args, "-var-file="+filepath.Join(ctx.outDir, tfvarsArg))
 	}
 	if opts.detailedExit {
 		args = append(args, "-detailed-exitcode")
@@ -676,9 +624,9 @@ func runTerraformPlan(runner *tfDaggerRunner, ctx stackContext, tfvarsArg string
 	}
 	args = append(args, "-out="+planArg)
 	planArgs := append([]string(nil), common(args)...)
-	_, planExit, err := runner.exec(planArgs, true)
+	_, planExit, err := runner.Exec(planArgs)
 	if err != nil && !(opts.detailedExit && planExit == 2) {
-		return res, fmt.Errorf("%s plan failed: %w", runner.engineCmd(), err)
+		return res, fmt.Errorf("%s plan failed: %w", runner.EngineCmd(), err)
 	}
 	res.exitCode = planExit
 	planPathOnDisk := planPath
@@ -690,16 +638,20 @@ func runTerraformPlan(runner *tfDaggerRunner, ctx stackContext, tfvarsArg string
 	}
 	res.planPathOnDisk = planPathOnDisk
 	planJSONPath := ""
+	var planJSONOutput string
 	if tempPlan || strings.TrimSpace(planPathOnDisk) != "" {
 		planJSONPath = strings.TrimSuffix(planPathOnDisk, filepath.Ext(planPathOnDisk)) + ".json"
-		out, _, err := runner.exec([]string{runner.engineCmd(), "show", "-json", planArg}, false)
+		out, _, err := runner.Exec([]string{"show", "-json", planArg})
 		if err != nil {
-			fmt.Fprintf(stderr, "warn: %s show -json failed: %v\n", runner.engineCmd(), err)
-		} else if err := os.WriteFile(planJSONPath, []byte(out), 0o644); err != nil {
-			fmt.Fprintf(stderr, "warn: write plan json failed: %v\n", err)
+			fmt.Fprintf(stderr, "warn: %s show -json failed: %v\n", runner.EngineCmd(), err)
+		} else {
+			planJSONOutput = out
+			if err := os.WriteFile(planJSONPath, []byte(out), 0o644); err != nil {
+				fmt.Fprintf(stderr, "warn: write plan json failed: %v\n", err)
+			}
 		}
 	}
-	if sum, err := collectPlanSummaryWithRunner(runner, ctx.outDir, planArg, planPathOnDisk, stderr); err == nil {
+	if sum, err := clihelper.CollectPlanSummaryWithRunner(ctx.outDir, planPathOnDisk, planJSONOutput, stderr); err == nil {
 		res.summary = sum
 		res.summary.RawPlanArgs = planArgs
 		if planJSONPath != "" {
@@ -710,6 +662,30 @@ func runTerraformPlan(runner *tfDaggerRunner, ctx stackContext, tfvarsArg string
 	}
 	res.planArgs = planArgs
 	return res, nil
+}
+
+func runTerraformInitWithRetry(r *terraform.Runner) error {
+	return clihelper.RunWithRetry(3, time.Second, func() error {
+		_, _, err := r.Exec([]string{"init"})
+		if err != nil && !clihelper.IsTransientInitError(err) {
+			return err
+		}
+		return err
+	})
+}
+
+func selectOrCreateWorkspace(r *terraform.Runner, name string) error {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return fmt.Errorf("workspace name is empty")
+	}
+	if _, _, err := r.Exec([]string{"workspace", "select", name}); err == nil {
+		return nil
+	}
+	if _, _, err := r.Exec([]string{"workspace", "new", name}); err != nil {
+		return fmt.Errorf("%s workspace create failed: %w", r.EngineCmd(), err)
+	}
+	return nil
 }
 
 func renderSnippet(root string, rng defsecTypes.Range) string {
@@ -754,83 +730,15 @@ func tfsecExitCode(metrics tfscanner.Metrics) int {
 	return 1
 }
 
-func printTfsecInsights(summary *tfsecSummary) {
-	fmt.Fprint(os.Stderr, formatTfsecInsights(summary))
-}
-
-func formatDurationMs(d time.Duration) string {
-	ms := float64(d) / float64(time.Millisecond)
-	return fmt.Sprintf("%.6fms", ms)
-}
-
-func formatTfsecInsights(summary *tfsecSummary) string {
-	var b strings.Builder
-	b.WriteString("  timings\n")
-	b.WriteString("  ──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "  disk i/o             %s\n", formatDurationMs(summary.Timings.DiskIO))
-	fmt.Fprintf(&b, "  parsing              %s\n", formatDurationMs(summary.Timings.Parsing))
-	fmt.Fprintf(&b, "  adaptation           %s\n", formatDurationMs(summary.Timings.Adaptation))
-	fmt.Fprintf(&b, "  checks               %s\n", formatDurationMs(summary.Timings.Checks))
-	fmt.Fprintf(&b, "  total                %s\n\n", formatDurationMs(summary.Timings.Total))
-
-	b.WriteString("  counts\n")
-	b.WriteString("  ──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "  modules downloaded   %d\n", summary.Counts.ModulesDownloaded)
-	fmt.Fprintf(&b, "  modules processed    %d\n", summary.Counts.ModulesProcessed)
-	fmt.Fprintf(&b, "  blocks processed     %d\n", summary.Counts.BlocksProcessed)
-	fmt.Fprintf(&b, "  files read           %d\n\n", summary.Counts.FilesRead)
-
-	b.WriteString("  results\n")
-	b.WriteString("  ──────────────────────────────────────────\n")
-	fmt.Fprintf(&b, "  passed               %d\n", summary.Counts.Passed)
-	fmt.Fprintf(&b, "  ignored              %d\n", summary.Counts.Ignored)
-	fmt.Fprintf(&b, "  critical             %d\n", summary.Critical)
-	fmt.Fprintf(&b, "  high                 %d\n", summary.High)
-	fmt.Fprintf(&b, "  medium               %d\n", summary.Medium)
-	fmt.Fprintf(&b, "  low                  %d\n\n", summary.Low)
-
-	totalProblems := summary.Failed
-	fmt.Fprintf(&b, "  %d passed, %d ignored, %d potential problem(s) detected.\n", summary.Counts.Passed, summary.Counts.Ignored, totalProblems)
-	return b.String()
-}
-
-func formatTfsecReport(summary *tfsecSummary) string {
-	var b strings.Builder
-	for i, f := range summary.Findings {
-		fmt.Fprintf(&b, "Result #%d %s %s\n", i+1, strings.ToUpper(f.Severity), f.Description)
-		b.WriteString("────────────────────────────────────────────────────────────────────────────────\n")
-		if f.Location != "" {
-			fmt.Fprintf(&b, "  %s\n", f.Location)
-			b.WriteString("────────────────────────────────────────────────────────────────────────────────\n")
-		}
-		if f.Snippet != "" {
-			b.WriteString(f.Snippet)
-			if !strings.HasSuffix(f.Snippet, "\n") {
-				b.WriteString("\n")
-			}
-		}
-		if f.Rule != "" {
-			fmt.Fprintf(&b, "          ID %s\n", f.Rule)
-		}
-		if f.Impact != "" {
-			fmt.Fprintf(&b, "      Impact %s\n", f.Impact)
-		}
-		if f.Resolution != "" {
-			fmt.Fprintf(&b, "  Resolution %s\n", f.Resolution)
-		}
-		if len(f.Links) > 0 {
-			b.WriteString("\n  More Information\n")
-			for _, link := range f.Links {
-				fmt.Fprintf(&b, "  - %s\n", link)
-			}
-		}
-		b.WriteString("────────────────────────────────────────────────────────────────────────────────\n\n")
+func printTfsecInsights(summary *clihelper.TfsecSummary) {
+	report := summary.Report
+	if strings.TrimSpace(report) == "" {
+		report = clihelper.FormatTfsecReport(summary)
 	}
-	b.WriteString(formatTfsecInsights(summary))
-	return b.String()
+	fmt.Fprint(os.Stderr, report)
 }
 
-func runInfracost(planJSONPath, workdir string) (*costSummary, error) {
+func runInfracost(planJSONPath, workdir string) (*clihelper.CostSummary, error) {
 	if _, err := exec.LookPath("infracost"); err != nil {
 		return nil, fmt.Errorf("infracost binary not found in PATH")
 	}
@@ -838,15 +746,15 @@ func runInfracost(planJSONPath, workdir string) (*costSummary, error) {
 		return nil, fmt.Errorf("plan json path is empty")
 	}
 	args := []string{"breakdown", "--path", planJSONPath, "--format", "json"}
-	out, err := runCmdOutput(workdir, "infracost", args...)
+	out, err := clihelper.RunCmdOutput(workdir, "infracost", args...)
 	if err != nil {
 		return nil, err
 	}
-	sum := &costSummary{Raw: out}
+	sum := &clihelper.CostSummary{Raw: out}
 	if t := extractInfracostTotal(out); t != "" {
 		sum.TotalMonthly = t
 	}
-	if txt, err := runCmdOutput(workdir, "infracost", "breakdown", "--path", planJSONPath, "--format", "table"); err == nil {
+	if txt, err := clihelper.RunCmdOutput(workdir, "infracost", "breakdown", "--path", planJSONPath, "--format", "table"); err == nil {
 		sum.Breakdown = txt
 	}
 	return sum, nil
