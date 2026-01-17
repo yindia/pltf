@@ -118,12 +118,44 @@ go install ./...
 - Commands like `plan` can still include optional helpers such as `--scan` (tfsec), `--cost` (Infracost), and `--rover`. `apply`/`destroy` always append `-auto-approve` so CI/CD can run unattended.
 - Every command reuses the generated workspace in `.pltf/<spec-name>/<env>/workspace`, so plan/apply operate on the same graph and Terraform state.
 
-## Specs
+## Specs & Concepts
 
-- **Environment** specs describe the cloud account/provider/backends as well as the core modules, variables, stacks, and secrets that apply to *every* instance of that environment (dev, prod, etc.). Think of an environment as the account-level declaration of infrastructure shape plus shared wiring for all workloads.
-- **Service** specs live on top of an Environment reference (`metadata.ref`) and capture the workload‑specific Terraform (modules, metadata, secrets, images, extra variables) that runs within that environment. Think of the environment as the base infrastructure (VPC, clusters, shared backends) and the service as the workload that deploys on top of it – a service can be deployed into any of the Environment’s entries, and `metadata.envRef` describes how this service maps to one or more env names.
-- **Stack** specs declare reusable bundles of modules, inputs, and outputs with documented provider requirements; environments include stacks via `metadata.stacks`, and stacks merge before generation so downstream specs cannot override them.
-- Use `variables` anywhere (stack, environment, service) to provide values to your modules. Place sensitive values inside `secrets` so pltf can inject them into generated Terraform without storing the raw secrets in Git. Service-level secrets/variables apply only to that workload, while environment scopes are shared across all services built on top of that environment.
+- **Environment spec** (e.g., `env.yaml`) declares the cloud provider, backend, base modules, variables, secrets, and optional stacks/images that are shared by every deployment of that account-level infrastructure (dev, prod, etc.). This is your base stack: VPCs, clusters, backend S3 buckets, etc.
+- **Service spec** references an Environment via `metadata.ref` and contains the workload-specific Terraform modules, metadata, secrets, images, and variable overrides that run on top of that environment. Use the service to represent applications that reuse the base infra but introduce their own modules or overrides; `metadata.envRef` maps the service into one or more of the environment entries so you can deploy it to prod, staging, or both.
+- **Stack spec** is a reusable bundle of modules, inputs, and outputs with documented provider requirements. Environments include stacks through `metadata.stacks`, and stacks are merged before generation so downstream specs cannot override them unexpectedly.
+- **Modules** can be either the built-in embedded modules or your own custom Terraform modules. Drop a `module.yaml` next to a custom module, refer to it in your spec, and pltf will treat it just like an embedded module during generation.
+- **Variables & secrets** are first-class at every level. Place shared values in the environment or stack, and keep workload-specific overrides/secrets inside the service spec. Secrets never land in Git: pltf injects them during generation using the `secrets` block.
+
+### Service example
+
+```yaml
+apiVersion: platform.io/v1
+kind: Service
+metadata:
+  name: billing
+  ref: ../env.yaml
+  envRef:
+    dev: {}
+    prod:
+      variables:
+        replica_count: 3
+modules:
+  - id: api
+    type: aws_service
+    inputs:
+      env: var.env_name
+secrets:
+  db_password:
+    type: file
+    path: ~/.secrets/db-prod.txt
+images:
+  - name: billing-api
+    context: ./services/billing
+    tags:
+      - ghcr.io/example/billing:${env_name}
+```
+
+This service reuses the base `env.yaml`, injects service-specific modules/secrets, builds its own image, and opts into both `dev` and `prod` (with extra prod-only variables).
 
 ## Image & Terraform Caching
 
