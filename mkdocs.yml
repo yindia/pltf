@@ -83,7 +83,6 @@ nav:
         - Validation: features/validation.md
         - Backends: features/backends.md
         - Custom Modules: features/custom-modules.md
-        - Bring Your Own Terraform: features/custom-terraform.md
         - Enterprise Migration: features/migration-enterprise.md
         - Placeholders & Wiring: features/placeholders.md
         - Secrets: features/secrets.md
