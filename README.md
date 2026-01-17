@@ -10,19 +10,22 @@ pltf (Platform Tools) turns your high-level infrastructure intent into ready-to-
 - **Security and cost transparency** – builtin tfsec reporting and optional Infracost summaries show up alongside the Terraform logs so you don’t miss risky findings before you deploy.
 - **Versioned, portable tooling** – the CLI stays Go-native, works alongside your existing git/terraform installs, and documents workflows for every team member.
 
-## Key concepts
+## Specs & Concepts
 
-- **Environment** (e.g., `env.yaml`) describes cloud providers, backend/state configuration, account/region entries, and the modules/variables that belong to a physical deployment (dev, prod, etc.). Use `variables` for values that vary per environment and `secrets` to reference vaults or secret files.
-- **Service** references an Environment spec and wires additional modules or metadata for a specific workload. Use `metadata.envRef` to map service-specific overrides or secrets to the environments defined upstream.
-- **Stack** is a reusable collection of modules with predefined inputs/outputs, labels, and provider requirements. Environments can include one or more stacks via `metadata.stacks`, which merge before generation.
-- **Variables/secrets** follow the spectype structure: `variables` is a simple map of key/value pairs available to modules, while `secrets` reference secret providers, file paths, or template-based values that get injected into Terraform without checking them into Git.
+- **Environment spec** (e.g., `env.yaml`) declares the cloud provider, backend, account/region entries, and the modules/variables that define the base infrastructure (VPCs, clusters, backend buckets) shared across dev, prod, and other deployments. Put shared inputs in `variables` and sensitive data in `secrets` so the base stack stays consistent without leaking secrets into Git.
+- **Service spec** references an Environment via `metadata.ref` and adds workload-specific Terraform (modules, metadata, secrets, images, overrides) that run within that environment. `metadata.envRef` maps a service into any of the environment entries so a single service can target multiple environments while tuning behavior per env.
+- **Stack spec** bundles reusable modules, inputs, and outputs with documented provider requirements. Environments include stacks with `metadata.stacks`, and stacks merge before generation so downstream specs can’t silently override their contracts.
+- **Modules** can be the embedded modules shipped with pltf or your own custom Terraform modules. Place a `module.yaml` next to a custom module, refer to it in your spec, and pltf treats it the same as an embedded module during generation.
+- **Variables & secrets** are first-class at every level. Shared values live in stacks/environments, while service-specific overrides and secrets stay in the service spec. Secrets never land in Git: pltf injects them when building the workspace.
+
+Use services anytime you need to deploy workload-specific Terraform on top of the base environment (see the billing service in the Quickstart example). The service shares the common infra, builds its own images, and applies per-environment tweaks while reusing the generated workspace.
 
 ## Table of Contents
 
 - [Install](#install)
 - [Quickstart](#quickstart)
 - [Terraform Workflows](#terraform-workflows)
-- [Specs](#specs)
+- [Specs & Concepts](#specs--concepts)
 - [Image & Terraform Caching](#image--terraform-caching)
 - [Commands](#commands)
 - [Behavior & Rules](#behavior--rules)
@@ -38,7 +41,7 @@ go install ./...
 
 ## Quickstart
 
-1. **Define reusable stacks** (`stack.yaml`):
+1. **Define reusable stacks** (`stack-cluster.yaml`):
 
    ```yaml
    apiVersion: platform.io/v1
@@ -46,70 +49,116 @@ go install ./...
    metadata:
      name: k8s-cluster
      labels:
-       workload: infra
+       tier: infra
+   providers:
+     aws: true
    modules:
-     - id: base
-       type: aws_base
+     - id: network
+       type: aws_network
+       inputs:
+         cidr_block: 10.0.0.0/16
      - id: eks
        type: aws_eks
        inputs:
          cluster_name: var.cluster_name
+         vpc_id: module.network.vpc_id
+     - id: observability
+       type: aws_logging
+       inputs:
+         log_bucket: var.log_bucket
    ```
 
-2. **Declare the base environment** (`env.yaml`):
+2. **Declare the base environment** (`env.yaml`) that references the stack, backend, variables, secrets, and multi-arch images:
 
    ```yaml
    apiVersion: platform.io/v1
    kind: Environment
    metadata:
-     name: example-aws
-     org: pltf
+     name: enterprise-aws
+     org: acme
      provider: aws
      stacks:
-       - ./stack.yaml
+       - ./stack-cluster.yaml
    backend:
      type: s3
-     bucket: platform-tfstate
-     region: us-east-1
+     bucket: acme-tfstate
+     region: us-west-2
    environments:
      dev:
        account: "111111111111"
+       region: us-west-2
+       variables:
+         log_bucket: dev-logs
+     prod:
+       account: "222222222222"
        region: us-east-1
        variables:
-         base_domain: example.com
+         log_bucket: prod-logs
    variables:
-     cluster_name: example-dev
-   modules:
-     - id: dns
-       type: aws_dns
-       inputs:
-         domain: var.base_domain
-   images:
-     - name: platform-tools
-       context: .
-       dockerfile: Dockerfile
-       tags:
-         - ghcr.io/example/example-aws:${env_name}
-       platforms:
-         - linux/amd64
-         - linux/arm64
-   secrets:
-     s3_creds:
-       type: file
-       path: ~/.aws/credentials
+     cluster_name: enterprise-cluster
+  modules:
+    - id: dns
+      type: aws_dns
+      inputs:
+        domain: var.base_domain
+  images:
+    - name: platform-tools
+      context: .
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      tags:
+        - ghcr.io/acme/platform-tools:${env_name}
+  secrets:
+    aws:
+      type: file
+      path: ~/.aws/credentials
    ```
 
-3. **Preview, validate, and run Terraform**:
+   You can point to your own Terraform modules by dropping a `module.yaml` next to them and referencing them alongside the embedded modules in your spec.
+
+3. **Add a service** (`service.yaml`) that plugs into the environment and runs workload-specific modules/secrets across multiple envs:
+
+   ```yaml
+   apiVersion: platform.io/v1
+   kind: Service
+   metadata:
+     name: billing
+     ref: ./env.yaml
+     envRef:
+       dev: {}
+       prod:
+         variables:
+           replica_count: 3
+   modules:
+  - id: api
+    type: helm_chart
+    inputs:
+      chart: ./services/billing/chart
+      repo: ./services/billing
+      values:
+        cluster: module.eks.cluster_name
+        replicas: var.replica_count
+   secrets:
+     db_password:
+       type: file
+       path: ~/.vault/db-prod.txt
+   images:
+     - name: billing-api
+       context: ./services/billing
+       tags:
+         - ghcr.io/acme/billing:${env_name}
+   ```
+
+4. **Preview, validate, and run Terraform**:
 
    ```bash
    ./pltf preview -f env.yaml -e dev
-   ./pltf validate -f env.yaml -e dev --scan
-   ./pltf generate -f env.yaml -e dev
-   ./pltf terraform plan -f env.yaml -e dev --scan --cost
-   ./pltf terraform apply -f env.yaml -e dev
+   ./pltf validate -f env.yaml -e prod --scan
+   ./pltf generate -f env.yaml -e prod
+   ./pltf terraform plan -f env.yaml -e prod --scan --cost
+   ./pltf terraform apply -f env.yaml -e prod
    ```
-
-4. **Add services** (`service.yaml`) that reference the environment and define workloads without duplicating account-level definitions.
 
 ## Terraform Workflows
 
@@ -117,45 +166,6 @@ go install ./...
 - `pltf terraform plan` and `apply` build the declared Docker images via Dagger, reusing the `pltf-image-cache`. `apply` pushes the selected tags while `plan` stops after building locally. `destroy` skips image builds entirely.
 - Commands like `plan` can still include optional helpers such as `--scan` (tfsec), `--cost` (Infracost), and `--rover`. `apply`/`destroy` always append `-auto-approve` so CI/CD can run unattended.
 - Every command reuses the generated workspace in `.pltf/<spec-name>/<env>/workspace`, so plan/apply operate on the same graph and Terraform state.
-
-## Specs & Concepts
-
-- **Environment spec** (e.g., `env.yaml`) declares the cloud provider, backend, base modules, variables, secrets, and optional stacks/images that are shared by every deployment of that account-level infrastructure (dev, prod, etc.). This is your base stack: VPCs, clusters, backend S3 buckets, etc.
-- **Service spec** references an Environment via `metadata.ref` and contains the workload-specific Terraform modules, metadata, secrets, images, and variable overrides that run on top of that environment. Use the service to represent applications that reuse the base infra but introduce their own modules or overrides; `metadata.envRef` maps the service into one or more of the environment entries so you can deploy it to prod, staging, or both.
-- **Stack spec** is a reusable bundle of modules, inputs, and outputs with documented provider requirements. Environments include stacks through `metadata.stacks`, and stacks are merged before generation so downstream specs cannot override them unexpectedly.
-- **Modules** can be either the built-in embedded modules or your own custom Terraform modules. Drop a `module.yaml` next to a custom module, refer to it in your spec, and pltf will treat it just like an embedded module during generation.
-- **Variables & secrets** are first-class at every level. Place shared values in the environment or stack, and keep workload-specific overrides/secrets inside the service spec. Secrets never land in Git: pltf injects them during generation using the `secrets` block.
-
-### Service example
-
-```yaml
-apiVersion: platform.io/v1
-kind: Service
-metadata:
-  name: billing
-  ref: ../env.yaml
-  envRef:
-    dev: {}
-    prod:
-      variables:
-        replica_count: 3
-modules:
-  - id: api
-    type: aws_service
-    inputs:
-      env: var.env_name
-secrets:
-  db_password:
-    type: file
-    path: ~/.secrets/db-prod.txt
-images:
-  - name: billing-api
-    context: ./services/billing
-    tags:
-      - ghcr.io/example/billing:${env_name}
-```
-
-This service reuses the base `env.yaml`, injects service-specific modules/secrets, builds its own image, and opts into both `dev` and `prod` (with extra prod-only variables).
 
 ## Image & Terraform Caching
 
