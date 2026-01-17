@@ -8,6 +8,7 @@ pltf (Platform Tools) transforms spec-driven infrastructure intent into ready-to
 - **Consistent Terraform runs** – `pltf terraform …` commands render the workspace, call the host `terraform` binary directly, stream tfsec/cost/rover output during execution, and auto-approve apply/destroy steps for deterministic CI/CD.
 - **Image-aware operations** – Docker images declared in specs build through Dagger once per plan/apply with shared caches; apply pushes the tags while plan stops locally.
 - **Security, cost, and drift guardrails** – builtin tfsec summaries (with problem lists) and optional Infracost reports pair with Terraform logs so risky changes are visible before deployment.
+- **Cloud-ready across providers** – AWS and GCP modules (plus Helm/Kubernetes modules) ship with pltf while `module.yaml` lets you register custom providers and workspaces.
 - **Composable toolchains** – mix the built-in modules with your own by placing `module.yaml` beside custom Terraform code; pltf treats every module the same when generating workspaces.
 
 ## Table of Contents
@@ -176,7 +177,7 @@ Environments describe the shared infrastructure (backends, stacks, provider mapp
 
 Services reference an environment via `metadata.ref` and declare workload-specific modules, metadata, secrets, and images. Each entry under `metadata.envRef` can target a different environment—services live in as many environments as the spec lists, with optional overrides per env. The diagram above shows how a single service spec can plug into both production and staging envs via their YAML definitions.
 
-Stacks bundle reusable modules with documented inputs, outputs, and provider requirements. Drop a `module.yaml` next to custom Terraform code, reference it, and pltf treats it like an embedded module during generation—this lets you bring your own modules in addition to the built-in catalog.
+Stacks bundle reusable modules with documented inputs, outputs, and provider requirements. Drop a `module.yaml` next to custom Terraform code, reference it, and pltf treats it like an embedded module during generation—this lets you bring your own modules in addition to the built-in catalog. If a module targets a different provider, declare the provider requirements inside `module.yaml` and register the provider in the consuming environment so Terraform knows which provider block to instantiate.
 
 Variables and secrets stay first-class at every level: stacks/environments hold shared runtime inputs while services layer on overrides and secrets. Secrets never land in Git—pltf injects them while materializing the workspace.
 
@@ -222,10 +223,10 @@ Use services whenever you need workload-specific Terraform on top of a base envi
 
 ## Provider Support
 
-| Provider | Status        |
-|----------|---------------|
-| AWS      | ✅ Supported   |
-| GCP      | 🔜 Coming Soon |
+| Provider | Status       |
+|----------|--------------|
+| AWS      | ✅ Supported  |
+| GCP      | ✅ Supported  |
 | Azure    | ❌ Not Supported |
 | Oracle   | ❌ Not Supported |
 

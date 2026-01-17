@@ -9,7 +9,7 @@ import (
 	"pltf/pkg/git"
 )
 
-const prCommentMarker = "<!-- pltf:terraform-run -->"
+const prCommentMarkerPrefix = "<!-- pltf:terraform-run"
 
 type RunSummary struct {
 	Action string
@@ -25,7 +25,8 @@ type RunSummary struct {
 }
 
 func MaybeUpsertPRComment(run RunSummary) error {
-	body := buildPRCommentBody(run)
+	marker := commentMarker(run)
+	body := buildPRCommentBody(run, marker)
 	commenter, err := git.NewCommenter("")
 	if err != nil {
 		if errors.Is(err, git.ErrNoProvider) {
@@ -39,7 +40,7 @@ func MaybeUpsertPRComment(run RunSummary) error {
 		return err
 	}
 
-	if err := commenter.UpsertPRComment(git.PRComment{Body: body, Marker: prCommentMarker}); err != nil {
+	if err := commenter.UpsertPRComment(git.PRComment{Body: body, Marker: marker}); err != nil {
 		if errors.Is(err, git.ErrNoPRNumber) {
 			return nil
 		}
@@ -48,7 +49,7 @@ func MaybeUpsertPRComment(run RunSummary) error {
 	return nil
 }
 
-func buildPRCommentBody(run RunSummary) string {
+func buildPRCommentBody(run RunSummary, marker string) string {
 	statusEmoji := "✅"
 	statusText := run.Status
 	if strings.ToLower(run.Status) != "succeeded" {
@@ -59,7 +60,7 @@ func buildPRCommentBody(run RunSummary) string {
 	}
 
 	var sb strings.Builder
-	sb.WriteString(prCommentMarker)
+	sb.WriteString(marker)
 	sb.WriteString("\n\n")
 	sb.WriteString("### Terrateam Plan Output\n\n")
 	sb.WriteString(fmt.Sprintf("**%s** %s\n\n", run.Spec, statusEmoji+" "+titleCase(statusText)))
@@ -174,4 +175,25 @@ func titleCase(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+func commentMarker(run RunSummary) string {
+	key := sanitizeCommentKey(run.Spec)
+	if specEnv := strings.TrimSpace(run.Env); specEnv != "" {
+		key = fmt.Sprintf("%s-%s", key, sanitizeCommentKey(specEnv))
+	}
+	return fmt.Sprintf("%s-%s -->", prCommentMarkerPrefix, key)
+}
+
+func sanitizeCommentKey(value string) string {
+	value = strings.TrimSpace(value)
+	value = strings.TrimPrefix(value, "./")
+	value = strings.ReplaceAll(value, "/", "-")
+	value = strings.ReplaceAll(value, " ", "-")
+	value = strings.ReplaceAll(value, "_", "-")
+	value = strings.ReplaceAll(value, ".", "-")
+	if value == "" {
+		return "default"
+	}
+	return value
 }
