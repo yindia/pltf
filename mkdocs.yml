@@ -52,8 +52,9 @@ nav:
           - Environment: concepts/environment.md
           - Stack: concepts/stack.md
           - Layer: concepts/layer.md
-          - Module: concepts/module.md
+      - Module: concepts/module.md
           - Specs Guide: specs.md
+          - Custom Modules: features/custom-modules.md
           - Modules & Wiring: modules.md
       - AWS: getting-started/aws.md
   - Terraform Workflows: workflows.md

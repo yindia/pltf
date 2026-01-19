@@ -232,7 +232,7 @@ func ResolveModulesRootFromRef(ref string) (string, error) {
 }
 
 func SelectModuleMeta(module config.Module, embeddedMetas, customMetas map[string]*config.ModuleMetadata, embeddedRoot string) (*config.ModuleMetadata, error) {
-	if strings.EqualFold(module.Source, "custom") {
+	if config.IsCustomRootSource(module.Source) {
 		if len(customMetas) == 0 {
 			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but no custom modules root provided", module.ID, module.Type)
 		}

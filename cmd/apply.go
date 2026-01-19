@@ -111,18 +111,18 @@ standard output layout unless overridden.`,
 	Example: `  pltf terraform apply -f env.yaml -e prod
   pltf terraform apply -f service.yaml -e dev -m ./modules -o ./.pltf/service/payments/dev --target=module.eks`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runTfWithAction("apply", applyFile, applyEnv, applyModulesDir, applyOut, applyVars, "", tfExecOpts{
-			targets:      applyTargets,
-			parallelism:  applyParallel,
-			lock:         applyLock,
-			lockTimeout:  applyLockTime,
-			noColor:      applyNoColor,
-			input:        applyInput,
-			refresh:      &applyRefresh,
-			jsonOutput:   false,
-			planFile:     "",
-			detailedExit: false,
-			autoApprove:  applyAutoApprove,
+		return runTfWithAction("apply", applyFile, applyEnv, applyModulesDir, applyOut, applyVars, "", clihelper.TerraformExecOptions{
+			Targets:      applyTargets,
+			Parallelism:  applyParallel,
+			Lock:         applyLock,
+			LockTimeout:  applyLockTime,
+			NoColor:      applyNoColor,
+			Input:        applyInput,
+			Refresh:      &applyRefresh,
+			JSONOutput:   false,
+			PlanFile:     "",
+			DetailedExit: false,
+			AutoApprove:  applyAutoApprove,
 		})
 	},
 }
@@ -151,15 +151,15 @@ refresh behavior, and color.`,
 	Example: `  pltf terraform destroy -f env.yaml -e prod
   pltf terraform destroy -f service.yaml -e dev --target=module.app-bucket`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runTfWithAction("destroy", destroyFile, destroyEnv, destroyModulesDir, destroyOut, destroyVars, "", tfExecOpts{
-			targets:     destroyTargets,
-			parallelism: destroyParallel,
-			lock:        destroyLock,
-			lockTimeout: destroyLockTime,
-			noColor:     destroyNoColor,
-			input:       destroyInput,
-			refresh:     &destroyRefresh,
-			autoApprove: destroyAutoApprove,
+		return runTfWithAction("destroy", destroyFile, destroyEnv, destroyModulesDir, destroyOut, destroyVars, "", clihelper.TerraformExecOptions{
+			Targets:     destroyTargets,
+			Parallelism: destroyParallel,
+			Lock:        destroyLock,
+			LockTimeout: destroyLockTime,
+			NoColor:     destroyNoColor,
+			Input:       destroyInput,
+			Refresh:     &destroyRefresh,
+			AutoApprove: destroyAutoApprove,
 		})
 	},
 }
@@ -177,19 +177,19 @@ local dry runs with the same generation defaults as apply.`,
   pltf terraform plan -f env.yaml -e prod --scan    # run tfsec against generated TF
   pltf terraform plan -f env.yaml -e prod --cost    # run infracost breakdown (if infracost binary present)`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", tfExecOpts{
-			targets:      planTargets,
-			parallelism:  planParallel,
-			lock:         planLock,
-			lockTimeout:  planLockTime,
-			noColor:      planNoColor,
-			input:        planInput,
-			refresh:      &planRefresh,
-			planFile:     planOutFile,
-			detailedExit: planDetailed,
-			rover:        planRover,
-			scan:         planScan,
-			cost:         planCost,
+		return runTfWithAction("plan", planFile, planEnv, planModulesDir, planOut, planVars, "", clihelper.TerraformExecOptions{
+			Targets:      planTargets,
+			Parallelism:  planParallel,
+			Lock:         planLock,
+			LockTimeout:  planLockTime,
+			NoColor:      planNoColor,
+			Input:        planInput,
+			Refresh:      &planRefresh,
+			PlanFile:     planOutFile,
+			DetailedExit: planDetailed,
+			Rover:        planRover,
+			Scan:         planScan,
+			Cost:         planCost,
 		})
 	},
 }
@@ -202,9 +202,9 @@ var outputCmd = &cobra.Command{
 	Example: `  pltf terraform output -f env.yaml -e prod
   pltf terraform output -f service.yaml -e dev --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runTfWithAction("output", outputFile, outputEnv, outputModulesDir, outputOut, nil, outputVar, tfExecOpts{
-			noColor:    outputNoColor,
-			jsonOutput: outputJSON,
+		return runTfWithAction("output", outputFile, outputEnv, outputModulesDir, outputOut, nil, outputVar, clihelper.TerraformExecOptions{
+			NoColor:    outputNoColor,
+			JSONOutput: outputJSON,
 		})
 	},
 }
@@ -220,59 +220,12 @@ var unlockCmd = &cobra.Command{
 		if strings.TrimSpace(unlockLockID) == "" {
 			return fmt.Errorf("--lock-id is required")
 		}
-		return runTfWithAction("force-unlock", unlockFile, unlockEnv, unlockModulesDir, unlockOut, nil, unlockLockID, tfExecOpts{
-			noColor:     unlockNoColor,
-			lock:        unlockLock,
-			lockTimeout: unlockLockTime,
+		return runTfWithAction("force-unlock", unlockFile, unlockEnv, unlockModulesDir, unlockOut, nil, unlockLockID, clihelper.TerraformExecOptions{
+			NoColor:     unlockNoColor,
+			Lock:        unlockLock,
+			LockTimeout: unlockLockTime,
 		})
 	},
-}
-
-type tfExecOpts struct {
-	targets      []string
-	parallelism  int
-	lock         bool
-	lockTimeout  string
-	noColor      bool
-	input        bool
-	refresh      *bool
-	planFile     string
-	detailedExit bool
-	jsonOutput   bool
-	autoApprove  bool
-	rover        bool
-	scan         bool
-	cost         bool
-	stdout       io.Writer
-	stderr       io.Writer
-}
-
-func appendTfCommonArgs(args []string, opts tfExecOpts) []string {
-	if opts.noColor {
-		args = append(args, "-no-color")
-	}
-	if !opts.input {
-		args = append(args, "-input=false")
-	}
-	if !opts.lock {
-		args = append(args, "-lock=false")
-	}
-	if opts.lockTimeout != "" {
-		args = append(args, "-lock-timeout="+opts.lockTimeout)
-	}
-	if opts.parallelism > 0 {
-		args = append(args, fmt.Sprintf("-parallelism=%d", opts.parallelism))
-	}
-	for _, t := range opts.targets {
-		args = append(args, "-target="+t)
-	}
-	if opts.refresh != nil {
-		args = append(args, fmt.Sprintf("-refresh=%t", *opts.refresh))
-	}
-	if opts.autoApprove {
-		args = append(args, "-auto-approve")
-	}
-	return args
 }
 
 type stackContext struct {
@@ -375,7 +328,7 @@ func autoGenerateWorkspace(file, env, modulesRoot, out string, vars []string) (s
 	return ctx, tfvarsPath, nil
 }
 
-func runTfWithAction(action, file, env, modules, out string, vars []string, lockID string, opts tfExecOpts) (retErr error) {
+func runTfWithAction(action, file, env, modules, out string, vars []string, lockID string, opts clihelper.TerraformExecOptions) (retErr error) {
 	ctx, tfvarsPath, err := autoGenerateWorkspace(file, env, modules, out, vars)
 	if err != nil {
 		return err
@@ -401,11 +354,11 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	engine := defaultTfEngine
-	stdout := opts.stdout
+	stdout := opts.Stdout
 	if stdout == nil {
 		stdout = os.Stdout
 	}
-	stderr := opts.stderr
+	stderr := opts.Stderr
 	if stderr == nil {
 		stderr = os.Stderr
 	}
@@ -441,7 +394,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	// Optional security scan happens before init/plan to fail fast.
 
 	var scanSum *clihelper.TfsecSummary
-	if action == "plan" && opts.scan {
+	if action == "plan" && opts.Scan {
 		var err error
 		scanSum, err = clihelper.RunTfsecScan(ctx.outDir)
 		if err != nil {
@@ -468,8 +421,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	}
 
 	common := func(args []string) []string {
-		args = appendTfCommonArgs(args, opts)
-		return args
+		return clihelper.AppendTerraformArgs(args, opts)
 	}
 
 	var runErr error
@@ -481,17 +433,22 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 	if action == "plan" || action == "apply" || action == "destroy" {
 		var errPlan error
 		log("running %s plan", engine)
-			planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, rootDir, common)
+		planArgsFunc := func(args []string) []string {
+			planOpts := opts
+			planOpts.AutoApprove = false
+			return clihelper.AppendTerraformArgs(args, planOpts)
+		}
+		planResult, errPlan = runTerraformPlan(tfRunner, ctx, tfvarsArg, opts, stderr, rootDir, planArgsFunc)
 		if errPlan != nil {
 			runErr = errPlan
 		}
 		if planResult.summary != nil {
 			planSum = planResult.summary
 		}
-		if opts.detailedExit && planResult.exitCode == 2 {
+		if opts.DetailedExit && planResult.exitCode == 2 {
 			runStatus = "changes"
 		}
-		if opts.rover && planResult.summary != nil && planResult.summary.PlanJSON != "" {
+		if opts.Rover && planResult.summary != nil && planResult.summary.PlanJSON != "" {
 			tfPath := engine
 			if p, err := exec.LookPath(engine); err == nil {
 				tfPath = p
@@ -517,7 +474,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		if planResult.summary != nil {
 			planJSONPath = planResult.summary.PlanJSON
 		}
-		if planResult.summary != nil && planJSONPath != "" && opts.cost {
+		if planResult.summary != nil && planJSONPath != "" && opts.Cost {
 			if sum, err := runInfracost(planJSONPath, ctx.outDir); err == nil {
 				costSum = sum
 			} else {
@@ -550,7 +507,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		}
 	case "output":
 		args := []string{"output"}
-		if opts.jsonOutput {
+		if opts.JSONOutput {
 			args = append(args, "-json")
 		}
 		if lockID != "" {
@@ -600,17 +557,17 @@ type planExecutionResult struct {
 	planPathOnDisk string
 }
 
-func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts tfExecOpts, stderr io.Writer, rootDir string, common func([]string) []string) (planExecutionResult, error) {
+func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg string, opts clihelper.TerraformExecOptions, stderr io.Writer, rootDir string, appendArgs func([]string) []string) (planExecutionResult, error) {
 	var res planExecutionResult
 	args := []string{"plan"}
 	if tfvarsArg != "" {
 		args = append(args, "-var-file="+filepath.Join(ctx.outDir, tfvarsArg))
 	}
-	if opts.detailedExit {
+	if opts.DetailedExit {
 		args = append(args, "-detailed-exitcode")
 	}
-	planPath := opts.planFile
-	planArg := opts.planFile
+	planPath := opts.PlanFile
+	planArg := opts.PlanFile
 	tempPlan := false
 	if strings.TrimSpace(planPath) == "" {
 		planArg = ".pltf-plan.tfplan"
@@ -625,9 +582,9 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 		}
 	}
 	args = append(args, "-out="+planArg)
-	planArgs := append([]string(nil), common(args)...)
+	planArgs := append([]string(nil), appendArgs(args)...)
 	_, planExit, err := runner.Exec(planArgs)
-	if err != nil && !(opts.detailedExit && planExit == 2) {
+	if err != nil && !(opts.DetailedExit && planExit == 2) {
 		return res, fmt.Errorf("%s plan failed: %w", runner.EngineCmd(), err)
 	}
 	res.exitCode = planExit
@@ -655,7 +612,7 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 	}
 	if sum, err := clihelper.CollectPlanSummaryWithRunner(ctx.outDir, planPathOnDisk, planJSONOutput, stderr); err == nil {
 		res.summary = sum
-		res.summary.RawPlanArgs = sanitizePlanArgs(planArgs, ctx.outDir, tfvarsArg, rootDir)
+		res.summary.RawPlanArgs = clihelper.SanitizePlanArgs(planArgs, ctx.outDir, tfvarsArg, rootDir)
 		if planJSONPath != "" {
 			res.summary.PlanJSON = planJSONPath
 		}
@@ -664,31 +621,6 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 	}
 	res.planArgs = planArgs
 	return res, nil
-}
-
-func sanitizePlanArgs(planArgs []string, outDir, tfvarsArg, rootDir string) []string {
-	sanitized := append([]string(nil), planArgs...)
-	if tfvarsArg == "" {
-		return sanitized
-	}
-	absVar := "-var-file=" + filepath.Join(outDir, tfvarsArg)
-	relPath := tfvarsArg
-	if rootDir != "" {
-		if rel, err := filepath.Rel(rootDir, outDir); err == nil && rel != "." && rel != "" {
-			relPath = filepath.Join(rel, tfvarsArg)
-		}
-	}
-	relPath = filepath.ToSlash(filepath.Clean(relPath))
-	if relPath == "." {
-		relPath = tfvarsArg
-	}
-	relVar := "-var-file=" + relPath
-	for i, arg := range sanitized {
-		if arg == absVar {
-			sanitized[i] = relVar
-		}
-	}
-	return sanitized
 }
 
 func runTerraformInitWithRetry(r *terraform.Runner) error {

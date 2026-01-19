@@ -79,6 +79,8 @@ type Generator struct {
 
 	// module dependencies (module id -> set of module ids it depends on)
 	moduleDeps map[string]map[string]struct{}
+	// cache where git module repos are stored
+	moduleGitCacheDir string
 
 	// workspace mode: render locals/providers with var references
 	useWorkspace bool
@@ -108,6 +110,11 @@ func NewGenerator(
 		return nil, fmt.Errorf("environment name cannot be empty")
 	}
 
+	cacheDir := filepath.Join(".pltf", "cache", "modules")
+	if err := os.MkdirAll(cacheDir, 0o755); err != nil {
+		return nil, fmt.Errorf("failed to create module git cache dir %s: %w", cacheDir, err)
+	}
+
 	g := &Generator{
 		envCfg:              envCfg,
 		svcCfg:              svcCfg,
@@ -120,6 +127,7 @@ func NewGenerator(
 		moduleScopes:        map[string]moduleScope{},
 		moduleDeps:          map[string]map[string]struct{}{},
 	}
+	g.moduleGitCacheDir = cacheDir
 
 	if strings.TrimSpace(customRoot) != "" {
 		g.customModulesRoot = filepath.Clean(customRoot)
@@ -160,16 +168,41 @@ func NewGenerator(
 	}
 
 	// Load all module metadata
-	var moduleTypes []string
+	moduleTypes := map[string]struct{}{}
 	customTypes := map[string]struct{}{}
-	for _, mod := range g.allModules {
-		moduleTypes = append(moduleTypes, mod.Type)
-		if strings.ToLower(mod.Source) == "custom" {
+	g.modMap = make(map[string]*config.ModuleMetadata)
+	g.moduleRootByType = make(map[string]string)
+
+	for i := range g.allModules {
+		mod := &g.allModules[i]
+		source := strings.TrimSpace(mod.Source)
+		if config.IsGitSource(source) {
+			meta, moduleDir, err := config.LoadModuleMetadataFromGitSource(source, g.moduleGitCacheDir)
+			if err != nil {
+				return nil, fmt.Errorf("module %q git source %q: %w", mod.ID, source, err)
+			}
+			mod.Type = meta.Type
+			moduleTypes[meta.Type] = struct{}{}
+			g.modMap[meta.Type] = meta
+			g.moduleRootByType[meta.Type] = moduleDir
+			continue
+		}
+		if mod.Type == "" {
+			return nil, fmt.Errorf("module %q must declare a type when source is not a git URL", mod.ID)
+		}
+		moduleTypes[mod.Type] = struct{}{}
+		if config.IsCustomRootSource(source) {
 			customTypes[mod.Type] = struct{}{}
 		}
 	}
+
 	if len(customTypes) > 0 && g.customModulesRoot == "" {
 		return nil, fmt.Errorf("modules marked source=custom require --modules or profile.modules_root")
+	}
+
+	typeList := make([]string, 0, len(moduleTypes))
+	for t := range moduleTypes {
+		typeList = append(typeList, t)
 	}
 
 	var roots []string
@@ -179,13 +212,15 @@ func NewGenerator(
 	}
 	roots = append(roots, g.embeddedModulesRoot)
 
-	modRecords, err := config.ScanModuleRoots(roots, moduleTypes)
+	modRecords, err := config.ScanModuleRoots(roots, typeList)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan modules roots %v: %w", roots, err)
 	}
-	g.modMap = make(map[string]*config.ModuleMetadata, len(modRecords))
-	g.moduleRootByType = make(map[string]string, len(modRecords))
 	for t, rec := range modRecords {
+		// Skip types already loaded from git sources
+		if _, ok := g.modMap[t]; ok {
+			continue
+		}
 		// Enforce custom modules to come from custom root
 		if _, ok := customTypes[t]; ok && g.customModulesRoot != "" && filepath.Clean(rec.Root) != filepath.Clean(g.customModulesRoot) {
 			return nil, fmt.Errorf("module type %q marked source=custom but not found in custom root %s", t, g.customModulesRoot)

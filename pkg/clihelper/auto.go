@@ -450,13 +450,13 @@ func validateCustomModules(envCfg *config.EnvironmentConfig, svcCfg *config.Serv
 
 	var customModules []config.Module
 	for _, m := range envCfg.Modules {
-		if strings.EqualFold(m.Source, "custom") {
+		if config.IsCustomRootSource(m.Source) {
 			customModules = append(customModules, m)
 		}
 	}
 	if svcCfg != nil {
 		for _, m := range svcCfg.Modules {
-			if strings.EqualFold(m.Source, "custom") {
+			if config.IsCustomRootSource(m.Source) {
 				customModules = append(customModules, m)
 			}
 		}

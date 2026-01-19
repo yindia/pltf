@@ -10,7 +10,7 @@ Terraform output is portable; module coverage today is focused on AWS. GCP/Azure
 `Service.metadata.ref` points to an Environment file. `envRef` selects the environment entry (e.g., `prod`) and lets you override variables for that service.
 
 **Can I bring my own modules?**  
-Yes. Add a `module.yaml` with inputs/outputs/schema and set `source: custom` (or point `modules_root` to your catalog). pltf will wire variables/links and emit Terraform.
+Yes. Add a `module.yaml` with inputs/outputs/schema and set `source: custom`, or point the entry at a git URL so pltf fetches its metadata. The old `modules_root` option is now optional, so you only need it if you want to share a catalog between many specs.
 
 **Do I have to run Terraform with pltf?**  
 No. You can just generate Terraform and run `terraform plan/apply` yourself. The CLI can also run Terraform for you after regeneration to keep code and state aligned.

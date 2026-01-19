@@ -29,8 +29,8 @@ type Backend struct {
 // Module declares a module instance in env/service YAML.
 type Module struct {
 	ID     string                 `yaml:"id"`
-	Type   string                 `yaml:"type"`
-	Source string                 `yaml:"source,omitempty"` // "custom" to force custom root
+	Type   string                 `yaml:"type,omitempty"`
+	Source string                 `yaml:"source,omitempty"` // "custom" or git URL (https://..., git@..., ssh://)
 	Inputs map[string]interface{} `yaml:"inputs,omitempty"`
 	Links  AccessLinks            `yaml:"links,omitempty"`
 }
