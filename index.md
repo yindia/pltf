@@ -1,8 +1,8 @@
 # pltf
 
-pltf is a Kubernetes-native CLI that turns your high-level infrastructure intent into ready-to-run Terraform workspaces. Define reusable stacks, reuse environment wiring, and deploy services that consume Helm charts or cloud modules while staying close to Terraform best practices; the generated workspaces run the host `terraform` binary so you never trade portability for automation.
+pltf is a Kubernetes-native CLI that transforms spec-driven intents into ready-to-run Terraform workspaces. Define stacks, environments, and services once, let pltf wire providers/backends/Helm charts, and run the host `terraform` binary so your deployments stay portable but repeatable.
 
-<div class="mermaid">
+```mermaid
 flowchart TB
     svc[(service.yaml)]
 
@@ -21,39 +21,21 @@ flowchart TB
 
     prod_service --> env
     stage_service --> env
-</div>
+```
 
-## Why teams use pltf
-- **Kubernetes-native IaC** – embed EKS clusters, Helm charts, and service modules while keeping Terraform state and providers under host control.
-- **Spec-first deployments** – capture stacks, environments, and services in YAML/JSON, and let pltf generate provider/backends, locals, and wiring for every run.
-- **Image builds without surprises** – Docker images in your specs build through Dagger with shared caches, but Terraform commands run natively (no embedded Dagger layers).
-- **Fast feedback loops** – `pltf terraform plan` produces tfsec/cost summaries, and `apply`/`destroy` always pass `-auto-approve` so CI/CD stays deterministic.
-- **Bring-your-own modules** – use the built-in catalog or drop a `module.yaml` beside your Terraform code; pltf treats every module equally.
+## Why teams rely on pltf
 
-## Grounded example
-
-- `example/stack.yaml` (and `example/stacks/*`) define reusable cluster building blocks.
-- `example/env.yaml` defines an AWS environment (`example-aws`) and references stacks for EKS, DNS, and observability.
-- `example/service.yaml` defines a Helm-based service that binds to the environment, pedals secrets, and builds images for each referenced env.
-
-## Typical workflow
-1. Define or update your stack, environment, and service specs.
-2. Validate, preview, and lint wiring:
-   - `pltf validate -f example/env.yaml`
-   - `pltf preview -f example/service.yaml --env prod`
-3. Run Terraform:
-   - `pltf terraform plan -f example/service.yaml --env prod --scan`
-   - `pltf terraform apply -f example/service.yaml --env prod`
-4. Inspect outputs/graphs:
-   - `pltf terraform output -f example/service.yaml --env prod`
-   - `pltf terraform graph -f example/service.yaml --env prod | dot -Tpng > graph.png`
+- **Kubernetes-native workflows** – embed EKS, Helm charts, and Kubernetes modules while Terraform manages state and providers.
+- **Spec-first operations** – YAML specs capture backend, stacks, variables, and secrets instead of replicating Terraform code per env.
+- **Image + Terraform caching** – Docker images build through Dagger with shared caches; Terraform runs natively with provider reuse.
+- **Custom modules welcome** – register built-in modules by `type` or point to git repos via `source` (HTTP/SSH) without a global `modules_root`.
+- **Security + cost guardrails** – tfsec/Infracost/Rover run with every Terraform plan and stream both timings and problem lists.
 
 ## Quick links
+
 - [Installation](installation.md)
 - [Getting Started](getting-started/aws.md)
-- [Platform Usage](platform.md)
-- [CLI Reference](usage.md)
-- [Spec Guide](specs.md)
-- [Modules & Wiring](modules.md)
-- [Features](features.md)
-- [Security](security/aws.md)
+- [Specs guide & modules](specs.md)
+- [Platform CLI commands](platform.md)
+- [Terraform workflows](workflows.md)
+- [Caching strategies](caching.md)

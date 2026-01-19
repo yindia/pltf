@@ -691,65 +691,42 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <p>pltf is a Kubernetes-native CLI that turns your high-level infrastructure intent into ready-to-run Terraform workspaces. Define reusable stacks, reuse environment wiring, and deploy services that consume Helm charts or cloud modules while staying close to Terraform best practices; the generated workspaces run the host <code>terraform</code> binary so you never trade portability for automation.</p>
-<div class="mermaid">
-flowchart TB
-    svc[(service.yaml)]
-
-    subgraph PROD[Production Env]
-        prod_service[Service A]
-    end
-
-    subgraph STAGE[Staging Env]
-        stage_service[Service A]
-    end
-
-    env[(env.yaml)]
-
-    svc --> prod_service
-    svc --> stage_service
-
-    prod_service --> env
-    stage_service --> env
-</div>
-
-<h2 id="why-teams-use-pltf">Why teams use pltf</h2>
+    <p>pltf is a Kubernetes-native CLI that transforms spec-driven intents into ready-to-run Terraform workspaces. Define stacks, environments, and services once, let pltf wire providers/backends/Helm charts, and run the host <code>terraform</code> binary so your deployments stay portable but repeatable.</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>flowchart TB
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    svc[(service.yaml)]
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    subgraph PROD[Production Env]
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        prod_service[Service A]
+</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    end
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    subgraph STAGE[Staging Env]
+</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        stage_service[Service A]
+</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    end
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    env[(env.yaml)]
+</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+</span><span id="__span-0-14"><a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    svc --&gt; prod_service
+</span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    svc --&gt; stage_service
+</span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
+</span><span id="__span-0-17"><a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    prod_service --&gt; env
+</span><span id="__span-0-18"><a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>    stage_service --&gt; env
+</span></code></pre></div>
+<h2 id="why-teams-rely-on-pltf">Why teams rely on pltf</h2>
 <ul>
-<li><strong>Kubernetes-native IaC</strong> – embed EKS clusters, Helm charts, and service modules while keeping Terraform state and providers under host control.</li>
-<li><strong>Spec-first deployments</strong> – capture stacks, environments, and services in YAML/JSON, and let pltf generate provider/backends, locals, and wiring for every run.</li>
-<li><strong>Image builds without surprises</strong> – Docker images in your specs build through Dagger with shared caches, but Terraform commands run natively (no embedded Dagger layers).</li>
-<li><strong>Fast feedback loops</strong> – <code>pltf terraform plan</code> produces tfsec/cost summaries, and <code>apply</code>/<code>destroy</code> always pass <code>-auto-approve</code> so CI/CD stays deterministic.</li>
-<li><strong>Bring-your-own modules</strong> – use the built-in catalog or drop a <code>module.yaml</code> beside your Terraform code; pltf treats every module equally.</li>
+<li><strong>Kubernetes-native workflows</strong> – embed EKS, Helm charts, and Kubernetes modules while Terraform manages state and providers.</li>
+<li><strong>Spec-first operations</strong> – YAML specs capture backend, stacks, variables, and secrets instead of replicating Terraform code per env.</li>
+<li><strong>Image + Terraform caching</strong> – Docker images build through Dagger with shared caches; Terraform runs natively with provider reuse.</li>
+<li><strong>Custom modules welcome</strong> – register built-in modules by <code>type</code> or point to git repos via <code>source</code> (HTTP/SSH) without a global <code>modules_root</code>.</li>
+<li><strong>Security + cost guardrails</strong> – tfsec/Infracost/Rover run with every Terraform plan and stream both timings and problem lists.</li>
 </ul>
-<h2 id="grounded-example">Grounded example</h2>
-<ul>
-<li><code>example/stack.yaml</code> (and <code>example/stacks/*</code>) define reusable cluster building blocks.</li>
-<li><code>example/env.yaml</code> defines an AWS environment (<code>example-aws</code>) and references stacks for EKS, DNS, and observability.</li>
-<li><code>example/service.yaml</code> defines a Helm-based service that binds to the environment, pedals secrets, and builds images for each referenced env.</li>
-</ul>
-<h2 id="typical-workflow">Typical workflow</h2>
-<ol>
-<li>Define or update your stack, environment, and service specs.</li>
-<li>Validate, preview, and lint wiring:</li>
-<li><code>pltf validate -f example/env.yaml</code></li>
-<li><code>pltf preview -f example/service.yaml --env prod</code></li>
-<li>Run Terraform:</li>
-<li><code>pltf terraform plan -f example/service.yaml --env prod --scan</code></li>
-<li><code>pltf terraform apply -f example/service.yaml --env prod</code></li>
-<li>Inspect outputs/graphs:</li>
-<li><code>pltf terraform output -f example/service.yaml --env prod</code></li>
-<li><code>pltf terraform graph -f example/service.yaml --env prod | dot -Tpng &gt; graph.png</code></li>
-</ol>
 <h2 id="quick-links">Quick links</h2>
 <ul>
 <li><a href="installation/">Installation</a></li>
 <li><a href="getting-started/aws/">Getting Started</a></li>
-<li><a href="platform/">Platform Usage</a></li>
-<li><a href="usage/">CLI Reference</a></li>
-<li><a href="specs/">Spec Guide</a></li>
-<li><a href="modules/">Modules &amp; Wiring</a></li>
-<li><a href="features/">Features</a></li>
-<li><a href="security/aws/">Security</a></li>
+<li><a href="specs/">Specs guide &amp; modules</a></li>
+<li><a href="platform/">Platform CLI commands</a></li>
+<li><a href="workflows/">Terraform workflows</a></li>
+<li><a href="caching/">Caching strategies</a></li>
 </ul>
   </div>
 </article>
@@ -966,26 +943,10 @@ flowchart TB
         
         
         
-        <a href="#why-teams-use-pltf"
+        <a href="#why-teams-rely-on-pltf"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
-            Why teams use pltf
-        </a>
-        
-
-        
-        <a href="#grounded-example"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Grounded example
-        </a>
-        
-
-        
-        <a href="#typical-workflow"
-            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
-            data-active="false" data-depth="2">
-            Typical workflow
+            Why teams rely on pltf
         </a>
         
 

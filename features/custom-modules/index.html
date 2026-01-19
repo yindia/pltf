@@ -827,6 +827,23 @@
             <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
                 
                 <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
+        data-size="default" href="/pltf/features/custom-modules/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Custom Modules
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
         data-size="default" href="/pltf/features/"
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
@@ -884,23 +901,6 @@
 
         
         Backends
-        
-
-        
-
-        
-
-        
-    </a>
-</li>
-                
-                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
-    <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
-        data-size="default" href="/pltf/features/custom-modules/"
-        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
-
-        
-        Custom Modules
         
 
         
@@ -1096,7 +1096,7 @@
 <h2 id="what-it-does">What it does</h2>
 <ul>
 <li>Uses the embedded catalog by default.</li>
-<li>Supports a custom modules root (<code>--modules</code> or profile <code>modules_root</code>, local path or git ref).</li>
+<li>Supports a custom modules root (<code>--modules</code> or profile defaults) but custom git sources now make that optional.</li>
 <li><code>source: custom</code> on a module forces lookup in your custom root; others fall back to embedded.</li>
 <li><code>pltf module init</code> inspects a TF module and writes <code>module.yaml</code> metadata.</li>
 <li>Inventory commands: <code>pltf module list|get -o table|json|yaml</code>.</li>
@@ -1171,10 +1171,12 @@
 </span><span id="__span-2-9"><a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>   └─ prod/
 </span></code></pre></div>
 <p>Use file inputs like <code>./files/dev/config.json</code>; pltf copies them into the generated workspace for the selected env.</p>
+<h2 id="direct-git-sources-future">Direct Git sources (future)</h2>
+<p>Each module entry can point directly at a git repo when <code>source</code> is an HTTP or SSH URL (e.g., <code>https://github.com/org/module.git//module-id?ref=main</code>). The module metadata (<code>module.yaml</code>) inside the repo defines the module <code>type</code>, so once the git fetching logic is implemented pltf will clone that repo and resolve the module without a shared <code>modules_root</code>. For now, continue to run <code>pltf module init</code> under the repo so the metadata exists inside it.</p>
 <h2 id="suggested-workflow">Suggested workflow</h2>
 <ol>
 <li>Place custom modules under a shared root and run <code>pltf module init --path ...</code> for each.</li>
-<li>Point <code>pltf generate</code>/<code>terraform plan</code> at that root with <code>--modules</code> or profile <code>modules_root</code>.</li>
+<li>(Optional) Point <code>pltf generate</code>/<code>terraform plan</code> at that root with <code>--modules</code> or profile defaults when you have a shared catalog; otherwise, each module can now specify its own git source URL.</li>
 <li>Reference modules with <code>source: custom</code> and include any extra provider blocks required by the module (e.g., GitHub, database, or SaaS providers).</li>
 </ol>
   </div>
@@ -1456,6 +1458,14 @@
             Suggested layout
         </a>
         
+        
+
+        
+        <a href="#direct-git-sources-future"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Direct Git sources (future)
+        </a>
         
 
         

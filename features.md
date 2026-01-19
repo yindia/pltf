@@ -3,7 +3,7 @@
 pltf focuses on faster, safer Terraform generation with predictable wiring. Deep dives live under `docs/features/*`.
 
 ## Map of features
-- [Profiles & Defaults](features/profiles.md): org/user defaults (`modules_root`, `default_env`, telemetry).
+- [Profiles & Defaults](features/profiles.md): org/user defaults (`default_env`, telemetry).
 - [Validation](features/validation.md): structural checks before render/apply.
 - [Backends](features/backends.md): `s3|gcs|azurerm` state backends, independent of target cloud.
 - [Custom Modules](features/custom-modules.md): bring-your-own `module.yaml` catalog.
@@ -34,7 +34,7 @@ Examples:
 
 ## Custom modules
 - Run `pltf module init --path <module_dir>` to scaffold `module.yaml`.
-- Reference with `source: custom` and point `--modules` or profile `modules_root` to your catalog.
+- Reference with `source: custom` or the new per-module `source` URL syntax; previously `--modules`/`modules_root` were required but custom git sources now make those optional.
 
 ## Validation
 - `pltf validate` runs structural checks before generation (Environment, Service, Stack).

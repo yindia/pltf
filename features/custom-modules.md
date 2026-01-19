@@ -4,7 +4,7 @@ Mix embedded modules with your own Terraform modules.
 
 ## What it does
 - Uses the embedded catalog by default.
-- Supports a custom modules root (`--modules` or profile `modules_root`, local path or git ref).
+- Supports a custom modules root (`--modules` or profile defaults) but custom git sources now make that optional.
 - `source: custom` on a module forces lookup in your custom root; others fall back to embedded.
 - `pltf module init` inspects a TF module and writes `module.yaml` metadata.
 - Inventory commands: `pltf module list|get -o table|json|yaml`.
@@ -79,8 +79,12 @@ This lets you reuse existing Terraform code while pltf handles wiring/validation
 
 Use file inputs like `./files/dev/config.json`; pltf copies them into the generated workspace for the selected env.
 
+## Direct Git sources (future)
+
+Each module entry can point directly at a git repo when `source` is an HTTP or SSH URL (e.g., `https://github.com/org/module.git//module-id?ref=main`). The module metadata (`module.yaml`) inside the repo defines the module `type`, so once the git fetching logic is implemented pltf will clone that repo and resolve the module without a shared `modules_root`. For now, continue to run `pltf module init` under the repo so the metadata exists inside it.
+
 ## Suggested workflow
 
 1. Place custom modules under a shared root and run `pltf module init --path ...` for each.
-2. Point `pltf generate`/`terraform plan` at that root with `--modules` or profile `modules_root`.
+2. (Optional) Point `pltf generate`/`terraform plan` at that root with `--modules` or profile defaults when you have a shared catalog; otherwise, each module can now specify its own git source URL.
 3. Reference modules with `source: custom` and include any extra provider blocks required by the module (e.g., GitHub, database, or SaaS providers).

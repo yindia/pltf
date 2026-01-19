@@ -56,7 +56,7 @@ IAM module contract:
 GCP/Azure: no bundled modules yet; use custom modules or your own registry. You can target GCP/Azure providers with custom modules and backends.
 
 ## Custom modules
-- Mark spec entries with `source: custom` to force lookup in your custom modules root (`--modules` or profile `modules_root`, local path or git ref).
+- Mark spec entries with `source: custom` to force lookup in your custom modules root (via `--modules` or profile defaults), or point the entry at a git URL so pltf fetches its metadata directly.
 - Generate `module.yaml` for your module with `pltf module init --path <module_dir> [--force]`.
 - Inventory commands: `pltf module list|get [-m ./modules] -o table|json|yaml`.
 

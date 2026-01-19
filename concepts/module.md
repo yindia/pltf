@@ -156,7 +156,7 @@ modules:
 ```
 
 ### Custom modules
-Generate `module.yaml` for your own Terraform module via `pltf module init --path <module_dir> [--force]`. Use `source: custom` in specs and provide `--modules` (or profile `modules_root`) to load them.
+Generate `module.yaml` for your own Terraform module via `pltf module init --path <module_dir> [--force]`. Use `source: custom` in specs, point at a shared catalog via `--modules` (or profile defaults) if you wish, or provide a git URL for the new per-module workflow to fetch metadata automatically.
 
 ### Terraform compatible
 pltf uses Terraform under the hood, so you’re never locked in. Extend with your own Terraform or take the generated code with you.

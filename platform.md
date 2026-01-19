@@ -42,12 +42,12 @@ pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
 pltf module init --path ./modules/aws_eks [--force]
 ```
 
-- Lists modules from embedded and custom roots; `source: custom` modules resolve only from your `--modules` path or profile `modules_root`.  
+- Lists modules from embedded and custom roots; `source: custom` modules resolve only from your shared catalog (via `--modules` or profile defaults), but you can now point modules directly at git URLs so `modules_root` is optional.
 - `module init` emits `module.yaml` from an existing Terraform module directory (`--force` overwrites).
 
 ## Profiles & Defaults
 
-- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) sets `modules_root`, `default_env`, `default_out`, and telemetry controls.  
+- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) sets `default_env`, `default_out`, and telemetry controls; the old `modules_root` setting is no longer required unless you still rely on a shared catalog.
 - `PLTF_DEFAULT_ENV` is also respected when choosing the environment.
 
 ## Backends

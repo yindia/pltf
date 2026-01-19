@@ -36,11 +36,11 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Module - PLTF CLI Documentation</title>
+    <title>Overview - PLTF CLI Documentation</title>
     
 
 
-<title>Module</title>
+<title>Overview</title>
 
 
 
@@ -55,7 +55,7 @@
 
 <!-- Open Graph (Facebook, LinkedIn) -->
 
-<meta property="og:title" content="Module">
+<meta property="og:title" content="Overview">
 
 
 
@@ -70,7 +70,7 @@
 
 <!-- Twitter Card -->
 
-<meta name="twitter:title" content="Module">
+<meta name="twitter:title" content="Overview">
 
 
 
@@ -622,13 +622,26 @@
     </a>
 </li>
                 
+            </ul>
+        </div>
+    </div>
+    
+    
+    
+    <div data-slot="sidebar-group" data-sidebar="group" class="relative flex w-full min-w-0 flex-col p-2">
+        <div data-slot="sidebar-group-label" data-sidebar="group-label"
+            class="ring-sidebar-ring flex h-8 shrink-0 items-center rounded-md px-2 text-xs outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0 text-muted-foreground font-medium">
+            Module</div>
+        <div data-slot="sidebar-group-content" data-sidebar="group-content" class="w-full text-sm">
+            <ul data-slot="sidebar-menu" data-sidebar="menu" class="flex w-full min-w-0 flex-col gap-0.5">
+                
                 <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
     <a data-slot="sidebar-menu-button" data-active="true" data-sidebar="menu-button"
         data-size="default" href="/pltf/concepts/module/"
         class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
 
         
-        Module
+        Overview
         
 
         
@@ -646,6 +659,23 @@
 
         
         Specs Guide
+        
+
+        
+
+        
+
+        
+    </a>
+</li>
+                
+                <li data-slot="sidebar-menu-item" data-sidebar="menu-item" class="group/menu-item relative">
+    <a data-slot="sidebar-menu-button" data-active="false" data-sidebar="menu-button"
+        data-size="default" href="/pltf/features/custom-modules/"
+        class="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer/menu-button flex items-center gap-2 rounded-md p-2 text-left outline-hidden ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 data-[active=true]:bg-accent data-[active=true]:border-accent 3xl:fixed:w-full 3xl:fixed:max-w-48 relative h-[30px] w-fit overflow-visible border border-transparent text-[0.8rem] font-medium after:absolute after:inset-x-0 after:-inset-y-1 after:z-0 after:rounded-md">
+
+        
+        Custom Modules
         
 
         
@@ -695,7 +725,7 @@
         <h1
           class="scroll-m-20 text-4xl font-semibold tracking-tight sm:text-3xl xl:text-4xl"
         >
-          Module
+          Overview
         </h1>
 
         <div class="flex items-center gap-2 pt-1.5">
@@ -897,7 +927,7 @@
 </span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">        </span><span class="nt">brokerUrl</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;rediss://:${module.redis.cache_auth_token}@${module.redis.cache_host}&quot;</span>
 </span></code></pre></div>
 <h3 id="custom-modules">Custom modules</h3>
-<p>Generate <code>module.yaml</code> for your own Terraform module via <code>pltf module init --path &lt;module_dir&gt; [--force]</code>. Use <code>source: custom</code> in specs and provide <code>--modules</code> (or profile <code>modules_root</code>) to load them.</p>
+<p>Generate <code>module.yaml</code> for your own Terraform module via <code>pltf module init --path &lt;module_dir&gt; [--force]</code>. Use <code>source: custom</code> in specs, point at a shared catalog via <code>--modules</code> (or profile defaults) if you wish, or provide a git URL for the new per-module workflow to fetch metadata automatically.</p>
 <h3 id="terraform-compatible">Terraform compatible</h3>
 <p>pltf uses Terraform under the hood, so you’re never locked in. Extend with your own Terraform or take the generated code with you.</p>
 <h2 id="next-steps">Next Steps</h2>
