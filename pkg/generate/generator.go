@@ -187,6 +187,21 @@ func NewGenerator(
 			g.moduleRootByType[meta.Type] = moduleDir
 			continue
 		}
+		if config.IsLocalSource(source) {
+			moduleDir, err := config.ResolveSpecPath(source, g.specDir)
+			if err != nil {
+				return nil, fmt.Errorf("module %q local source %q: %w", mod.ID, source, err)
+			}
+			meta, err := config.LoadModuleMetadata(moduleDir)
+			if err != nil {
+				return nil, fmt.Errorf("module %q local source %q: %w", mod.ID, source, err)
+			}
+			mod.Type = meta.Type
+			moduleTypes[meta.Type] = struct{}{}
+			g.modMap[meta.Type] = meta
+			g.moduleRootByType[meta.Type] = moduleDir
+			continue
+		}
 		if mod.Type == "" {
 			return nil, fmt.Errorf("module %q must declare a type when source is not a git URL", mod.ID)
 		}

@@ -122,6 +122,9 @@ func copyUsedModules(outDir string, used map[string]bool, rootByType map[string]
 			return fmt.Errorf("module type %s root not found", moduleType)
 		}
 		srcDir := filepath.Join(srcRoot, moduleType)
+		if _, err := os.Stat(srcDir); os.IsNotExist(err) {
+			srcDir = srcRoot
+		}
 		dstDir := filepath.Join(outDir, "modules", moduleType)
 
 		if err := copyDir(srcDir, dstDir); err != nil {
