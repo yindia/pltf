@@ -151,6 +151,19 @@ func (v *ModuleValidator) ValidateClusterModulesForModules(modules []config.Modu
 	return nil
 }
 
+// ModuleMetaForModule resolves module metadata using the configured roots.
+func (v *ModuleValidator) ModuleMetaForModule(module config.Module) (*config.ModuleMetadata, error) {
+	embeddedMetas, err := v.loadEmbedded()
+	if err != nil {
+		return nil, err
+	}
+	customMetas, err := v.loadCustom()
+	if err != nil {
+		return nil, err
+	}
+	return v.selectModuleMeta(module, embeddedMetas, customMetas)
+}
+
 func ValidateProviderSupport(envCfg *config.EnvironmentConfig, svcCfg *config.ServiceConfig) error {
 	if envCfg == nil {
 		return nil
