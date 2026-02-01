@@ -59,4 +59,5 @@ No modules.
 | <a name="output_k8s_ca_data"></a> [k8s\_ca\_data](#output\_k8s\_ca\_data) | n/a |
 | <a name="output_k8s_cluster_name"></a> [k8s\_cluster\_name](#output\_k8s\_cluster\_name) | n/a |
 | <a name="output_k8s_endpoint"></a> [k8s\_endpoint](#output\_k8s\_endpoint) | n/a |
+| <a name="output_plt_cluster_type"></a> [plt\_cluster\_type](#output\_plt\_cluster\_type) | n/a |
 <!-- END_TF_DOCS -->

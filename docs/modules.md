@@ -47,11 +47,22 @@ IAM module contract:
 - Modules that `provide` `iam.policy` must declare output `policy_arn`.
 
 ## Embedded modules (AWS)
-- `aws_base`, `aws_dns`, `aws_eks`, `aws_nodegroup`, `helm_chart`
+- `aws_base`, `aws_dns`, `aws_eks`, `aws_nodegroup`
 - `aws_postgres`, `aws_mysql`, `aws_redis`, `aws_dynamodb`, `aws_s3`, `aws_ses`, `aws_sns`, `aws_sqs`, `aws_documentdb`
 - `aws_iam_role`, `aws_iam_policy`, `aws_iam_user`
 
-GCP/Azure: no bundled modules yet; use custom modules or your own registry. You can target GCP/Azure providers with custom modules and backends.
+## Embedded modules (GCP)
+- `gcp_base`, `gcp_dns`, `gcp_gke`, `gcp_nodepool`
+- `gcp_postgres`, `gcp_mysql`, `gcp_redis`, `gcp_gcs`
+- `gcp_service_account`, `gcp_k8s_service`
+
+## Embedded modules (Azure)
+- `azure_base`, `azure_aks`
+- `azure_postgres`, `azure_redis`
+- `azure_k8s_service`
+
+## Shared modules
+- `helm_chart`
 
 ## Custom modules
 - Mark spec entries with `source: custom` to force lookup in your custom modules root (via `--modules` or profile defaults), or point the entry at a git URL so pltf fetches its metadata directly.
