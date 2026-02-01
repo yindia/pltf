@@ -61,7 +61,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   resource_group_name = data.azurerm_resource_group.pltf.name
   dns_prefix          = "pltf"
   //  disk_encryption_set_id = azurerm_disk_encryption_set.pltf.id
-  kubernetes_version = var.kubernetes_version
+  kubernetes_version                = var.kubernetes_version
   role_based_access_control_enabled = true
 
   network_profile {

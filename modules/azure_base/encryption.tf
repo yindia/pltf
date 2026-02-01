@@ -27,10 +27,10 @@ resource "azurerm_key_vault" "pltf" {
 }
 
 resource "azurerm_key_vault_key" "acr" {
-  name         = "pltf-${var.env_name}-acr"
-  key_vault_id = azurerm_key_vault.pltf.id
-  key_type     = "RSA"
-  key_size     = 2048
+  name            = "pltf-${var.env_name}-acr"
+  key_vault_id    = azurerm_key_vault.pltf.id
+  key_type        = "RSA"
+  key_size        = 2048
   expiration_date = var.key_vault_key_expiration_date
 
   key_opts = [

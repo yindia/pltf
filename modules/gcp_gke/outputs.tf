@@ -9,3 +9,7 @@ output "k8s_ca_data" {
 output "k8s_cluster_name" {
   value = google_container_cluster.primary.name
 }
+
+output "plt_cluster_type" {
+  value = true
+}

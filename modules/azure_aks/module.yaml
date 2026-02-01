@@ -2,6 +2,7 @@ name: azure_aks
 type: azure_aks
 provider: azure
 version: 1.0.0
+cluster: true
 resources:
     - azurerm_kubernetes_cluster.main
     - azurerm_role_assignment.azurerm_container_registry
@@ -84,3 +85,5 @@ outputs:
       type: string
     - name: k8s_endpoint
       type: string
+    - name: plt_cluster_type
+      type: bool
