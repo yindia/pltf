@@ -37,18 +37,16 @@ resource "google_container_cluster" "primary" {
     key_name = data.google_kms_crypto_key.kms.id
   }
 
-  resource_labels = merge(
-    {
-      env_name    = lower(var.env_name)
-      layer_name  = lower(var.layer_name)
-      module_name = lower(var.module_name)
-    },
-    var.resource_labels,
-  )
+  resource_labels = {
+    env_name    = lower(var.env_name)
+    layer_name  = lower(var.layer_name)
+    module_name = lower(var.module_name)
+    managed_by  = "pltf"
+  }
 
   master_auth {
     client_certificate_config {
-      # tfsec recomments using oauth or SA, we ignore this since opta currently
+      # tfsec recomments using oauth or SA, we ignore this since Pltf currently
       # uses client certificate for auth. 
       # https://aquasecurity.github.io/tfsec/v1.8.0/checks/google/gke/no-legacy-authentication/
       #tfsec:ignore:google-gke-no-legacy-authentication

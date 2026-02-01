@@ -96,7 +96,7 @@ resource "google_container_node_pool" "node_pool" {
       content {
         key    = taint.value["key"]
         effect = lookup(taint.value, "effect", "NO_SCHEDULE")
-        value  = lookup(taint.value, "value", "opta")
+        value  = lookup(taint.value, "value", "Pltf")
       }
     }
   }

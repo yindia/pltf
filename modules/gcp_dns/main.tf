@@ -1,7 +1,7 @@
 resource "google_dns_managed_zone" "public" {
   name        = "pltf-${var.layer_name}"
   dns_name    = "${var.domain}."
-  description = "Opta DNS for environment ${var.layer_name}"
+  description = "Pltf DNS for environment ${var.layer_name}"
   dnssec_config {
     kind          = "dns#managedZoneDnsSecConfig"
     non_existence = "nsec3"
