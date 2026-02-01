@@ -313,6 +313,26 @@
          <lastmod>2026-02-01</lastmod>
     </url>
     <url>
+         <loc>https://yindia.github.io/pltf/references/modules/azure_aks/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/azure_base/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/azure_k8s_service/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/azure_postgres/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/azure_redis/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
          <loc>https://yindia.github.io/pltf/references/modules/gcp_base/</loc>
          <lastmod>2026-02-01</lastmod>
     </url>
