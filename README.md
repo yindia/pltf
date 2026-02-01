@@ -10,6 +10,7 @@ pltf (Platform Tools) turns high-level infrastructure intent into ready-to-run T
 - **Bring-your-own modules** – reference built-in module types or point to your own Git repo (`https://…` or `git@…`) and pltf will clone, cache, and wire it without needing a global `modules_root`.
 - **Cost/security guardrails** – `pltf terraform plan` streams tfsec/Infracost/Rover summaries (with problem lists) so issues surface before apply.
 
+
 ## Spec foundations
 
 ```mermaid
@@ -230,7 +231,7 @@ Commands render workspaces under `.pltf/<environment_name>/workspace` or `.pltf/
 |----------|--------|
 | AWS      | ✅     |
 | GCP      | ✅     |
-| Azure    | ❌     |
+| Azure    | ✅     |
 
 ## Contributing
 
