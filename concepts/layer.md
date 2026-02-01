@@ -27,7 +27,7 @@ flowchart TB
 </div>
 
 ## Definition (example)
-Based on `example/service.yaml`:
+Based on a typical service spec:
 
 ```yaml
 apiVersion: platform.io/v1

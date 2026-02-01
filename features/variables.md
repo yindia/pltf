@@ -29,7 +29,7 @@ PLTF_VAR_min_nodes=3 PLTF_VAR_max_nodes=6 pltf generate -f env.yaml -e prod
 
 ## Scope rules
 - Stack variables provide shared defaults and are auto‑applied.
-- Environment/Service `variables` are for custom logic only and must not reuse stack variable names.
+- Environment/Service `variables` are defined at the top level and must not reuse stack variable names.
 
 ## Parent outputs
 Services can use environment outputs via `${parent.<output>}`:
@@ -46,4 +46,4 @@ public_uri: "${parent.domain}/hello"
 ## Notes
 - Required variables without defaults must be provided via `--var` or env.
 - Precedence: stack variables → spec variables → CLI `--var`.
-- Values stay in Terraform variables (not locals) to avoid leaking secrets.
+- Secrets remain Terraform variables; non-secret values may also be mirrored into locals for wiring.

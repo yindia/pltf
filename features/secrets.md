@@ -3,9 +3,9 @@
 Keep sensitive values out of specs and source control.
 
 ## What it does
-- Secrets stay as Terraform variables and render to Kubernetes secrets for services.
+- Secrets stay as Terraform variables.
 - You declare secret keys in your spec; actual values are provided at runtime via environment variables or `--var`, typically sourced from your secret store/CI.
-- Services receive secrets as env vars; no values are written into locals or files.
+- Modules decide how to consume secrets (for example, Helm charts or database modules).
 
 ## Example (service)
 ```yaml
@@ -20,9 +20,11 @@ secrets:
   db_password: {}   # value supplied via env/CI
 modules:
   - id: app
-    type: aws_k8s_service
+    type: helm_chart
     inputs:
-      db_password: "${var.db_password}"
+      chart: ./charts/app
+      values:
+        db_password: "${var.db_password}"
 ```
 Runtime:
 ```bash

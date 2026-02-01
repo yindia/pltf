@@ -352,7 +352,7 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../getting-started/aws/">
+        data-slot="button" href="../../concepts/overview/">
         Getting Started
     </a>
     
@@ -360,8 +360,24 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../cli/pltf/">
-        Platform
+        data-slot="button" href="../../workflows/">
+        Workflows
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../usage/">
+        CLI
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../features/">
+        Features
     </a>
     
     
@@ -694,11 +710,10 @@
 <h2 id="step-3-pin-versions-in-specs">Step 3: Pin versions in specs</h2>
 <p>After upgrading, pin the new versions so future applies stay consistent:
 <div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nt">modules</span><span class="p">:</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_eks</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">k8s_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.25&quot;</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_nodegroup</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">k8s_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.25&quot;</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">eks</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_eks</span>
+</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">inputs</span><span class="p">:</span>
+</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">      </span><span class="nt">k8s_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.25&quot;</span>
 </span></code></pre></div>
 Then:
 <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>plan<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>prod
@@ -781,18 +796,6 @@ Then:
                         
                     </a>
                     
-                    <a class="text-2xl font-medium" href="../../workflows/">
-                        
-                        Terraform Workflows
-                        
-                    </a>
-                    
-                    <a class="text-2xl font-medium" href="../../caching/">
-                        
-                        Image & Caching
-                        
-                    </a>
-                    
                 </div>
             </div>
             
@@ -801,7 +804,7 @@ Then:
             <div class="flex flex-col gap-8">
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
+                    <div class="text-muted-foreground text-sm font-medium">Docs Map</div>
                     
                 </div>
                 
@@ -810,9 +813,63 @@ Then:
                     
                     <div class="flex flex-col gap-3">
                         
+                        <a class="text-2xl font-medium" href="../../concepts/overview/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/environment/">
+                            
+                            Environment
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/stack/">
+                            
+                            Stack
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/layer/">
+                            
+                            Service (Layer)
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/module/">
+                            
+                            Module
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../specs/">
+                            
+                            Specs Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../modules/">
+                            
+                            Modules & Wiring
+                            
+                        </a>
+                        
                         <a class="text-2xl font-medium" href="../../getting-started/aws/">
                             
                             AWS
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/gcp/">
+                            
+                            GCP
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/azure/">
+                            
+                            Azure
                             
                         </a>
                         
@@ -821,9 +878,54 @@ Then:
                 </div>
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">Platform</div>
+                    <div class="text-muted-foreground text-sm font-medium">Workflows</div>
                     
                     <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../workflows/">
+                            
+                            Terraform Workflows
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-commands/">
+                            
+                            Terraform Commands
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-generator/">
+                            
+                            Terraform Generator
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../caching/">
+                            
+                            Image & Caching
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">CLI</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../usage/">
+                            
+                            Usage
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../platform/">
+                            
+                            Platform Patterns
+                            
+                        </a>
                         
                         <a class="text-2xl font-medium" href="../../cli/pltf/">
                             
@@ -846,6 +948,81 @@ Then:
                         <a class="text-2xl font-medium" href="../../cli/pltf_preview/">
                             
                             preview
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Features</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../features/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/profiles/">
+                            
+                            Profiles & Defaults
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/validation/">
+                            
+                            Validation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/preview/">
+                            
+                            Preview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/backends/">
+                            
+                            Backends
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/custom-modules/">
+                            
+                            Custom Modules
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/migration-enterprise/">
+                            
+                            Enterprise Migration
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/placeholders/">
+                            
+                            Placeholders & Wiring
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/secrets/">
+                            
+                            Secrets
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/variables/">
+                            
+                            Variables
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/telemetry/">
+                            
+                            Telemetry
                             
                         </a>
                         
@@ -922,6 +1099,11 @@ Then:
                         </a>
                         
                     </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
                     
                 </div>
                 

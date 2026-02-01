@@ -100,11 +100,11 @@ outputs:
 
 ## Definition
 Modules have:
-- a **type** (e.g., `aws_eks`, `aws_s3`)
-- an optional **id/name** (so you can include multiple of the same type)
+- a required **id** (unique within the stack)
+- a **type** (e.g., `aws_eks`, `aws_s3`), required unless `source` points to a git/local module with `module.yaml`
 - optional **inputs** (configuration)
 - optional **links** (to consume other module outputs)
-- optional **source** (`custom` forces lookup in your custom modules root)
+- optional **source** (`custom` forces lookup in your custom modules root; git/paths load metadata directly)
 
 Modules are defined inside the `modules` section of an Environment or Service.
 

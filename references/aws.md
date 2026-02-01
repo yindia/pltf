@@ -1,15 +1,14 @@
 # AWS Reference
 
-The next generation of Infrastructure-as-Code: work with high-level constructs instead of getting lost in low-level cloud configuration. Status: active development; review generated code before applying.
-
-AWS is fully supported for environments, services, and modules. This page summarizes how the AWS provider, backends, and module wiring work in pltf.
+AWS is fully supported for environments, services, and the embedded module catalog. This page summarizes how the AWS provider, backends, and module wiring work in pltf.
 
 ## Provider and Backends
-- **Provider:** Automatically injected; version comes from the central versions file. Region is taken from your env spec.
-- **Backends:** You can store state in `s3`, `gcs`, or `azurerm` even when targeting AWS. For cross-account S3, set `backend.profile`. Optional `backend.region` overrides the bucket region.
+- **Provider:** Automatically injected; version comes from the central versions file. Region is taken from the selected environment entry.
+- **Backends:** AWS uses `backend.type: s3` (default if omitted). Use `backend.profile` for cross-account state and `backend.region` to override the bucket region.
 - **Default tags:** Labels in your env/service specs become global tags on the AWS provider.
 
 ## Example (Environment + Service)
+Environment:
 ```yaml
 apiVersion: platform.io/v1
 kind: Environment
@@ -19,60 +18,66 @@ metadata:
   provider: aws
   labels:
     team: platform
-    cost_center: shared
+backend:
+  type: s3
+  bucket: pltf-tfstate
+  region: us-east-1
 environments:
   prod:
     account: "556169302489"
     region: us-east-1
-    backend:
-      type: s3
-      profile: cross-account
-    modules:
-      - type: aws_base
-      - type: aws_eks
-      - type: aws_k8s_base
+variables:
+  base_domain: prod.pltf.internal
+modules:
+  - id: base
+    type: aws_base
+  - id: eks
+    type: aws_eks
+    inputs:
+      cluster_name: "pltf-app-${layer_name}-${env_name}"
 ```
 
+Service:
 ```yaml
 apiVersion: platform.io/v1
 kind: Service
 metadata:
   name: payments-api
-  org: pltf
-  provider: aws
+  ref: ./env.yaml
   envRef:
-    name: prod
-    path: ../env.yaml
-spec:
-  variables:
-    image: ghcr.io/acme/payments:latest
-  modules:
-    - name: app
-      type: aws_k8s_service
-      port:
-        http: 8080
-      links:
-        - app-bucket: [write]
-        - app-queue: [consume]
-    - name: app-bucket
-      type: aws_s3
+    prod: {}
+variables:
+  image: ghcr.io/acme/payments:latest
+modules:
+  - id: app
+    type: helm_chart
+    inputs:
+      chart: ./charts/payments
+      values:
+        image: var.image
+  - id: app-bucket
+    type: aws_s3
+    inputs:
       bucket_name: "payments-${env_name}"
-    - name: app-queue
-      type: aws_sqs
+  - id: app-queue
+    type: aws_sqs
 ```
 
 ## Modules and Fields
-- **Fields:** Each module instance accepts inputs declared in its `module.yaml`. Only set what you need; defaults apply otherwise.
-- **Names:** `name` is optional; defaults to the module `type`. Names are used for Terraform resource names and template placeholders.
-- **Types:** `type` selects the module implementation. Embedded AWS modules are documented under “Modules (AWS)” in the nav.
-- **Sources:** Add `source: custom` to pull a module from your custom modules root; otherwise the embedded catalog is used.
+- **id:** required and unique within the stack.
+- **type:** selects the module implementation; required unless `source` is a git/local path with `module.yaml`.
+- **source:** optional; `custom` forces lookup in your custom modules root, while git/paths load metadata directly.
+- **inputs:** key/value config for module variables.
+- **links:** access bindings that let modules consume other module outputs (IAM policies/IRSA).
 
 ## Linking
 Linking lets a module consume outputs of another:
 ```yaml
 links:
-  - app-bucket: [read, write]
-  - app-queue: [consume]
+  readWrite:
+    - app-bucket
+  consume:
+    - app-queue
 ```
 When links are present, pltf automatically renders IAM policies and (for Kubernetes) IRSA trusts. Supported AWS link targets include S3, SQS, SNS, SES, DynamoDB, RDS, and more via module metadata.
 

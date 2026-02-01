@@ -1,9 +1,9 @@
 # Backends
 
-Choose where Terraform state lives, independent of the target cloud.
+Choose where Terraform state lives, aligned with the provider.
 
 ## What it does
-- Supports `backend.type` = `s3|gcs|azurerm` for any provider.
+- Supports `backend.type` = `s3|gcs|azurerm` with provider compatibility (AWS → S3, GCP → GCS, Azure → Azurerm).
 - Allows `backend.profile` for cross-account S3, `region` override, and container/resource_group for azurerm.
 - Ensures the backend bucket/container exists before running Terraform.
 
@@ -18,4 +18,4 @@ backend:
 
 ## Notes
 - Backends are rendered into `backend.tf`/`terraform.tfvars` alongside providers.
-- You can point all clouds to a single backend (e.g., S3) if desired.
+- If `backend.type` is omitted, pltf picks the default backend for the provider.

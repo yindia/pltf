@@ -352,7 +352,7 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../getting-started/aws/">
+        data-slot="button" href="../../concepts/overview/">
         Getting Started
     </a>
     
@@ -360,8 +360,24 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../cli/pltf/">
-        Platform
+        data-slot="button" href="../../workflows/">
+        Workflows
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../usage/">
+        CLI
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../features/">
+        Features
     </a>
     
     
@@ -677,33 +693,21 @@
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
     <p>Architecture overview for Kubernetes clusters deployed by pltf.</p>
 <h2 id="description">Description</h2>
-<p>pltf divides the cluster into namespaces for third-party integrations and for your services. Third-party components are deployed via Helm charts (v3) into their own namespaces; your services are deployed into namespaces derived from the service/layer name.</p>
-<h3 id="third-party-integrations-common-set">Third-party integrations (common set)</h3>
-<ul>
-<li><strong>Linkerd</strong> (service mesh) — mTLS, traffic control, golden metrics; chosen for simplicity and security.</li>
-<li><strong>Metrics Server</strong> — HPA metrics (built-in on GKE/Azure; installed on EKS).</li>
-<li><strong>Cluster Autoscaler</strong> — scales nodes (built-in on GKE/Azure; installed on EKS).</li>
-<li><strong>Ingress NGINX</strong> — ingress controller routing LB traffic into the cluster.</li>
-<li><strong>External DNS</strong> — manages DNS records for LBs (not needed on GKE/Azure by default).</li>
-<li><strong>Datadog (optional)</strong> — metrics/logs/APM via the Datadog K8s integration module.</li>
-</ul>
+<p>pltf does not enforce a fixed Kubernetes layout. The cluster shape depends on the modules you include (for example, <code>aws_eks</code> for the control plane and <code>helm_chart</code> or custom modules for workloads and add-ons).</p>
+<h3 id="third-party-integrations">Third-party integrations</h3>
+<p>Common add-ons are typically deployed via Helm charts into their own namespaces. Which components you install (ingress, metrics, service mesh, logging, etc.) depends on your module selection and organization standards.</p>
 <h3 id="services-pltf-modules">Services (pltf modules)</h3>
-<p>Each service (<code>aws_k8s_service</code>/<code>gcp_k8s_service</code>) creates:
-- Namespace named from the service (layer) name.
-- Deployment + pods, Service, optional Ingress.
-- Horizontal Pod Autoscaler (CPU/memory driven).
-- Service Account wired to cloud IAM via IRSA/Workload Identity; least privilege via links.
-- ConfigMap/Secrets for app config and credentials (secrets encrypted at rest by the cloud).
-- Internal DNS of the form <code>&lt;module_name&gt;.&lt;layer_name&gt;</code> for service-to-service calls.</p>
+<p>Service modules such as <code>helm_chart</code> (or custom modules) are responsible for workload deployment. Typical responsibilities include:
+- Namespace creation scoped to the service/layer name.
+- Deployments, Services, and optional Ingress resources.
+- Service accounts and IAM bindings when the module implements them.
+- ConfigMaps/Secrets for app config and credentials.</p>
 <h2 id="security-overview">Security Overview</h2>
 <ul>
-<li>Linkerd mTLS secures cross-service traffic.</li>
-<li>Official/Bitnami Helm charts, version-locked; IAM roles scoped to least privilege.</li>
-<li>Service accounts per service; no extra cluster roles granted by default.</li>
-<li>IRSA/Workload Identity/OIDC for cloud access; no long-lived credentials in pods.</li>
-<li>Secrets stored in K8s are encrypted at rest; cloud KMS used by the control plane.</li>
-<li>plft does not modify <code>aws-auth</code> beyond optional <code>admin_arns</code> configuration.</li>
-<li>Helm v3 used for all chart deployments.</li>
+<li>Use least-privilege IAM roles via module links where supported.</li>
+<li>Prefer short-lived cloud auth (IRSA/Workload Identity/OIDC) when your modules configure it.</li>
+<li>Store sensitive values in secret managers and inject via Terraform variables.</li>
+<li>Helm v3 is used for Helm chart deployments.</li>
 </ul>
   </div>
 </article>
@@ -771,18 +775,6 @@
                         
                     </a>
                     
-                    <a class="text-2xl font-medium" href="../../workflows/">
-                        
-                        Terraform Workflows
-                        
-                    </a>
-                    
-                    <a class="text-2xl font-medium" href="../../caching/">
-                        
-                        Image & Caching
-                        
-                    </a>
-                    
                 </div>
             </div>
             
@@ -791,7 +783,7 @@
             <div class="flex flex-col gap-8">
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
+                    <div class="text-muted-foreground text-sm font-medium">Docs Map</div>
                     
                 </div>
                 
@@ -800,9 +792,63 @@
                     
                     <div class="flex flex-col gap-3">
                         
+                        <a class="text-2xl font-medium" href="../../concepts/overview/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/environment/">
+                            
+                            Environment
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/stack/">
+                            
+                            Stack
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/layer/">
+                            
+                            Service (Layer)
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/module/">
+                            
+                            Module
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../specs/">
+                            
+                            Specs Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../modules/">
+                            
+                            Modules & Wiring
+                            
+                        </a>
+                        
                         <a class="text-2xl font-medium" href="../../getting-started/aws/">
                             
                             AWS
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/gcp/">
+                            
+                            GCP
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/azure/">
+                            
+                            Azure
                             
                         </a>
                         
@@ -811,9 +857,54 @@
                 </div>
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">Platform</div>
+                    <div class="text-muted-foreground text-sm font-medium">Workflows</div>
                     
                     <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../workflows/">
+                            
+                            Terraform Workflows
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-commands/">
+                            
+                            Terraform Commands
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-generator/">
+                            
+                            Terraform Generator
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../caching/">
+                            
+                            Image & Caching
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">CLI</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../usage/">
+                            
+                            Usage
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../platform/">
+                            
+                            Platform Patterns
+                            
+                        </a>
                         
                         <a class="text-2xl font-medium" href="../../cli/pltf/">
                             
@@ -836,6 +927,81 @@
                         <a class="text-2xl font-medium" href="../../cli/pltf_preview/">
                             
                             preview
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Features</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../features/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/profiles/">
+                            
+                            Profiles & Defaults
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/validation/">
+                            
+                            Validation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/preview/">
+                            
+                            Preview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/backends/">
+                            
+                            Backends
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/custom-modules/">
+                            
+                            Custom Modules
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/migration-enterprise/">
+                            
+                            Enterprise Migration
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/placeholders/">
+                            
+                            Placeholders & Wiring
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/secrets/">
+                            
+                            Secrets
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/variables/">
+                            
+                            Variables
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/telemetry/">
+                            
+                            Telemetry
                             
                         </a>
                         
@@ -915,6 +1081,11 @@
                     
                 </div>
                 
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
+                    
+                </div>
+                
             </div>
             
             
@@ -940,10 +1111,10 @@
         </a>
         
         
-        <a href="#third-party-integrations-common-set"
+        <a href="#third-party-integrations"
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="3">
-            Third-party integrations (common set)
+            Third-party integrations
         </a>
         
         <a href="#services-pltf-modules"

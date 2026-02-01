@@ -1,6 +1,6 @@
 # Getting Started: AWS
 
-Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `example/service.yaml`) to a working Kubernetes-native AWS stack. The guide shows how services reference envs, how Docker images build via Dagger, and how Terraform runs natively on the host.
+Follow this walkthrough to go from the checked-in sample (`example/e2e.yaml`) to a working Kubernetes-native AWS stack. The guide shows how services reference envs, how Docker images build via Dagger, and how Terraform runs natively on the host.
 
 ## 1) Prerequisites
 
@@ -11,7 +11,7 @@ Follow this walkthrough to go from the checked-in samples (`example/env.yaml`, `
 
 ## 2) Render the Environment (VPC + EKS + DNS)
 
-The sample `example/env.yaml` already wires AWS base, DNS, and EKS modules into the `prod` environment. Copy it to `env.yaml` and adjust variables as needed.
+The sample `example/e2e.yaml` already wires AWS base, DNS, and EKS modules into the `prod` environment. Copy it to `env.yaml` and adjust variables as needed.
 
 ```yaml
 apiVersion: platform.io/v1
@@ -21,13 +21,13 @@ metadata:
   name: example-aws
   org: pltf
   provider: aws
+variables:
+  base_domain: prod.pltf.internal
+  cluster_name: pltf-data
 environments:
   prod:
     account: "556169302489"
     region: ap-northeast-1
-    variables:
-      base_domain: prod.pltf.internal
-      cluster_name: pltf-data
 modules:
   - id: base
     type: aws_base
@@ -59,16 +59,16 @@ That config boots:
 Now run:
 
 ```bash
-pltf validate -f example/env.yaml --env prod
-pltf terraform plan  -f example/env.yaml --env prod
-pltf terraform apply -f example/env.yaml --env prod
+pltf validate -f example/e2e.yaml --env prod
+pltf terraform plan  -f example/e2e.yaml --env prod
+pltf terraform apply -f example/e2e.yaml --env prod
 ```
 
- Terraform runs operate inside `.pltf/<env>/workspace` so the standard `.terraform` cache keeps provider downloads per workspace. `pltf terraform plan` builds Docker images (no push) before planning; `apply` builds + pushes them using your host registry credentials.
+ Terraform runs operate inside `.pltf/<environment_name>/workspace` so the standard `.terraform` cache keeps provider downloads per workspace. `pltf terraform plan` builds Docker images (no push) before planning; `apply` builds + pushes them using your host registry credentials.
 
 ## 3) Add a Service (Postgres + S3 + SNS/SQS + IAM)
 
-The sample `example/service.yaml` references `env.yaml` and shows how a service binds modules/variables/secrets.
+Create `service.yaml` to reference your environment and bind service modules, variables, and secrets.
 
 ```yaml
 apiVersion: platform.io/v1
@@ -138,28 +138,28 @@ This adds:
 - Postgres plus service-scoped DB name.  
 - An S3 bucket named after `layer_name`/`env_name`.  
 - An SNS topic, two SQS queues, and IAM roles wired via `links`.  
-- Variable/secret overrides for `prod`.  
+- Service-scoped variables and secrets.  
 
 Run:
 
 ```bash
-pltf validate        -f example/service.yaml --env prod
-pltf terraform plan  -f example/service.yaml --env prod
-pltf terraform apply -f example/service.yaml --env prod
+pltf validate        -f service.yaml --env prod
+pltf terraform plan  -f service.yaml --env prod
+pltf terraform apply -f service.yaml --env prod
 ```
 
 Inspect outputs/graphs:
 
 ```bash
-pltf terraform output -f example/service.yaml --env prod
-pltf terraform graph  -f example/service.yaml --env prod | dot -Tpng > graph.png
+pltf terraform output -f service.yaml --env prod
+pltf terraform graph  -f service.yaml --env prod | dot -Tpng > graph.png
 ```
 
 ## 4) Cleanup
 
 ```bash
-pltf terraform destroy -f example/service.yaml --env prod
-pltf terraform destroy -f example/env.yaml --env prod
+pltf terraform destroy -f service.yaml --env prod
+pltf terraform destroy -f example/e2e.yaml --env prod
 ```
 
 ## 5) Extend the stack

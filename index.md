@@ -34,6 +34,7 @@ flowchart TB
 ## Quick links
 
 - [Installation](installation.md)
+- [Documentation map](README.md)
 - [Getting Started](getting-started/aws.md)
 - [Specs guide & modules](specs.md)
 - [Platform CLI commands](platform.md)

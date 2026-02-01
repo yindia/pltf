@@ -352,7 +352,7 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../getting-started/aws/">
+        data-slot="button" href="../../concepts/overview/">
         Getting Started
     </a>
     
@@ -360,8 +360,24 @@
     
     
     <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
-        data-slot="button" href="../../cli/pltf/">
-        Platform
+        data-slot="button" href="../../workflows/">
+        Workflows
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../usage/">
+        CLI
+    </a>
+    
+    
+    
+    
+    <a class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg:not([class*='size-'])]:size-4 shrink-0 [&amp;_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50 h-8 rounded-md gap-1.5 px-3 has-[&gt;svg]:px-2.5"
+        data-slot="button" href="../../features/">
+        Features
     </a>
     
     
@@ -678,9 +694,9 @@
 <h2 id="kubeconfig">Kubeconfig</h2>
 <ol>
 <li>Fetch outputs:
-   <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>output<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>&lt;env&gt;<span class="w"> </span>--json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span><span class="s1">&#39;.aws_eks&#39;</span>
+   <div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pltf<span class="w"> </span>terraform<span class="w"> </span>output<span class="w"> </span>-f<span class="w"> </span>env.yaml<span class="w"> </span>-e<span class="w"> </span>&lt;env&gt;<span class="w"> </span>--json
 </span></code></pre></div>
-   Note <code>k8s_cluster_name</code>, <code>k8s_endpoint</code>, and <code>k8s_ca_data</code>.</li>
+   Note <code>k8s_cluster_name</code>, <code>k8s_endpoint</code>, and <code>k8s_ca_data</code> (output names may be prefixed if there are duplicates).</li>
 <li>Update kubeconfig:
    <div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>aws<span class="w"> </span>eks<span class="w"> </span>update-kubeconfig<span class="w"> </span><span class="se">\</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">  </span>--region<span class="w"> </span>&lt;region&gt;<span class="w"> </span><span class="se">\</span>
@@ -712,36 +728,30 @@ Fields:
 - <code>username</code>: friendly alias.
 - <code>groups</code>: Kubernetes RBAC groups (use <code>system:masters</code> for admin).</p>
 <h2 id="granting-access-via-pltf">Granting access via pltf</h2>
-<p>Use <code>admin_arns</code> on <code>aws_k8s_base</code> to inject IAM admins without editing Kubernetes directly:
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">modules</span><span class="p">:</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">aws_k8s_base</span>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="nt">admin_arns</span><span class="p">:</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;arn:aws:iam::123456789012:user/platform-admin&quot;</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;arn:aws:iam::123456789012:role/platform-admin&quot;</span>
-</span></code></pre></div></p>
+<p>pltf does not manage <code>aws-auth</code> by default. Use a custom module or Helm chart to manage RBAC mappings if you want them in code.</p>
 <h2 id="viewing-rbac-bindings">Viewing RBAC bindings</h2>
-<div class="language-bash highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterrolebindings<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.items[] | select(.subjects[0].kind==\&quot;Group\&quot;) | .metadata.name&#39;</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rolebindings<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.items[] | select(.subjects[0].kind==\&quot;Group\&quot;) | .metadata.name&#39;</span>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>kubectl<span class="w"> </span>get<span class="w"> </span>clusterrolebindings<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.items[] | select(.subjects[0].kind==\&quot;Group\&quot;) | .metadata.name&#39;</span>
+</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>kubectl<span class="w"> </span>get<span class="w"> </span>rolebindings<span class="w"> </span>-A<span class="w"> </span>-o<span class="w"> </span>json<span class="w"> </span><span class="p">|</span><span class="w"> </span>jq<span class="w"> </span>-r<span class="w"> </span><span class="s1">&#39;.items[] | select(.subjects[0].kind==\&quot;Group\&quot;) | .metadata.name&#39;</span>
 </span></code></pre></div>
 <p>Example cluster role binding:
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io/v1</span>
-</span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterRoleBinding</span>
-</span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">metadata</span><span class="p">:</span>
-</span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-cluster-role-binding</span>
-</span><span id="__span-5-5"><a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">roleRef</span><span class="p">:</span>
-</span><span id="__span-5-6"><a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="nt">apiGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io</span>
-</span><span id="__span-5-7"><a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterRole</span>
-</span><span id="__span-5-8"><a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system:discovery</span>
-</span><span id="__span-5-9"><a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nt">subjects</span><span class="p">:</span>
-</span><span id="__span-5-10"><a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">apiGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io</span>
-</span><span id="__span-5-11"><a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Group</span>
-</span><span id="__span-5-12"><a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-group</span>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">apiVersion</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io/v1</span>
+</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterRoleBinding</span>
+</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">metadata</span><span class="p">:</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-cluster-role-binding</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nt">roleRef</span><span class="p">:</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="nt">apiGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io</span>
+</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ClusterRole</span>
+</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">system:discovery</span>
+</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nt">subjects</span><span class="p">:</span>
+</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">apiGroup</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">rbac.authorization.k8s.io</span>
+</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">    </span><span class="nt">kind</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Group</span>
+</span><span id="__span-4-12"><a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my-group</span>
 </span></code></pre></div>
 This grants members of <code>my-group</code> the permissions of <code>system:discovery</code> across all namespaces.</p>
 <h2 id="summary">Summary</h2>
 <ul>
 <li>Use <code>aws eks update-kubeconfig</code> with cluster outputs to get access.</li>
-<li>Add IAM admins via <code>admin_arns</code> on <code>aws_k8s_base</code> (maps to <code>system:masters</code>).</li>
+<li>Manage <code>aws-auth</code> via your own Terraform module/Helm chart if you want it codified.</li>
 <li>For custom RBAC, edit <code>aws-auth</code> or create your own role/cluster role bindings.</li>
 </ul>
   </div>
@@ -810,18 +820,6 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
                         
                     </a>
                     
-                    <a class="text-2xl font-medium" href="../../workflows/">
-                        
-                        Terraform Workflows
-                        
-                    </a>
-                    
-                    <a class="text-2xl font-medium" href="../../caching/">
-                        
-                        Image & Caching
-                        
-                    </a>
-                    
                 </div>
             </div>
             
@@ -830,7 +828,7 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
             <div class="flex flex-col gap-8">
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
+                    <div class="text-muted-foreground text-sm font-medium">Docs Map</div>
                     
                 </div>
                 
@@ -839,9 +837,63 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
                     
                     <div class="flex flex-col gap-3">
                         
+                        <a class="text-2xl font-medium" href="../../concepts/overview/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/environment/">
+                            
+                            Environment
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/stack/">
+                            
+                            Stack
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/layer/">
+                            
+                            Service (Layer)
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../concepts/module/">
+                            
+                            Module
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../specs/">
+                            
+                            Specs Guide
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../modules/">
+                            
+                            Modules & Wiring
+                            
+                        </a>
+                        
                         <a class="text-2xl font-medium" href="../../getting-started/aws/">
                             
                             AWS
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/gcp/">
+                            
+                            GCP
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../getting-started/azure/">
+                            
+                            Azure
                             
                         </a>
                         
@@ -850,9 +902,54 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
                 </div>
                 
                 <div class="flex flex-col gap-4">
-                    <div class="text-muted-foreground text-sm font-medium">Platform</div>
+                    <div class="text-muted-foreground text-sm font-medium">Workflows</div>
                     
                     <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../workflows/">
+                            
+                            Terraform Workflows
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-commands/">
+                            
+                            Terraform Commands
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/terraform-generator/">
+                            
+                            Terraform Generator
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../caching/">
+                            
+                            Image & Caching
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">CLI</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../usage/">
+                            
+                            Usage
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../platform/">
+                            
+                            Platform Patterns
+                            
+                        </a>
                         
                         <a class="text-2xl font-medium" href="../../cli/pltf/">
                             
@@ -875,6 +972,81 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
                         <a class="text-2xl font-medium" href="../../cli/pltf_preview/">
                             
                             preview
+                            
+                        </a>
+                        
+                    </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">Features</div>
+                    
+                    <div class="flex flex-col gap-3">
+                        
+                        <a class="text-2xl font-medium" href="../../features/">
+                            
+                            Overview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/profiles/">
+                            
+                            Profiles & Defaults
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/validation/">
+                            
+                            Validation
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/preview/">
+                            
+                            Preview
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/backends/">
+                            
+                            Backends
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/custom-modules/">
+                            
+                            Custom Modules
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/migration-enterprise/">
+                            
+                            Enterprise Migration
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/placeholders/">
+                            
+                            Placeholders & Wiring
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/secrets/">
+                            
+                            Secrets
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/variables/">
+                            
+                            Variables
+                            
+                        </a>
+                        
+                        <a class="text-2xl font-medium" href="../../features/telemetry/">
+                            
+                            Telemetry
                             
                         </a>
                         
@@ -951,6 +1123,11 @@ This grants members of <code>my-group</code> the permissions of <code>system:dis
                         </a>
                         
                     </div>
+                    
+                </div>
+                
+                <div class="flex flex-col gap-4">
+                    <div class="text-muted-foreground text-sm font-medium">GitHub</div>
                     
                 </div>
                 
