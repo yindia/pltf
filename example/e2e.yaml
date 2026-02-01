@@ -10,19 +10,17 @@ metadata:
     cost_center: shared
   stacks:
     - example-eks-stack
-variables:
-  base_domain: "${env_name}.pltf.internal"
-images:
-  - name: platform-tools
-    context: .
-    dockerfile: Dockerfile
-    platforms:
-      - linux/amd64
-      - linux/arm64
-    tags:
-      - ghcr.io/example/${layer_name}:${env_name}
-    buildArgs:
-      ENV: ${env_name}
+# images:
+#   - name: platform-tools
+#     context: .
+#     dockerfile: Dockerfile
+#     platforms:
+#       - linux/amd64
+#       - linux/arm64
+#     tags:
+#       - ghcr.io/example/${layer_name}:${env_name}
+#     buildArgs:
+#       ENV: ${env_name}
 environments:
   dev:
     account: "556169302489"
@@ -33,6 +31,9 @@ environments:
   prod:
     account: "556169302489"
     region: ap-northeast-1
+variables:
+  replica_counts: '{"dev":1,"prod":3}'
+  environment_settings: '{"region":"us-west-2","zones":["us-west-2a","us-west-2b"]}'
 modules:
   - id: nodegroup1
     source: ../modules/aws_nodegroup
@@ -46,7 +47,7 @@ modules:
   - id: s3
     type: aws_s3
     inputs:
-      bucket_name: "pltf-app-${layer_name}-${env_name}"
+      bucket_name: "pltf-app-${var.environment_settings}-${env_name}"
     links:
       readWrite: adminpltfrole
       readWrite: userpltfrole

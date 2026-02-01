@@ -7,7 +7,7 @@ It’s under active development. Pin a release, review generated Terraform, and 
 Terraform output is portable; module coverage today is focused on AWS. GCP/Azure are on the roadmap and can be added via custom modules.
 
 **How do Environment and Service specs relate?**  
-`Service.metadata.ref` points to an Environment file. `envRef` selects the environment entry (e.g., `prod`) and lets you override variables for that service.
+`Service.metadata.ref` points to an Environment file. `envRef` selects the environment entry (e.g., `prod`); variables/secrets live at the top level.
 
 **Can I bring my own modules?**  
 Yes. Add a `module.yaml` with inputs/outputs/schema and set `source: custom`, or point the entry at a git URL so pltf fetches its metadata. The old `modules_root` option is now optional, so you only need it if you want to share a catalog between many specs.
@@ -16,7 +16,7 @@ Yes. Add a `module.yaml` with inputs/outputs/schema and set `source: custom`, or
 No. You can just generate Terraform and run `terraform plan/apply` yourself. The CLI can also run Terraform for you after regeneration to keep code and state aligned.
 
 **Which state backends can I use?**  
-`s3`, `gcs`, or `azurerm` regardless of target cloud. Configure credentials via profiles or env vars just like plain Terraform.
+`s3`, `gcs`, or `azurerm` matching the provider (AWS → S3, GCP → GCS, Azure → Azurerm). Configure credentials via profiles or env vars just like plain Terraform.
 
 **How are secrets handled?**  
 Define secrets at the top level (`secrets:`) in Environment or Service specs. They are rendered as Terraform variables and should be sourced from your secret manager or CI env, not hardcoded.
@@ -25,4 +25,4 @@ Define secrets at the top level (`secrets:`) in Environment or Service specs. Th
 Use `links` to reference other module outputs (e.g., an IAM role ARN for a Helm chart). The generator wires those into Terraform expressions; no manual interpolation needed.
 
 **Where do I start?**  
-Clone the repo and use the samples: `example/env.yaml` and `example/service.yaml`. Run `pltf preview` then `pltf terraform plan --env prod` to see the rendered code and plan.
+Clone the repo and use the sample `example/e2e.yaml`, or follow the [Getting Started](getting-started/aws.md) guide for a service spec. Run `pltf preview` then `pltf terraform plan --env prod` to see the rendered code and plan.

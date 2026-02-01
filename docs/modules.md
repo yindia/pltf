@@ -1,6 +1,6 @@
 # Modules & Wiring
 
-Modules are discovered from a modules root where each module type directory contains a `module.yaml`. The CLI scans custom roots (when provided) and the embedded catalog. Modules marked `source: custom` must be found in your custom root; others fall back to embedded.
+Modules are discovered from a modules root where each module type directory contains a `module.yaml`. The CLI scans custom roots (when provided) and the embedded catalog. Modules marked `source: custom` must be found in your custom root; git/local `source` entries load metadata directly.
 
 ## Wiring rules
 - Inputs auto-wire to outputs with the same name (current scope, or parent env for services).
@@ -15,7 +15,6 @@ name: aws_eks
 type: aws_eks
 provider: aws
 version: 1.0.0
-cluster: true
 description: EKS cluster
 cluster: true
 inputs:
@@ -48,10 +47,9 @@ IAM module contract:
 - Modules that `provide` `iam.policy` must declare output `policy_arn`.
 
 ## Embedded modules (AWS)
-- `aws_base`, `aws_dns`, `aws_eks`, `aws_k8s_base`, `aws_k8s_service`, `aws_nodegroup`
+- `aws_base`, `aws_dns`, `aws_eks`, `aws_nodegroup`, `helm_chart`
 - `aws_postgres`, `aws_mysql`, `aws_redis`, `aws_dynamodb`, `aws_s3`, `aws_ses`, `aws_sns`, `aws_sqs`, `aws_documentdb`
 - `aws_iam_role`, `aws_iam_policy`, `aws_iam_user`
-- `cloudfront_distribution`
 
 GCP/Azure: no bundled modules yet; use custom modules or your own registry. You can target GCP/Azure providers with custom modules and backends.
 

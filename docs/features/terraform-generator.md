@@ -33,7 +33,7 @@ pltf generate -f service.yaml -e prod -o .pltf/example/payments/workspace
 ## Migrate to Terraform
 - Run `pltf generate` (or `pltf terraform plan` to generate+init) for each env/service workspace.
 - Commit the generated directory to VCS if you want to manage TF directly.
-- Backends follow your spec; use `backend.type` (`s3|gcs|azurerm`) to point at your state bucket/container. Workspace mode uses `workspace_key_prefix` (S3/Azure) or `prefix` (GCS).
+- Backends follow your spec; use a provider-compatible `backend.type` (`s3|gcs|azurerm`) to point at your state bucket/container. Workspace mode uses `workspace_key_prefix` (S3/Azure) or `prefix` (GCS).
 
 ## Notes
 - No provider calls during generation; safe to run without credentials.

@@ -23,11 +23,10 @@ EKS does not auto-upgrade clusters. Upgrade one minor version at a time (e.g., 1
 After upgrading, pin the new versions so future applies stay consistent:
 ```yaml
 modules:
-  - type: aws_eks
-    k8s_version: "1.25"
-  - type: aws_nodegroup
-    name: default
-    k8s_version: "1.25"
+  - id: eks
+    type: aws_eks
+    inputs:
+      k8s_version: "1.25"
 ```
 Then:
 ```bash

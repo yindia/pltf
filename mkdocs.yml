@@ -43,27 +43,29 @@ watch:
 copyright: Copyright &copy; 2025 - pltf
 nav:
   - Home: index.md
+  - Docs Map: README.md
   - Installation: installation.md
-  - FAQ: faq.md
-  - GitHub: https://github.com/yindia/pltf
   - Getting Started:
-      - Concepts:
-          - Overview: concepts/overview.md
-          - Environment: concepts/environment.md
-          - Stack: concepts/stack.md
-          - Layer: concepts/layer.md
-      - Module:
-          - Overview: concepts/module.md
-          - Specs Guide: specs.md
-          - Custom Modules: features/custom-modules.md
-          - Modules & Wiring: modules.md
+      - Overview: concepts/overview.md
+      - Environment: concepts/environment.md
+      - Stack: concepts/stack.md
+      - Service (Layer): concepts/layer.md
+      - Module: concepts/module.md
+      - Specs Guide: specs.md
+      - Modules & Wiring: modules.md
       - AWS: getting-started/aws.md
-  - Terraform Workflows: workflows.md
-  - Image & Caching: caching.md
-  - Platform:
+      - GCP: getting-started/gcp.md
+      - Azure: getting-started/azure.md
+  - Workflows:
+      - Terraform Workflows: workflows.md
+      - Terraform Commands: features/terraform-commands.md
+      - Terraform Generator: features/terraform-generator.md
+      - Image & Caching: caching.md
+  - CLI:
+      - Usage: usage.md
+      - Platform Patterns: platform.md
       - pltf: cli/pltf.md
       - generate: cli/pltf_generate.md
-      - lint: cli/pltf_lint.md
       - validate: cli/pltf_validate.md
       - preview: cli/pltf_preview.md
       - terraform:
@@ -79,17 +81,24 @@ nav:
         - list: cli/pltf_module_list.md
         - get: cli/pltf_module_get.md
         - init: cli/pltf_module_init.md
-      - Features:
-        - Overview: features.md
-        - Profiles & Defaults: features/profiles.md
-        - Validation: features/validation.md
-        - Backends: features/backends.md
-        - Custom Modules: features/custom-modules.md
-        - Enterprise Migration: features/migration-enterprise.md
-        - Placeholders & Wiring: features/placeholders.md
-        - Secrets: features/secrets.md
-        - Variables: features/variables.md
-        - Telemetry: features/telemetry.md
+      - completion:
+        - Overview: cli/pltf_completion.md
+        - bash: cli/pltf_completion_bash.md
+        - fish: cli/pltf_completion_fish.md
+        - zsh: cli/pltf_completion_zsh.md
+        - powershell: cli/pltf_completion_powershell.md
+  - Features:
+      - Overview: features.md
+      - Profiles & Defaults: features/profiles.md
+      - Validation: features/validation.md
+      - Preview: features/preview.md
+      - Backends: features/backends.md
+      - Custom Modules: features/custom-modules.md
+      - Enterprise Migration: features/migration-enterprise.md
+      - Placeholders & Wiring: features/placeholders.md
+      - Secrets: features/secrets.md
+      - Variables: features/variables.md
+      - Telemetry: features/telemetry.md
   - References:
       - AWS:
           - Overview: references/aws.md
@@ -113,6 +122,7 @@ nav:
         - aws_ses: references/modules/aws_ses.md
         - aws_sns: references/modules/aws_sns.md
         - aws_sqs: references/modules/aws_sqs.md
+        - helm_chart: references/modules/helm_chart.md
   - Examples:
       - ML Cluster: example/ml.md
       - Full Stack application: example/fsapp.md
@@ -121,4 +131,6 @@ nav:
       - AWS Architecture: security/aws.md
       - Kubernetes Architecture: security/kubernetes.md
       - Compliance: security/compliance.md
+  - FAQ: faq.md
+  - GitHub: https://github.com/yindia/pltf
 docs_dir: docs

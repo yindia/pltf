@@ -66,13 +66,9 @@ environments:
   dev:
     account: "111111111111"
     region: us-east-1
-    variables:
-      log_bucket: dev-logs
   prod:
     account: "222222222222"
     region: us-west-2
-    secrets:
-      db_password: {}
 images:
   - name: platform-tools
     context: ./images/tools
@@ -86,8 +82,8 @@ images:
       - linux/arm64
 ```
 Notes:
-- `environments` describe cloud/account/region entries and can override `variables`/`secrets` per entry.
-- `modules` merge with stacks (referenced via `metadata.stacks`), `id` and `type` are mandatory, and `inputs`/`links` work the same as Terraform module blocks.
+- `environments` describe cloud/account/region entries; variables and secrets are defined at the top level and applied to each env (per-env overrides are not supported).
+- `modules` merge with stacks (referenced via `metadata.stacks`), `id` is mandatory, and `type` is required unless `source` is a git/local ref. `inputs`/`links` work the same as Terraform module blocks.
 - Backends (S3/GCS/Azure) stay stable after generation; when you change backend config rerun `terraform init -reconfigure`.
 - `images` describe Docker builds. Plan builds them using Dagger cache, apply builds + pushes tagged images using host registry credentials, and destroy skips the image step. Omitting `platforms` uses the host OS/ARCH.
 
@@ -101,11 +97,7 @@ metadata:
   ref: ./env.yaml
   envRef:
     dev: {}
-    prod:
-      variables:
-        replica_count: 3
-      secrets:
-        api_key: {}
+    prod: {}
 modules:
   - id: api
     type: helm_chart
@@ -128,8 +120,8 @@ images:
       - ghcr.io/acme/payments:${env_name}
 ```
 Notes:
-- `metadata.ref` points to the environment spec; `metadata.envRef` lists every env the service runs in, optionally overriding `variables`, `secrets`, or even `images` per env.
-- Services reuse the generated workspace of their referenced environment, so Terraform runs share state and graph data.
+- `metadata.ref` points to the environment spec; `metadata.envRef` lists every env the service runs in. Variables/secrets are defined at the top level.
+- Services render their own workspace but read environment outputs via remote state.
 - Modules in services can reference environment outputs via `${parent.<output>}` templates.
 
 ## Image config
@@ -159,7 +151,7 @@ Notes:
 
 ## Secrets vs. locals
 - Secrets remain Terraform variables (`var.<name>`).
-- Non-secret inputs become locals; `var.<name>` resolves to locals unless marked secret explicitly.
+- Non-secret inputs are also available as locals for wiring convenience; `var.<name>` is always valid.
 
 ## Templated references
 - `${module.<module>.<output>}` — module output in the current scope.  

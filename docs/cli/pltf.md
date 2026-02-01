@@ -19,12 +19,12 @@ pltf [flags]
 
 ```
 # Validate configs
-pltf env validate --file env.yaml
-pltf service validate --file service.yaml
+pltf validate --file env.yaml --env dev
+pltf validate --file service.yaml --env dev
 
 # Generate Terraform for dev
-pltf env generate --file env.yaml --env dev
-pltf service generate --file service.yaml --env dev
+pltf generate --file env.yaml --env dev
+pltf generate --file service.yaml --env dev
 
 # Scaffold module metadata for an existing TF module
 pltf module init --path ./modules/aws_eks

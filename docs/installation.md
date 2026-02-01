@@ -33,7 +33,7 @@ go build -o bin/pltf main.go
 ## Verify the install
 ```bash
 pltf --help
-pltf validate -f example/env.yaml
+pltf validate -f example/e2e.yaml -e dev
 ```
 
 ## Upgrade
