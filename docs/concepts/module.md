@@ -100,11 +100,11 @@ outputs:
 
 ## Definition
 Modules have:
-- a **type** (e.g., `aws_eks`, `aws_s3`)
-- an optional **id/name** (so you can include multiple of the same type)
+- a required **id** (unique within the stack)
+- a **type** (e.g., `aws_eks`, `aws_s3`), required unless `source` points to a git/local module with `module.yaml`
 - optional **inputs** (configuration)
 - optional **links** (to consume other module outputs)
-- optional **source** (`custom` forces lookup in your custom modules root)
+- optional **source** (`custom` forces lookup in your custom modules root; git/paths load metadata directly)
 
 Modules are defined inside the `modules` section of an Environment or Service.
 
@@ -156,7 +156,7 @@ modules:
 ```
 
 ### Custom modules
-Generate `module.yaml` for your own Terraform module via `pltf module init --path <module_dir> [--force]`. Use `source: custom` in specs and provide `--modules` (or profile `modules_root`) to load them.
+Generate `module.yaml` for your own Terraform module via `pltf module init --path <module_dir> [--force]`. Use `source: custom` in specs, point at a shared catalog via `--modules` (or profile defaults) if you wish, or provide a git URL for the new per-module workflow to fetch metadata automatically.
 
 ### Terraform compatible
 pltf uses Terraform under the hood, so you’re never locked in. Extend with your own Terraform or take the generated code with you.

@@ -24,7 +24,7 @@ flowchart TB
 </div>
 
 ## Definition (example)
-Based on `example/env.yaml`:
+Based on `example/e2e.yaml`:
 
 ```yaml
 apiVersion: platform.io/v1
@@ -72,9 +72,9 @@ modules:
 ## Key points
 
 - **Metadata**: name/org/provider; labels become tags.
-- **environments**: per-env account/region (no per-env secrets); select with `--env prod`.
+- **environments**: per-env account/region; variables/secrets are top-level and applied to each env; select with `--env prod`.
 - **modules**: shared building blocks. Use the embedded catalog or `source: custom` with your module root.
-- **Backends**: choose `s3|gcs|azurerm` independently of provider; use profiles for cross-account S3 (set in profiles or flags).
+- **Backends**: choose a provider-compatible backend (`s3|gcs|azurerm`); use profiles for cross-account S3 (set in profiles or flags).
 
 ## Outputs and linking
 Environment module outputs are addressable by Services via links or `${module.<id>.<output>}`. This keeps Services thin while reusing the foundation.

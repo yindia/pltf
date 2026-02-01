@@ -88,22 +88,30 @@ func ResolveGitRef(ref, baseDir string) (string, error) {
 }
 
 func isGitRef(ref string) bool {
-	u, err := url.Parse(ref)
+	normalized, err := normalizeGitRef(ref)
 	if err != nil {
 		return false
 	}
-	if u.Scheme != "http" && u.Scheme != "https" {
+	u, err := url.Parse(normalized)
+	if err != nil {
+		return false
+	}
+	if u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "ssh" {
 		return false
 	}
 	return u.Host != ""
 }
 
 func parseGitRef(ref string) (repoURL, filePath, gitRef string, err error) {
-	u, err := url.Parse(ref)
+	normalized, err := normalizeGitRef(ref)
 	if err != nil {
 		return "", "", "", fmt.Errorf("invalid git ref %q: %w", ref, err)
 	}
-	if u.Scheme != "http" && u.Scheme != "https" {
+	u, err := url.Parse(normalized)
+	if err != nil {
+		return "", "", "", fmt.Errorf("invalid git ref %q: %w", ref, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" && u.Scheme != "ssh" {
 		return "", "", "", fmt.Errorf("unsupported git scheme %q in %s", u.Scheme, ref)
 	}
 	pathParts := strings.SplitN(u.Path, "//", 2)

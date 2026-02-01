@@ -231,30 +231,6 @@ func ResolveModulesRootFromRef(ref string) (string, error) {
 	return resolved, nil
 }
 
-func SelectModuleMeta(module config.Module, embeddedMetas, customMetas map[string]*config.ModuleMetadata, embeddedRoot string) (*config.ModuleMetadata, error) {
-	if strings.EqualFold(module.Source, "custom") {
-		if len(customMetas) == 0 {
-			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but no custom modules root provided", module.ID, module.Type)
-		}
-		meta, ok := customMetas[module.Type]
-		if !ok {
-			return nil, fmt.Errorf("module %q (type=%s) marked source=custom but metadata not found", module.ID, module.Type)
-		}
-		return meta, nil
-	}
-
-	meta, ok := embeddedMetas[module.Type]
-	if !ok {
-		if len(customMetas) > 0 {
-			if alt, ok := customMetas[module.Type]; ok {
-				return alt, nil
-			}
-		}
-		return nil, fmt.Errorf("module %q type %q not found in embedded modules (%s); use source: custom with --modules", module.ID, module.Type, embeddedRoot)
-	}
-	return meta, nil
-}
-
 func RunCmdOutputWithIO(dir, name string, stderr io.Writer, args ...string) (string, error) {
 	return runner.Default.RunOutput(runner.Cmd{
 		Name:   name,

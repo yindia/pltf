@@ -6,15 +6,15 @@ This page walks through the most common CLI flows, CI/CD patterns, and how `pltf
 
 ```bash
 pltf validate -f env.yaml -e prod
-pltf preview  -f example/service.yaml -e prod
+pltf preview  -f example/e2e.yaml -e prod
 pltf generate -f service.yaml -e prod -m ./modules --out .pltf/example/payments/workspace
 ```
 
 - `validate` checks spec structure, references, and wiring before any generation. It picks the environment via `--env`, `PLTF_DEFAULT_ENV`, or the profile `default_env`.  
 - `preview` surfaces providers, backend, labels, and modules without invoking Terraform.  
 - `generate` renders workspace-ready Terraform—file inputs are copied into the output tree, and `--var/-v` overrides merge over spec vars.  
-- `--modules/-m` selects a custom module root (local path or git ref); modules tagged `source: custom` resolve only from the custom root.  
-- `--out/-o` defaults to `.pltf/<env>/workspace` or `.pltf/<env>/<service>/workspace`.
+- `--modules/-m` selects a custom module root (local path or git ref); modules tagged `source: custom` resolve only from the custom root, while git/local `source` entries bypass it.  
+- `--out/-o` defaults to `.pltf/<environment_name>/workspace` or `.pltf/<environment_name>/<service_name>/workspace`.
 
 ## Terraform Commands
 
@@ -27,9 +27,9 @@ pltf terraform force-unlock -f env.yaml -e prod --lock-id=<id>
 ```
 
 - Every Terraform helper runs locally in the generated workspace, picks up credentials (`~/.aws`, `~/.docker`, etc.) from the host, and benefits from the plain `.terraform` cache Terraform maintains inside the workspace.
-- Plan/apply/destroy all run `terraform plan` first and keep `.pltf-plan.tfplan` plus optional tfsec/cost summaries or Rover output.  
+- Plan/apply/destroy run `terraform plan` first and keep `.pltf-plan.tfplan` plus optional tfsec/cost summaries or Rover output for audit trails.  
 - Apply/destroy append `-auto-approve` so there’s no interactive approval.  
-- `plan`/`destroy` build images without pushing; `apply` builds and then pushes with the host registry credentials.  
+- `plan` builds images without pushing; `apply` builds and then pushes with the host registry credentials; `destroy` skips image builds.  
 ### Common Terraform flags
 
 - `--target/-t`, `--parallelism/-p`, `--lock/-l`, `--lock-timeout/-T`, `--no-color/-C`, `--input/-i`, `--refresh/-r`, `--plan-file/-P`, `--detailed-exitcode/-d`, `--json/-j`.
@@ -42,17 +42,17 @@ pltf module get aws_eks [-m ./modules] [-o table|json|yaml]
 pltf module init --path ./modules/aws_eks [--force]
 ```
 
-- Lists modules from embedded and custom roots; `source: custom` modules resolve only from your `--modules` path or profile `modules_root`.  
+- Lists modules from embedded and custom roots; `source: custom` modules resolve only from your shared catalog (via `--modules` or profile defaults), but you can now point modules directly at git URLs so `modules_root` is optional.
 - `module init` emits `module.yaml` from an existing Terraform module directory (`--force` overwrites).
 
 ## Profiles & Defaults
 
-- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) sets `modules_root`, `default_env`, `default_out`, and telemetry controls.  
+- `~/.pltf/profile.yaml` (or `PLTF_PROFILE`) sets `default_env`, `default_out`, and telemetry controls; the old `modules_root` setting is no longer required unless you still rely on a shared catalog.
 - `PLTF_DEFAULT_ENV` is also respected when choosing the environment.
 
 ## Backends
 
-- `backend.type` is independent of provider (`s3`, `gcs`, `azurerm`...).  
+- `backend.type` must be compatible with the provider (`s3` for AWS, `gcs` for GCP, `azurerm` for Azure).  
 - Optional `backend.profile`, `region`, `container`, and `resource_group` support cross-account S3 or Azure storage.
 
 ## CI/CD integration
@@ -69,7 +69,7 @@ pltf module init --path ./modules/aws_eks [--force]
 ```yaml
 - name: Terraform plan
   run: |
-    pltf terraform plan -f example/env.yaml --env ${{ matrix.env }}
+    pltf terraform plan -f example/e2e.yaml --env ${{ matrix.env }}
 ```
 
 ### Deploy on branch/tag
@@ -82,7 +82,7 @@ pltf module init --path ./modules/aws_eks [--force]
 - name: Apply
   if: github.event_name == 'push'
   run: |
-    pltf terraform apply -f example/env.yaml --env ${{ steps.select.outputs.env }}
+    pltf terraform apply -f example/e2e.yaml --env ${{ steps.select.outputs.env }}
 ```
 
 > Tips: swap AWS env vars with GCP/Azure equivalents and run `pltf terraform plan` on service specs when verifying app deployments. Use `OPENAI_API_KEY` to automatically post plan summaries/AI critiques in PR comments.

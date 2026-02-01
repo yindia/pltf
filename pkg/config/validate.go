@@ -175,6 +175,9 @@ func validateModulesNoLinks(mods []Module, context string) (map[string]struct{},
 			return nil, fmt.Errorf("module id is required%s", contextSuffix(context))
 		}
 		if m.Type == "" {
+			if IsGitSource(m.Source) || IsLocalSource(m.Source) {
+				continue
+			}
 			return nil, fmt.Errorf("module %q type is required%s", m.ID, contextSuffix(context))
 		}
 		if _, exists := ids[m.ID]; exists {
