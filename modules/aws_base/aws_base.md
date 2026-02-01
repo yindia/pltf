@@ -18,8 +18,8 @@ To use an existing VPC, set `vpc_id`, `public_subnet_ids`, and `private_subnet_i
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider_aws) | 6.27.0 |
-| <a name="provider_random"></a> [random](#provider_random) | 3.7.2 |
+| <a name="provider_aws"></a> [aws](#provider_aws) | n/a |
+| <a name="provider_random"></a> [random](#provider_random) | n/a |
 
 #### Modules
 
@@ -75,10 +75,13 @@ No modules.
 | <a name="input_env_name"></a> [env_name](#input_env_name) | Env name | `string` |
 | <a name="input_layer_name"></a> [layer_name](#input_layer_name) | Layer name | `string` |
 | <a name="input_module_name"></a> [module_name](#input_module_name) | Module name | `string` |
+| <a name="input_cluster_name"></a> [cluster_name](#input_cluster_name) | Cluster name used for Kubernetes tagging | `string` |
+| <a name="input_enable_karpenter"></a> [enable_karpenter](#input_enable_karpenter) | Whether to tag subnets for Karpenter discovery | `bool` |
 | <a name="input_private_ipv4_cidr_blocks"></a> [private_ipv4_cidr_blocks](#input_private_ipv4_cidr_blocks) | Cidr blocks for private subnets. One for each desired AZ | `list(string)` |
 | <a name="input_private_subnet_ids"></a> [private_subnet_ids](#input_private_subnet_ids) | List of pre-existing private subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set. | `list(string)` |
 | <a name="input_public_ipv4_cidr_blocks"></a> [public_ipv4_cidr_blocks](#input_public_ipv4_cidr_blocks) | Cidr blocks for public subnets. One for each desired AZ | `list(string)` |
 | <a name="input_public_subnet_ids"></a> [public_subnet_ids](#input_public_subnet_ids) | List of pre-existing public subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set. | `list(string)` |
+| <a name="input_public_subnet_map_public_ip_on_launch"></a> [public_subnet_map_public_ip_on_launch](#input_public_subnet_map_public_ip_on_launch) | Whether instances launched in public subnets receive a public IP by default. | `bool` |
 | <a name="input_total_ipv4_cidr_block"></a> [total_ipv4_cidr_block](#input_total_ipv4_cidr_block) | Cidr block to reserve for whole vpc | `string` |
 | <a name="input_vpc_id"></a> [vpc_id](#input_vpc_id) | The ID of an pre-existing VPC to use instead of creating a new VPC for pltf | `string` |
 | <a name="input_vpc_log_retention"></a> [vpc_log_retention](#input_vpc_log_retention) | n/a | `number` |
