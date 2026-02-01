@@ -1,0 +1,220 @@
+name: gcp_k8s_service
+type: gcp_k8s_service
+provider: gcp
+version: 1.0.0
+capabilities:
+    accepts:
+        - secret
+resources:
+    - google_project_iam_member.project
+    - google_service_account.k8s_service
+    - google_service_account_iam_binding.trust_k8s_workload_idu
+    - google_storage_bucket_iam_member.bucket_get
+    - google_storage_bucket_iam_member.bucket_viewer
+    - google_storage_bucket_iam_member.viewer
+    - helm_release.k8s-service
+    - random_string.suffix
+data:
+    - data.google_client_config.current
+    - data.google_container_registry_repository.root
+inputs:
+    - default: []
+      name: additional_iam_roles
+      required: false
+    - name: args
+      required: true
+      type: list(string)
+    - default: 80
+      description: Percentage of requested cpu after which autoscaling kicks in
+      name: autoscaling_target_cpu_percentage
+      required: false
+    - default: 80
+      description: Percentage of requested memory after which autoscaling kicks in
+      name: autoscaling_target_mem_percentage
+      required: false
+    - name: commands
+      required: true
+      type: list(string)
+    - default: null
+      name: consistent_hash
+      required: false
+      type: string
+    - default: []
+      name: cron_jobs
+      required: false
+    - default: null
+      description: Digest of image to be deployed
+      name: digest
+      required: false
+      type: string
+    - default: ""
+      name: domain
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: []
+      description: Environment variables to pass to the container
+      name: env_vars
+      required: false
+      type: |-
+        list(object({
+            name  = string
+            value = string
+          }))
+    - name: healthcheck_command
+      required: true
+      type: list(string)
+    - default: null
+      name: healthcheck_path
+      required: false
+      type: string
+    - default: null
+      description: The port that exposes an HTTP interface
+      name: http_port
+      required: false
+      type: any
+    - description: External Image to be deployed
+      name: image
+      required: true
+      type: string
+    - default: {}
+      name: ingress_extra_annotations
+      required: false
+      type: map(string)
+    - default: 30
+      name: initial_liveness_delay
+      required: false
+      type: number
+    - default: 30
+      name: initial_readiness_delay
+      required: false
+      type: number
+    - default: false
+      name: keep_path_prefix
+      required: false
+      type: bool
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: []
+      name: link_secrets
+      required: false
+      type: list(map(string))
+    - default: null
+      name: links
+      required: false
+    - name: liveness_probe_command
+      required: true
+      type: list(string)
+    - default: null
+      description: Url path for liveness probe
+      name: liveness_probe_path
+      required: false
+      type: string
+    - default: 3
+      description: Max value for HPA autoscaling
+      name: max_containers
+      required: false
+      type: string
+    - name: max_history
+      required: true
+      type: number
+    - default: 1
+      description: Min value for HPA autoscaling
+      name: min_containers
+      required: false
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: []
+      name: persistent_storage
+      required: false
+      type: list(map(string))
+    - default: {}
+      description: values to add to the pod annotations for the k8s-service pods
+      name: pod_annotations
+      required: false
+      type: map(string)
+    - name: pod_labels
+      required: true
+      type: map(string)
+    - description: Ports to be exposed
+      name: ports
+      required: true
+      type: list(any)
+    - default: null
+      description: The port that is used for health probes
+      name: probe_port
+      required: false
+      type: any
+    - default: []
+      name: public_uri
+      required: false
+      type: list(string)
+    - default: []
+      name: read_buckets
+      required: false
+      type: list(string)
+    - name: readiness_probe_command
+      required: true
+      type: list(string)
+    - default: null
+      description: Url path for readiness probe
+      name: readiness_probe_path
+      required: false
+      type: string
+    - name: resource_limits
+      required: true
+      type: map(any)
+    - default:
+        cpu: 100
+        memory: 128
+      name: resource_request
+      required: false
+      type: map(any)
+    - default: null
+      name: secrets
+      required: false
+    - default: {}
+      description: Annotations to add to the service resource
+      name: service_annotations
+      required: false
+      type: map(string)
+    - default: false
+      name: sticky_session
+      required: false
+    - default: 86400
+      name: sticky_session_max_age
+      required: false
+    - default: null
+      description: Tag of image to be deployed
+      name: tag
+      required: false
+      type: string
+    - default: 300
+      name: timeout
+      required: false
+      type: number
+    - default: []
+      name: tolerations
+      required: false
+      type: list(map(string))
+    - default: []
+      name: write_buckets
+      required: false
+      type: list(string)
+outputs:
+    - name: current_digest
+      type: string
+    - name: current_image
+      type: string
+    - name: current_tag
+      type: string
+    - name: docker_repo_url
+      type: string

@@ -1,0 +1,72 @@
+name: gcp_base
+type: gcp_base
+provider: gcp
+version: 1.0.0
+resources:
+    - google_compute_address.address
+    - google_compute_firewall.firewall
+    - google_compute_firewall.k8s_extra_rules
+    - google_compute_global_address.private_ip_alloc
+    - google_compute_network.vpc
+    - google_compute_route.default
+    - google_compute_router.router
+    - google_compute_router_nat.nat
+    - google_compute_subnetwork.project_subnet
+    - google_container_registry.registry
+    - google_kms_crypto_key.key
+    - google_kms_crypto_key_iam_member.gcs
+    - google_kms_crypto_key_iam_member.gke
+    - google_kms_key_ring.keyring
+    - google_secret_manager_secret.kms_secret
+    - google_secret_manager_secret_version.secret-version-basic
+    - google_service_networking_connection.private_services
+    - random_id.key_suffix
+data:
+    - data.google_client_config.current
+    - data.google_project.current
+    - data.google_storage_project_service_account.gcs_account
+inputs:
+    - default: 10.0.32.0/19
+      name: cluster_ipv4_cidr_block
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: 10.0.80.0/28
+      name: k8s_master_ipv4_cidr_block
+      required: false
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 10.0.0.0/19
+      description: Cidr block for private subnet. Don't need to worry about AZs in GCP
+      name: private_ipv4_cidr_block
+      required: false
+      type: string
+    - default: 10.0.64.0/20
+      name: services_ipv4_cidr_block
+      required: false
+      type: string
+outputs:
+    - name: k8s_master_ipv4_cidr_block
+      type: string
+    - name: kms_account_key_id
+      type: string
+    - name: private_subnet_id
+      type: string
+    - name: private_subnet_self_link
+      type: string
+    - name: public_nat_ips
+      type: string
+    - name: vpc_id
+      type: string
+    - name: vpc_self_link
+      type: string

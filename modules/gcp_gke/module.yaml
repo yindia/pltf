@@ -1,0 +1,78 @@
+name: gcp_gke
+type: gcp_gke
+provider: gcp
+version: 1.0.0
+resources:
+    - google_container_cluster.primary
+    - google_container_node_pool.default
+    - google_project_iam_member.gke_node_log_writer
+    - google_project_iam_member.gke_node_metric_writer
+    - google_project_iam_member.gke_node_monitoring_viewer
+    - google_project_iam_member.gke_node_stackdriver_writer
+    - google_service_account.gke_node
+    - google_storage_bucket_iam_member.viewer
+    - random_string.node_group_hash
+data:
+    - data.google_client_config.current
+    - data.google_kms_crypto_key.kms
+    - data.google_kms_key_ring.key_ring
+    - data.google_secret_manager_secret_version.kms_suffix
+inputs:
+    - name: cluster_name
+      required: true
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: REGULAR
+      name: gke_channel
+      required: false
+      type: string
+    - name: k8s_master_ipv4_cidr_block
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 5
+      name: max_nodes
+      required: false
+      type: number
+    - default: 1
+      name: min_nodes
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 20
+      name: node_disk_size
+      required: false
+      type: number
+    - default: n2-highcpu-4
+      name: node_instance_type
+      required: false
+      type: string
+    - name: node_zone_names
+      required: true
+      type: list(string)
+    - default: false
+      name: preemptible
+      required: false
+      type: bool
+    - name: private_subnet_self_link
+      required: true
+      type: string
+    - name: vpc_self_link
+      required: true
+      type: string
+outputs:
+    - name: k8s_ca_data
+      type: string
+    - name: k8s_cluster_name
+      type: string
+    - name: k8s_endpoint
+      type: string

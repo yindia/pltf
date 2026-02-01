@@ -1128,7 +1128,47 @@ func (g *Generator) applyAugmentations(m config.Module) config.Module {
 		m.Inputs["kubernetes_trusts"] = list
 	}
 
+	if len(aug.ReadBuckets) > 0 {
+		m.Inputs["read_buckets"] = mergeStringInputs(m.Inputs["read_buckets"], aug.ReadBuckets)
+	}
+	if len(aug.WriteBuckets) > 0 {
+		m.Inputs["write_buckets"] = mergeStringInputs(m.Inputs["write_buckets"], aug.WriteBuckets)
+	}
+
 	return m
+}
+
+func mergeStringInputs(existing interface{}, extra []string) []string {
+	var out []string
+	seen := map[string]struct{}{}
+	add := func(val string) {
+		if strings.TrimSpace(val) == "" {
+			return
+		}
+		if _, ok := seen[val]; ok {
+			return
+		}
+		seen[val] = struct{}{}
+		out = append(out, val)
+	}
+
+	switch v := existing.(type) {
+	case []string:
+		for _, item := range v {
+			add(item)
+		}
+	case []interface{}:
+		for _, item := range v {
+			if s, ok := item.(string); ok {
+				add(s)
+			}
+		}
+	}
+
+	for _, item := range extra {
+		add(item)
+	}
+	return out
 }
 
 func (g *Generator) replaceIntrinsicPlaceholders(val string, replaceEnvLayer bool) string {

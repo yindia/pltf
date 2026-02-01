@@ -23,6 +23,8 @@ type Context struct {
 type Augmentation struct {
 	IamPolicy        map[string]interface{}
 	KubernetesTrusts []map[string]interface{}
+	ReadBuckets      []string
+	WriteBuckets     []string
 	SourceModule     config.Module
 }
 
@@ -100,6 +102,13 @@ func mergeAugmentation(existing, next Augmentation) Augmentation {
 
 	if len(next.KubernetesTrusts) > 0 {
 		merged.KubernetesTrusts = append(merged.KubernetesTrusts, next.KubernetesTrusts...)
+	}
+
+	if len(next.ReadBuckets) > 0 {
+		merged.ReadBuckets = append(merged.ReadBuckets, next.ReadBuckets...)
+	}
+	if len(next.WriteBuckets) > 0 {
+		merged.WriteBuckets = append(merged.WriteBuckets, next.WriteBuckets...)
 	}
 
 	if merged.SourceModule.ID == "" {
