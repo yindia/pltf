@@ -47,7 +47,7 @@ modules:
   - id: s3
     type: aws_s3
     inputs:
-      bucket_name: "pltf-app-${var.env_name}-${env_name}"
+      bucket_name: "pltf-app-${env_name}"
     links:
       readWrite: adminpltfrole
       readWrite: userpltfrole
