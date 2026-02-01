@@ -104,6 +104,10 @@ nav:
           - Overview: references/aws.md
           - EKS Access: references/aws_eks_access.md
           - EKS Upgrade: references/aws_eks_upgrade.md
+      - GCP:
+          - Overview: references/gcp.md
+          - GKE Access: references/gcp_gke_access.md
+          - GKE Upgrade: references/gcp_gke_upgrade.md
   - Modules:
       - AWS:
         - aws_base: references/modules/aws_base.md
@@ -123,6 +127,17 @@ nav:
         - aws_sns: references/modules/aws_sns.md
         - aws_sqs: references/modules/aws_sqs.md
         - helm_chart: references/modules/helm_chart.md
+      - GCP:
+        - gcp_base: references/modules/gcp_base.md
+        - gcp_dns: references/modules/gcp_dns.md
+        - gcp_gcs: references/modules/gcp_gcs.md
+        - gcp_gke: references/modules/gcp_gke.md
+        - gcp_k8s_service: references/modules/gcp_k8s_service.md
+        - gcp_mysql: references/modules/gcp_mysql.md
+        - gcp_nodepool: references/modules/gcp_nodepool.md
+        - gcp_postgres: references/modules/gcp_postgres.md
+        - gcp_redis: references/modules/gcp_redis.md
+        - gcp_service_account: references/modules/gcp_service_account.md
   - Examples:
       - ML Cluster: example/ml.md
       - Full Stack application: example/fsapp.md
