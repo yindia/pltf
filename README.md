@@ -1,14 +1,37 @@
-# pltf CLI 🚀
+# Pltf
 
-pltf (Platform Tools) turns high-level infrastructure intent into ready-to-run Terraform workspaces with sensible defaults, inline validation, and repeatable security/cost scans. Its Kubernetes-native workflow (EKS, Helm, charts) keeps workload definitions aligned with k8s best practices while still relying on the host `terraform` binary so you never trade portability for automation.
+Pltf is a new kind of Infrastructure-as-Code framework built for fast-moving startups. It lets teams work with high-level concepts like microservices, environments, and databases, instead of low-level configuration such as VPC, IAM, ELB, or Kubernetes.
 
-### Quick highlights
+We've always been frustrated by the amount of manual effort required to manage infrastructure. We strongly believe in developer productivity, and empowering engineers has been our mission for the past few years.
 
-- **Spec-first automation** – define reusable `Stack`, `Environment`, and `Service` specs to capture clusters, backends, modules, providers, and secrets instead of hand-editing Terraform from scratch.
-- **Terraform-native runners** – `pltf terraform …` renders the workspace, builds declared Docker images through Dagger when required, then runs the host `terraform` binary with reusable provider caches and `-auto-approve` for applies/destroys.
-- **Image-aware execution** – multi-arch Docker images in specs reuse a shared Dagger cache; plan builds the artifacts once and apply both builds and pushes registered tags.
-- **Bring-your-own modules** – reference built-in module types or point to your own Git repo (`https://…` or `git@…`) and pltf will clone, cache, and wire it without needing a global `modules_root`.
-- **Cost/security guardrails** – `pltf terraform plan` streams tfsec/Infracost/Rover summaries (with problem lists) so issues surface before apply.
+With Pltf, we're reimagining how infrastructure should be managed in modern cloud environments. Pltf enables anyone to build automated, scalable, and secure infrastructure across AWS, GCP, and Azure. Our early users save countless hours every week and are able to scale their companies with minimal investment in DevOps.
+
+Pltf gives you:
+
+- SOC2 compliance from day one
+- AWS, GCP, and Azure support
+- Continuous deployment
+- Hardened network and security configurations
+- Support for multiple environments
+- Built-in auto-scaling and high availability (HA)
+- Support for spot instances
+- Zero lock-in
+- Out-of-the-box wiring between modules
+- Out-of-the-box provider management
+- Bring-your-own modules
+- Out-of-the-box support for tfsec, tflint, infracost, and rover (https://github.com/yindia/rover)
+
+## How it works
+
+The idea is simple:
+
+1. Platform teams define the core infrastructure using either their own modules or existing CLI modules.
+2. Application teams deploy services on top of these base environments using higher-level abstractions.
+3. Services become layered components within the Pltf ecosystem.
+
+Our CLI reads these environments, services, and stacks to generate Terraform automatically. Once generated, teams can either commit the Terraform code or use our CLI to run Terraform commands directly.
+
+In addition, Pltf integrates with infracost, tfsec, and tflint, and provides an AI-powered summary of the plan and risk assessment directly in pull requests.
 
 
 ## Spec foundations

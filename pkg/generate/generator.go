@@ -426,6 +426,12 @@ func (g *Generator) assertSafeOutDir() error {
 	if cleaned == "." || cleaned == string(filepath.Separator) {
 		return fmt.Errorf("refusing to operate on unsafe output directory %q", cleaned)
 	}
+	if vol := filepath.VolumeName(cleaned); vol != "" {
+		tail := strings.TrimPrefix(cleaned, vol)
+		if tail == "" || tail == string(filepath.Separator) {
+			return fmt.Errorf("refusing to operate on unsafe output directory %q", cleaned)
+		}
+	}
 	return nil
 }
 

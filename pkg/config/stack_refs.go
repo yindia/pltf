@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"pltf/stacks"
@@ -28,7 +27,7 @@ func looksLikeStackName(ref string) bool {
 	if strings.Contains(ref, "://") {
 		return false
 	}
-	if strings.Contains(ref, string(filepath.Separator)) {
+	if strings.ContainsAny(ref, "/\\") {
 		return false
 	}
 	if strings.HasSuffix(ref, ".yaml") || strings.HasSuffix(ref, ".yml") {
