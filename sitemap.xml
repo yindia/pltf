@@ -269,6 +269,10 @@
          <lastmod>2026-02-01</lastmod>
     </url>
     <url>
+         <loc>https://yindia.github.io/pltf/references/modules/aws_k8s_service/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
          <loc>https://yindia.github.io/pltf/references/modules/aws_mysql/</loc>
          <lastmod>2026-02-01</lastmod>
     </url>
@@ -298,6 +302,46 @@
     </url>
     <url>
          <loc>https://yindia.github.io/pltf/references/modules/aws_sqs/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_base/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_dns/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_gcs/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_gke/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_k8s_service/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_mysql/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_nodepool/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_postgres/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_redis/</loc>
+         <lastmod>2026-02-01</lastmod>
+    </url>
+    <url>
+         <loc>https://yindia.github.io/pltf/references/modules/gcp_service_account/</loc>
          <lastmod>2026-02-01</lastmod>
     </url>
     <url>

@@ -951,11 +951,11 @@
 <tbody>
 <tr>
 <td><a name="provider_aws"></a> <a href="#provider_aws">aws</a></td>
-<td>6.27.0</td>
+<td>n/a</td>
 </tr>
 <tr>
 <td><a name="provider_random"></a> <a href="#provider_random">random</a></td>
-<td>3.7.2</td>
+<td>n/a</td>
 </tr>
 </tbody>
 </table></div>
@@ -1150,6 +1150,16 @@
 <td><code>string</code></td>
 </tr>
 <tr>
+<td><a name="input_cluster_name"></a> <a href="#input_cluster_name">cluster_name</a></td>
+<td>Cluster name used for Kubernetes tagging</td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><a name="input_enable_karpenter"></a> <a href="#input_enable_karpenter">enable_karpenter</a></td>
+<td>Whether to tag subnets for Karpenter discovery</td>
+<td><code>bool</code></td>
+</tr>
+<tr>
 <td><a name="input_private_ipv4_cidr_blocks"></a> <a href="#input_private_ipv4_cidr_blocks">private_ipv4_cidr_blocks</a></td>
 <td>Cidr blocks for private subnets. One for each desired AZ</td>
 <td><code>list(string)</code></td>
@@ -1168,6 +1178,11 @@
 <td><a name="input_public_subnet_ids"></a> <a href="#input_public_subnet_ids">public_subnet_ids</a></td>
 <td>List of pre-existing public subnets to use instead of creating new subnets for pltf. Required when var.vpc_id is set.</td>
 <td><code>list(string)</code></td>
+</tr>
+<tr>
+<td><a name="input_public_subnet_map_public_ip_on_launch"></a> <a href="#input_public_subnet_map_public_ip_on_launch">public_subnet_map_public_ip_on_launch</a></td>
+<td>Whether instances launched in public subnets receive a public IP by default.</td>
+<td><code>bool</code></td>
 </tr>
 <tr>
 <td><a name="input_total_ipv4_cidr_block"></a> <a href="#input_total_ipv4_cidr_block">total_ipv4_cidr_block</a></td>

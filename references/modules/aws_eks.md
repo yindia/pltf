@@ -76,4 +76,5 @@ No modules.
 | <a name="output_k8s_openid_provider_arn"></a> [k8s\_openid\_provider\_arn](#output\_k8s\_openid\_provider\_arn) | n/a |
 | <a name="output_k8s_openid_provider_url"></a> [k8s\_openid\_provider\_url](#output\_k8s\_openid\_provider\_url) | n/a |
 | <a name="output_k8s_version"></a> [k8s\_version](#output\_k8s\_version) | n/a |
+| <a name="output_plt_cluster_type"></a> [plt\_cluster\_type](#output\_plt\_cluster\_type) | n/a |
 <!-- END_TF_DOCS -->
