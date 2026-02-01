@@ -869,11 +869,26 @@ Notes:
 - Modules that <code>provide</code> <code>iam.policy</code> must declare output <code>policy_arn</code>.</p>
 <h2 id="embedded-modules-aws">Embedded modules (AWS)</h2>
 <ul>
-<li><code>aws_base</code>, <code>aws_dns</code>, <code>aws_eks</code>, <code>aws_nodegroup</code>, <code>helm_chart</code></li>
+<li><code>aws_base</code>, <code>aws_dns</code>, <code>aws_eks</code>, <code>aws_nodegroup</code></li>
 <li><code>aws_postgres</code>, <code>aws_mysql</code>, <code>aws_redis</code>, <code>aws_dynamodb</code>, <code>aws_s3</code>, <code>aws_ses</code>, <code>aws_sns</code>, <code>aws_sqs</code>, <code>aws_documentdb</code></li>
 <li><code>aws_iam_role</code>, <code>aws_iam_policy</code>, <code>aws_iam_user</code></li>
 </ul>
-<p>GCP/Azure: no bundled modules yet; use custom modules or your own registry. You can target GCP/Azure providers with custom modules and backends.</p>
+<h2 id="embedded-modules-gcp">Embedded modules (GCP)</h2>
+<ul>
+<li><code>gcp_base</code>, <code>gcp_dns</code>, <code>gcp_gke</code>, <code>gcp_nodepool</code></li>
+<li><code>gcp_postgres</code>, <code>gcp_mysql</code>, <code>gcp_redis</code>, <code>gcp_gcs</code></li>
+<li><code>gcp_service_account</code>, <code>gcp_k8s_service</code></li>
+</ul>
+<h2 id="embedded-modules-azure">Embedded modules (Azure)</h2>
+<ul>
+<li><code>azure_base</code>, <code>azure_aks</code></li>
+<li><code>azure_postgres</code>, <code>azure_redis</code></li>
+<li><code>azure_k8s_service</code></li>
+</ul>
+<h2 id="shared-modules">Shared modules</h2>
+<ul>
+<li><code>helm_chart</code></li>
+</ul>
 <h2 id="custom-modules">Custom modules</h2>
 <ul>
 <li>Mark spec entries with <code>source: custom</code> to force lookup in your custom modules root (via <code>--modules</code> or profile defaults), or point the entry at a git URL so pltf fetches its metadata directly.</li>
@@ -1298,6 +1313,30 @@ Notes:
             class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
             data-active="false" data-depth="2">
             Embedded modules (AWS)
+        </a>
+        
+
+        
+        <a href="#embedded-modules-gcp"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Embedded modules (GCP)
+        </a>
+        
+
+        
+        <a href="#embedded-modules-azure"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Embedded modules (Azure)
+        </a>
+        
+
+        
+        <a href="#shared-modules"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Shared modules
         </a>
         
 

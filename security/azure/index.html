@@ -644,9 +644,27 @@
     </div>
   </div>
   <div class="typography w-full flex-1 *:data-[slot=alert]:first:mt-0">
-    <blockquote>
-<p>Placeholder. Cover identity (AAD/SP), backend hardening, and network segmentation.</p>
-</blockquote>
+    <p>Security highlights for Azure environments managed by pltf.</p>
+<h2 id="identity-and-access">Identity and access</h2>
+<ul>
+<li>Use AAD identities and RBAC for AKS (<code>azure_aks</code> enables RBAC by default).</li>
+<li>Prefer managed identities over long-lived secrets.</li>
+</ul>
+<h2 id="network-controls">Network controls</h2>
+<ul>
+<li><code>azure_base</code> provisions VNets/subnets and applies restrictive network rules.</li>
+<li>Key Vault is configured with network ACLs and purge protection.</li>
+</ul>
+<h2 id="state-and-secrets">State and secrets</h2>
+<ul>
+<li>Use the <code>azurerm</code> backend with a dedicated storage account and container.</li>
+<li>Keep secrets in Key Vault or CI secret stores.</li>
+</ul>
+<h2 id="logging">Logging</h2>
+<ul>
+<li>AKS connects to Log Analytics via OMS agent.</li>
+<li>Enable diagnostic settings for critical resources (Key Vault, networking).</li>
+</ul>
   </div>
 </article>
                                 <div class="mx-auto flex flex-wrap h-16 w-full max-w-2xl items-center gap-2 px-4 md:px-0">
@@ -1012,6 +1030,44 @@
                                 <div view-transition-name="toc" class="no-scrollbar overflow-y-auto px-8">
     <div class="flex flex-col gap-2 p-4 pt-0 text-sm">
         <p class="text-muted-foreground bg-background sticky top-0 h-6 text-xs">On This Page</p>
+        
+        
+        
+        
+        <a href="#identity-and-access"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Identity and access
+        </a>
+        
+
+        
+        <a href="#network-controls"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Network controls
+        </a>
+        
+
+        
+        <a href="#state-and-secrets"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            State and secrets
+        </a>
+        
+
+        
+        <a href="#logging"
+            class="text-muted-foreground hover:text-foreground data-[active=true]:text-foreground text-[0.8rem] no-underline transition-colors data-[depth=3]:pl-4 data-[depth=4]:pl-6"
+            data-active="false" data-depth="2">
+            Logging
+        </a>
+        
+
+        
+        
+        
         
 
     </div>
