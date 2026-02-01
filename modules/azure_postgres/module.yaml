@@ -6,6 +6,9 @@ capabilities:
     provides:
         - secret
 resources:
+    - azurerm_postgresql_configuration.connection_throttling
+    - azurerm_postgresql_configuration.log_checkpoints
+    - azurerm_postgresql_configuration.log_connections
     - azurerm_postgresql_configuration.log_disconnections
     - azurerm_postgresql_configuration.log_duration
     - azurerm_postgresql_configuration.log_retention_days

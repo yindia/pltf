@@ -8,6 +8,8 @@ if [[ ! -d "$root_dir" ]]; then
   exit 1
 fi
 
+go build -o pltf ./main.go
+
 for dir in "$root_dir"/aws_*; do
   if [[ ! -d "$dir" ]]; then
     continue
@@ -16,7 +18,7 @@ for dir in "$root_dir"/aws_*; do
     continue
   fi
   echo "Generating module.yaml in $dir"
-  go run ./main.go module init --path "$dir" --force --provider aws
+  ./pltf module init --path "$dir" --force --provider aws
  done
 
 
@@ -28,7 +30,7 @@ for dir in "$root_dir"/azure_*; do
     continue
   fi
   echo "Generating module.yaml in $dir"
-  go run ./main.go module init --path "$dir" --force --provider azure
+  ./pltf module init --path "$dir" --force --provider azure
  done
 
 
@@ -40,7 +42,7 @@ for dir in "$root_dir"/gcp_*; do
     continue
   fi
   echo "Generating module.yaml in $dir"
-  go run ./main.go module init --path "$dir" --force --provider gcp
+  ./pltf module init --path "$dir" --force --provider gcp
  done
 
-go run ./main.go module init --path modules/helm_chart --force --provider helm
+./pltf module init --path modules/helm_chart --force --provider helm

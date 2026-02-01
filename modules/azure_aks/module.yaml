@@ -40,6 +40,9 @@ inputs:
       name: layer_name
       required: true
       type: string
+    - name: log_analytics_workspace_id
+      required: true
+      type: string
     - default: 5
       name: max_nodes
       required: false

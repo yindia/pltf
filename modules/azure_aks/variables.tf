@@ -63,6 +63,10 @@ variable "admin_group_object_ids" {
   default = []
 }
 
+variable "log_analytics_workspace_id" {
+  type = string
+}
+
 variable "node_instance_type" {
   type    = string
   default = "Standard_D2_v2"

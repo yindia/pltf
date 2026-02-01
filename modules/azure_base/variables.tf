@@ -1,6 +1,6 @@
 data "azurerm_subscription" "current" {}
-data "azurerm_resource_group" "opta" {
-  name = "opta-${var.env_name}"
+data "azurerm_resource_group" "pltf" {
+  name = "pltf-${var.env_name}"
 }
 
 variable "env_name" {
@@ -32,4 +32,24 @@ variable "subnet_ipv4_cidr_block" {
 
 variable "location" {
   type = string
+}
+
+variable "key_vault_soft_delete_retention_days" {
+  type    = number
+  default = 90
+}
+
+variable "key_vault_ip_rules" {
+  type    = list(string)
+  default = []
+}
+
+variable "key_vault_subnet_ids" {
+  type    = list(string)
+  default = []
+}
+
+variable "key_vault_key_expiration_date" {
+  type    = string
+  default = "2035-01-01T00:00:00Z"
 }

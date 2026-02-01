@@ -72,6 +72,27 @@ resource "azurerm_postgresql_configuration" "log_disconnections" {
   value               = "on"
 }
 
+resource "azurerm_postgresql_configuration" "log_connections" {
+  name                = "log_connections"
+  resource_group_name = data.azurerm_resource_group.main.name
+  server_name         = azurerm_postgresql_server.pltf.name
+  value               = "on"
+}
+
+resource "azurerm_postgresql_configuration" "log_checkpoints" {
+  name                = "log_checkpoints"
+  resource_group_name = data.azurerm_resource_group.main.name
+  server_name         = azurerm_postgresql_server.pltf.name
+  value               = "on"
+}
+
+resource "azurerm_postgresql_configuration" "connection_throttling" {
+  name                = "connection_throttling"
+  resource_group_name = data.azurerm_resource_group.main.name
+  server_name         = azurerm_postgresql_server.pltf.name
+  value               = "on"
+}
+
 
 resource "azurerm_postgresql_configuration" "log_duration" {
   name                = "log_duration"

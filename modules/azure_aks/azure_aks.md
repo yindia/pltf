@@ -40,6 +40,7 @@ No modules.
 | <a name="input_env_name"></a> [env\_name](#input\_env\_name) | Env name | `string` | n/a | yes |
 | <a name="input_kubernetes_version"></a> [kubernetes\_version](#input\_kubernetes\_version) | n/a | `string` | `"1.21.9"` | no |
 | <a name="input_layer_name"></a> [layer\_name](#input\_layer\_name) | Layer name | `string` | n/a | yes |
+| <a name="input_log_analytics_workspace_id"></a> [log\_analytics\_workspace\_id](#input\_log\_analytics\_workspace\_id) | n/a | `string` | n/a | yes |
 | <a name="input_max_nodes"></a> [max\_nodes](#input\_max\_nodes) | n/a | `number` | `5` | no |
 | <a name="input_min_nodes"></a> [min\_nodes](#input\_min\_nodes) | n/a | `number` | `1` | no |
 | <a name="input_module_name"></a> [module\_name](#input\_module\_name) | Module name | `string` | n/a | yes |

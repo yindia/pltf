@@ -1,12 +1,12 @@
-resource "azurerm_network_security_group" "opta" {
-  name                = "opta-${var.env_name}-default"
-  location            = data.azurerm_resource_group.opta.location
-  resource_group_name = data.azurerm_resource_group.opta.name
+resource "azurerm_network_security_group" "pltf" {
+  name                = "pltf-${var.env_name}-default"
+  location            = data.azurerm_resource_group.pltf.location
+  resource_group_name = data.azurerm_resource_group.pltf.name
 }
 
 resource "azurerm_network_security_rule" "internal" {
-  network_security_group_name = azurerm_network_security_group.opta.name
-  resource_group_name         = data.azurerm_resource_group.opta.name
+  network_security_group_name = azurerm_network_security_group.pltf.name
+  resource_group_name         = data.azurerm_resource_group.pltf.name
   name                        = "internal"
   priority                    = 100
   direction                   = "Inbound"
@@ -19,8 +19,8 @@ resource "azurerm_network_security_rule" "internal" {
 }
 
 resource "azurerm_network_security_rule" "allowoutbound" {
-  network_security_group_name = azurerm_network_security_group.opta.name
-  resource_group_name         = data.azurerm_resource_group.opta.name
+  network_security_group_name = azurerm_network_security_group.pltf.name
+  resource_group_name         = data.azurerm_resource_group.pltf.name
   name                        = "allowoutbound"
   priority                    = 100
   direction                   = "Outbound"
@@ -34,7 +34,7 @@ resource "azurerm_network_security_rule" "allowoutbound" {
   destination_port_range     = "*"
 }
 
-resource "azurerm_subnet_network_security_group_association" "opta" {
-  subnet_id                 = azurerm_subnet.opta.id
-  network_security_group_id = azurerm_network_security_group.opta.id
+resource "azurerm_subnet_network_security_group_association" "pltf" {
+  subnet_id                 = azurerm_subnet.pltf.id
+  network_security_group_id = azurerm_network_security_group.pltf.id
 }

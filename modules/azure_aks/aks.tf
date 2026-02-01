@@ -62,6 +62,7 @@ resource "azurerm_kubernetes_cluster" "main" {
   dns_prefix          = "pltf"
   //  disk_encryption_set_id = azurerm_disk_encryption_set.pltf.id
   kubernetes_version = var.kubernetes_version
+  role_based_access_control_enabled = true
 
   network_profile {
     network_plugin     = "azure"
@@ -76,6 +77,10 @@ resource "azurerm_kubernetes_cluster" "main" {
     managed                = true
     tenant_id              = data.azurerm_client_config.current.tenant_id
     admin_group_object_ids = var.admin_group_object_ids
+  }
+
+  oms_agent {
+    log_analytics_workspace_id = var.log_analytics_workspace_id
   }
 
   default_node_pool {
