@@ -66,6 +66,11 @@ variable "preemptible" {
   default = false
 }
 
+variable "image_type" {
+  type    = string
+  default = "COS_CONTAINERD"
+}
+
 variable "taints" {
   type    = list(map(string))
   default = []

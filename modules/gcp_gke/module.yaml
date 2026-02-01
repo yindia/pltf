@@ -63,6 +63,10 @@ inputs:
       name: preemptible
       required: false
       type: bool
+    - default: {}
+      name: resource_labels
+      required: false
+      type: map(string)
     - name: private_subnet_self_link
       required: true
       type: string

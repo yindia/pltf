@@ -58,6 +58,10 @@ inputs:
       name: preemptible
       required: false
       type: bool
+    - default: COS_CONTAINERD
+      name: image_type
+      required: false
+      type: string
     - name: private_subnet_self_link
       required: true
       type: string

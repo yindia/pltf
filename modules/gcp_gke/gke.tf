@@ -37,6 +37,15 @@ resource "google_container_cluster" "primary" {
     key_name = data.google_kms_crypto_key.kms.id
   }
 
+  resource_labels = merge(
+    {
+      env_name    = lower(var.env_name)
+      layer_name  = lower(var.layer_name)
+      module_name = lower(var.module_name)
+    },
+    var.resource_labels,
+  )
+
   master_auth {
     client_certificate_config {
       # tfsec recomments using oauth or SA, we ignore this since opta currently

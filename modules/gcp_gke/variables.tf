@@ -78,3 +78,8 @@ variable "preemptible" {
   type    = bool
   default = false
 }
+
+variable "resource_labels" {
+  type    = map(string)
+  default = {}
+}
