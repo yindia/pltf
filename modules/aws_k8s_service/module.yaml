@@ -1,0 +1,225 @@
+name: aws_k8s_service
+type: aws_k8s_service
+provider: aws
+version: 1.0.0
+capabilities:
+    accepts:
+        - secret
+        - iam.policy
+resources:
+    - aws_ecr_lifecycle_policy.repo_policy
+    - aws_ecr_repository.repo
+    - aws_ecr_repository_policy.repo_policy
+    - aws_iam_policy.k8s_service
+    - aws_iam_role.k8s_service
+    - aws_iam_role_policy_attachment.extra_policies_attachment
+    - aws_iam_role_policy_attachment.vanilla_role_attachment
+    - helm_release.k8s-service
+    - random_string.repo_name_hash
+data:
+    - data.aws_caller_identity.current
+    - data.aws_ecr_image.service_image
+    - data.aws_iam_policy_document.repo_policy
+    - data.aws_iam_policy_document.trust_k8s_openid
+inputs:
+    - default: []
+      name: additional_iam_policies
+      required: false
+      type: list(string)
+    - name: args
+      required: true
+      type: list(string)
+    - default: 80
+      description: Percentage of requested cpu after which autoscaling kicks in
+      name: autoscaling_target_cpu_percentage
+      required: false
+    - default: 80
+      description: Percentage of requested memory after which autoscaling kicks in
+      name: autoscaling_target_mem_percentage
+      required: false
+    - name: commands
+      required: true
+      type: list(string)
+    - default: null
+      name: consistent_hash
+      required: false
+      type: string
+    - default: []
+      name: cron_jobs
+      required: false
+    - default: null
+      description: Digest of image to be deployed
+      name: digest
+      required: false
+      type: string
+    - default: ""
+      name: domain
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: []
+      description: Environment variables to pass to the container
+      name: env_vars
+      required: false
+      type: |-
+        list(object({
+            name  = string
+            value = string
+          }))
+    - name: healthcheck_command
+      required: true
+      type: list(string)
+    - default: null
+      name: healthcheck_path
+      required: false
+      type: string
+    - default: null
+      description: The port that exposes an HTTP interface
+      name: http_port
+      required: false
+      type: any
+    - name: iam_policy
+      required: true
+    - description: External Image to be deployed
+      name: image
+      required: true
+      type: string
+    - default: {}
+      name: ingress_extra_annotations
+      required: false
+      type: map(string)
+    - default: 30
+      name: initial_liveness_delay
+      required: false
+      type: number
+    - default: 30
+      name: initial_readiness_delay
+      required: false
+      type: number
+    - default: false
+      name: keep_path_prefix
+      required: false
+      type: bool
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: []
+      name: link_secrets
+      required: false
+      type: list(map(string))
+    - default: null
+      name: links
+      required: false
+    - name: liveness_probe_command
+      required: true
+      type: list(string)
+    - default: null
+      description: Url path for liveness probe
+      name: liveness_probe_path
+      required: false
+      type: string
+    - default: 3
+      description: Max value for HPA autoscaling
+      name: max_containers
+      required: false
+      type: string
+    - name: max_history
+      required: true
+      type: number
+    - default: 1
+      description: Min value for HPA autoscaling
+      name: min_containers
+      required: false
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - name: openid_provider_arn
+      required: true
+      type: string
+    - name: openid_provider_url
+      required: true
+      type: string
+    - default: []
+      name: persistent_storage
+      required: false
+      type: list(map(string))
+    - default: {}
+      description: values to add to the pod annotations for the k8s-service pods
+      name: pod_annotations
+      required: false
+      type: map(string)
+    - name: pod_labels
+      required: true
+      type: map(string)
+    - description: Ports to be exposed
+      name: ports
+      required: true
+      type: list(any)
+    - default: null
+      description: The port that is used for health probes
+      name: probe_port
+      required: false
+      type: any
+    - default: []
+      name: public_uri
+      required: false
+      type: list(string)
+    - name: readiness_probe_command
+      required: true
+      type: list(string)
+    - default: null
+      description: Url path for readiness probe
+      name: readiness_probe_path
+      required: false
+      type: string
+    - name: resource_limits
+      required: true
+      type: map(any)
+    - default:
+        cpu: 100
+        memory: 128
+      name: resource_request
+      required: false
+      type: map(any)
+    - default: null
+      name: secrets
+      required: false
+    - default: {}
+      description: Annotations to add to the service resource
+      name: service_annotations
+      required: false
+      type: map(string)
+    - default: false
+      name: sticky_session
+      required: false
+    - default: 86400
+      name: sticky_session_max_age
+      required: false
+    - default: null
+      description: Tag of image to be deployed
+      name: tag
+      required: false
+      type: string
+    - default: 300
+      name: timeout
+      required: false
+      type: number
+    - default: []
+      name: tolerations
+      required: false
+      type: list(map(string))
+outputs:
+    - name: current_digest
+      type: string
+    - name: current_image
+      type: string
+    - name: current_tag
+      type: string
+    - name: docker_repo_url
+      type: string

@@ -209,7 +209,6 @@ pltf caches module clones per repo/commit so repeated plans avoid git overhead, 
 - `pltf terraform graph/output` run after plan/apply to inspect dependency graphs or module outputs without extra wrappers.
 - `pltf preview` and `pltf validate` check wiring and run tfsec, printing both the summary timings and problem list for quick triage.
 - `pltf module list/get/init` inspect or bootstrap modules from both the embedded catalog and your Git sources.
-- `pltf config` summarizes envs, services, secrets, and modules for a repo.
 
 Commands render workspaces under `.pltf/<environment_name>/workspace` or `.pltf/<environment_name>/<service_name>/workspace`, ensuring `plan` and `apply` operate on the same graph.
 

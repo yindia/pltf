@@ -1,0 +1,37 @@
+name: gcp_gcs
+type: gcp_gcs
+provider: gcp
+version: 1.0.0
+resources:
+    - google_storage_bucket.bucket
+    - google_storage_bucket_iam_member.viewer
+data:
+    - data.google_client_config.current
+    - data.google_kms_crypto_key.kms
+    - data.google_kms_key_ring.key_ring
+    - data.google_secret_manager_secret_version.kms_suffix
+inputs:
+    - default: true
+      name: block_public
+      required: false
+      type: bool
+    - name: bucket_name
+      required: true
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+outputs:
+    - name: bucket_id
+      type: string
+    - name: bucket_name
+      type: string

@@ -1,0 +1,42 @@
+name: gcp_redis
+type: gcp_redis
+provider: gcp
+version: 1.0.0
+capabilities:
+    provides:
+        - secret
+resources:
+    - google_redis_instance.main
+data:
+    - data.google_compute_network.vpc
+inputs:
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: true
+      name: high_availability
+      required: false
+      type: bool
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 2
+      name: memory_size_gb
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: REDIS_5_0
+      name: redis_version
+      required: false
+      type: string
+outputs:
+    - name: cache_auth_token
+      type: string
+      capability: secret
+    - name: cache_host
+      type: string

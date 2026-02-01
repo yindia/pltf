@@ -1,0 +1,51 @@
+name: gcp_postgres
+type: gcp_postgres
+provider: gcp
+version: 1.0.0
+capabilities:
+    provides:
+        - secret
+resources:
+    - google_sql_database.main
+    - google_sql_database_instance.instance
+    - google_sql_user.root
+    - random_id.key_suffix
+    - random_password.root_auth
+    - time_sleep.wait_30_seconds
+data:
+    - data.google_compute_network.vpc
+inputs:
+    - default: "11"
+      name: engine_version
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: db-f1-micro
+      name: instance_tier
+      required: false
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: false
+      name: safety
+      required: false
+      type: bool
+outputs:
+    - name: db_host
+      type: string
+    - name: db_name
+      type: string
+    - name: db_password
+      type: string
+      capability: secret
+    - name: db_user
+      type: string

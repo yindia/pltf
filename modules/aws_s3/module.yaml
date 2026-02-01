@@ -14,7 +14,6 @@ resources:
     - aws_s3_bucket_lifecycle_configuration.replica
     - aws_s3_bucket_logging.bucket
     - aws_s3_bucket_logging.replica
-    - aws_s3_object.user_files
     - aws_s3_bucket_ownership_controls.ownership_controls
     - aws_s3_bucket_policy.policy
     - aws_s3_bucket_policy.replica_bucket_policy
@@ -25,6 +24,7 @@ resources:
     - aws_s3_bucket_server_side_encryption_configuration.replica
     - aws_s3_bucket_versioning.bucket
     - aws_s3_bucket_versioning.replica
+    - aws_s3_object.user_files
 data:
     - data.aws_iam_policy_document.replica_bucket_policy
     - data.aws_iam_policy_document.replication

@@ -1,0 +1,49 @@
+name: gcp_dns
+type: gcp_dns
+provider: gcp
+version: 1.0.0
+resources:
+    - google_compute_managed_ssl_certificate.certificate
+    - google_dns_managed_zone.public
+    - random_id.cert_suffix
+data:
+    - data.google_client_config.current
+    - data.google_compute_network.vpc
+    - data.google_compute_subnetwork.private
+inputs:
+    - default: false
+      name: delegated
+      required: false
+      type: bool
+    - name: domain
+      required: true
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: []
+      name: subdomains
+      required: false
+      type: list(string)
+outputs:
+    - name: cert_self_link
+      type: string
+    - name: delegated
+      type: string
+    - name: domain
+      type: string
+    - name: name_servers
+      type: string
+    - name: zone_id
+      type: string
+    - name: zone_name
+      type: string

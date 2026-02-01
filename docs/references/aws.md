@@ -22,6 +22,17 @@ metadata:
     cost_center: shared
   stacks:
     - example-eks-stack
+# images:
+#   - name: platform-tools
+#     context: .
+#     dockerfile: Dockerfile
+#     platforms:
+#       - linux/amd64
+#       - linux/arm64
+#     tags:
+#       - ghcr.io/example/${layer_name}:${env_name}
+#     buildArgs:
+#       ENV: ${env_name}
 environments:
   dev:
     account: "556169302489"
