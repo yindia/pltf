@@ -19,6 +19,7 @@ var (
 	moduleInitPath      string
 	moduleInitName      string
 	moduleInitType      string
+	moduleInitProvider  string
 	moduleInitDesc      string
 	moduleInitOut       string
 	moduleInitOverwrite bool
@@ -148,9 +149,12 @@ var moduleInitCmd = &cobra.Command{
 	Long: `Scan a Terraform module directory, read variables/outputs, and write a module.yaml
 descriptor. If module.yaml already exists at the destination it will be replaced.
 Use flags to override metadata such as name, type, description, or output path.
-Provider defaults to aws and version to 1.0.0.`,
+Provider defaults to aws and version to 1.0.0 (override with --provider).`,
 	Example: `  # Generate module.yaml inside ./modules/aws_eks
   pltf module init --path ./modules/aws_eks
+
+  # Generate module.yaml for a GCP module
+  pltf module init --path ./modules/gcp_gcs --provider gcp
 
   # Write to a custom location and override name/type
   pltf module init --path ./modules/db --name postgres --type aws_postgres --out ./modules/db/module.yaml`,
@@ -174,7 +178,11 @@ Provider defaults to aws and version to 1.0.0.`,
 			return fmt.Errorf("error loading module: %v", diags)
 		}
 
-		meta := buildModuleMetadata(abs, tfMod)
+		provider, err := normalizeModuleProvider(moduleInitProvider)
+		if err != nil {
+			return err
+		}
+		meta := buildModuleMetadata(abs, tfMod, provider)
 		yamlMeta := buildModuleMetadataYAML(meta, tfMod)
 
 		out, err := yaml.Marshal(yamlMeta)
@@ -194,7 +202,7 @@ Provider defaults to aws and version to 1.0.0.`,
 	},
 }
 
-func buildModuleMetadata(abs string, tfMod *tfconfig.Module) *config.ModuleMetadata {
+func buildModuleMetadata(abs string, tfMod *tfconfig.Module, provider string) *config.ModuleMetadata {
 	name := moduleInitName
 	if name == "" {
 		name = filepath.Base(abs)
@@ -215,7 +223,7 @@ func buildModuleMetadata(abs string, tfMod *tfconfig.Module) *config.ModuleMetad
 	return &config.ModuleMetadata{
 		Name:        name,
 		Type:        modType,
-		Provider:    defaultModuleProvider,
+		Provider:    provider,
 		Version:     defaultModuleVersion,
 		Description: moduleInitDesc,
 		Cluster:     hasClusterOutputs(outputs),
@@ -228,6 +236,28 @@ func buildModuleMetadata(abs string, tfMod *tfconfig.Module) *config.ModuleMetad
 		Inputs:      inputs,
 		Outputs:     outputs,
 	}
+}
+
+func normalizeModuleProvider(raw string) (string, error) {
+	provider := strings.ToLower(strings.TrimSpace(raw))
+	if provider == "" {
+		return defaultModuleProvider, nil
+	}
+	if provider == "google" {
+		provider = "gcp"
+	}
+
+	allowed := map[string]struct{}{
+		"aws":     {},
+		"gcp":     {},
+		"azure":   {},
+		"azurerm": {},
+		"helm":    {},
+	}
+	if _, ok := allowed[provider]; !ok {
+		return "", fmt.Errorf("invalid provider %q (expected aws, gcp, azure, azurerm, helm)", raw)
+	}
+	return provider, nil
 }
 
 func buildInputs(tfMod *tfconfig.Module) ([]config.InputSpec, []string) {
@@ -448,6 +478,7 @@ func init() {
 	moduleInitCmd.Flags().StringVar(&moduleInitPath, "path", ".", "Directory containing the Terraform module to inspect; defaults to current directory")
 	moduleInitCmd.Flags().StringVar(&moduleInitName, "name", "", "Module name to write into module.yaml (defaults to directory name)")
 	moduleInitCmd.Flags().StringVar(&moduleInitType, "type", "", "Logical module type; defaults to the module name when omitted")
+	moduleInitCmd.Flags().StringVar(&moduleInitProvider, "provider", "", "Provider for module.yaml (aws|gcp|azure|azurerm|helm; defaults to aws)")
 	moduleInitCmd.Flags().StringVar(&moduleInitDesc, "description", "", "Human-readable description for the module; optional")
 	moduleInitCmd.Flags().StringVar(&moduleInitOut, "out", "", "Output path for module.yaml (defaults to <path>/module.yaml)")
 	moduleInitCmd.Flags().BoolVar(&moduleInitOverwrite, "force", false, "Overwrite an existing module.yaml (backs up to module.yaml.bak-<timestamp> when absent)")

@@ -24,6 +24,10 @@ inputs:
       name: gke_channel
       required: false
       type: string
+    - default: COS_CONTAINERD
+      name: image_type
+      required: false
+      type: string
     - name: k8s_master_ipv4_cidr_block
       required: true
       type: string
@@ -58,10 +62,6 @@ inputs:
       name: preemptible
       required: false
       type: bool
-    - default: COS_CONTAINERD
-      name: image_type
-      required: false
-      type: string
     - name: private_subnet_self_link
       required: true
       type: string

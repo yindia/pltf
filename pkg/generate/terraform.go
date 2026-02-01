@@ -93,7 +93,7 @@ func writeProvidersTF(
 	body := file.Body()
 
 	if needsK8s || needsHelm || needsKustomize {
-		if !strings.EqualFold(providerType, "aws") && !strings.EqualFold(providerType, "gcp") {
+		if !strings.EqualFold(providerType, "aws") && !strings.EqualFold(providerType, "gcp") && !strings.EqualFold(providerType, "google") && !strings.EqualFold(providerType, "azure") && !strings.EqualFold(providerType, "azurerm") {
 			return fmt.Errorf("kubernetes/helm/kustomize providers are not supported for %q yet", providerType)
 		}
 	}
@@ -120,7 +120,12 @@ func writeProvidersTF(
 		k8sBody := k8s.Body()
 		k8sBody.SetAttributeRaw("host", hclwrite.TokensForTraversal(cluster.host))
 		k8sBody.SetAttributeRaw("cluster_ca_certificate", base64DecodeTokens(cluster.caData))
-		k8sBody.SetAttributeRaw("token", hclwrite.TokensForTraversal(cluster.token))
+		if len(cluster.token) > 0 {
+			k8sBody.SetAttributeRaw("token", hclwrite.TokensForTraversal(cluster.token))
+		} else if len(cluster.clientCert) > 0 && len(cluster.clientKey) > 0 {
+			k8sBody.SetAttributeRaw("client_certificate", base64DecodeTokens(cluster.clientCert))
+			k8sBody.SetAttributeRaw("client_key", base64DecodeTokens(cluster.clientKey))
+		}
 	}
 
 	if needsHelm && cluster != nil {
@@ -136,7 +141,12 @@ func writeProvidersTF(
 		kustomizeBody := kustomize.Body()
 		kustomizeBody.SetAttributeRaw("host", hclwrite.TokensForTraversal(cluster.host))
 		kustomizeBody.SetAttributeRaw("cluster_ca_certificate", base64DecodeTokens(cluster.caData))
-		kustomizeBody.SetAttributeRaw("token", hclwrite.TokensForTraversal(cluster.token))
+		if len(cluster.token) > 0 {
+			kustomizeBody.SetAttributeRaw("token", hclwrite.TokensForTraversal(cluster.token))
+		} else if len(cluster.clientCert) > 0 && len(cluster.clientKey) > 0 {
+			kustomizeBody.SetAttributeRaw("client_certificate", base64DecodeTokens(cluster.clientCert))
+			kustomizeBody.SetAttributeRaw("client_key", base64DecodeTokens(cluster.clientKey))
+		}
 	}
 
 	return os.WriteFile(filepath.Join(outDir, "providers.tf"), file.Bytes(), 0o644)

@@ -10,10 +10,12 @@ import (
 )
 
 type clusterRef struct {
-	host   hcl.Traversal
-	caData hcl.Traversal
-	token  hcl.Traversal
-	auth   *authData
+	host       hcl.Traversal
+	caData     hcl.Traversal
+	token      hcl.Traversal
+	clientCert hcl.Traversal
+	clientKey  hcl.Traversal
+	auth       *authData
 }
 
 type authData struct {
@@ -63,7 +65,7 @@ func (g *Generator) clusterRefs() (*clusterRef, error) {
 		}, nil
 	}
 
-	if g.envCfg != nil && strings.EqualFold(g.envCfg.Metadata.Provider, "gcp") {
+	if g.envCfg != nil && (strings.EqualFold(g.envCfg.Metadata.Provider, "gcp") || strings.EqualFold(g.envCfg.Metadata.Provider, "google")) {
 		return &clusterRef{
 			host: hcl.Traversal{
 				hcl.TraverseRoot{Name: "module"},
@@ -85,6 +87,31 @@ func (g *Generator) clusterRefs() (*clusterRef, error) {
 				blockType: "google_client_config",
 				name:      "this",
 				attrs:     map[string]hcl.Traversal{},
+			},
+		}, nil
+	}
+
+	if g.envCfg != nil && (strings.EqualFold(g.envCfg.Metadata.Provider, "azure") || strings.EqualFold(g.envCfg.Metadata.Provider, "azurerm")) {
+		return &clusterRef{
+			host: hcl.Traversal{
+				hcl.TraverseRoot{Name: "module"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "k8s_endpoint"},
+			},
+			caData: hcl.Traversal{
+				hcl.TraverseRoot{Name: "module"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "k8s_ca_data"},
+			},
+			clientCert: hcl.Traversal{
+				hcl.TraverseRoot{Name: "module"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "client_cert"},
+			},
+			clientKey: hcl.Traversal{
+				hcl.TraverseRoot{Name: "module"},
+				hcl.TraverseAttr{Name: id},
+				hcl.TraverseAttr{Name: "client_key"},
 			},
 		}, nil
 	}
@@ -132,7 +159,12 @@ func helmKubeConfigTokens(cluster *clusterRef) hclwrite.Tokens {
 
 	addAttr("host", hclwrite.TokensForTraversal(cluster.host))
 	addAttr("cluster_ca_certificate", base64DecodeTokens(cluster.caData))
-	addAttr("token", hclwrite.TokensForTraversal(cluster.token))
+	if len(cluster.token) > 0 {
+		addAttr("token", hclwrite.TokensForTraversal(cluster.token))
+	} else if len(cluster.clientCert) > 0 && len(cluster.clientKey) > 0 {
+		addAttr("client_certificate", base64DecodeTokens(cluster.clientCert))
+		addAttr("client_key", base64DecodeTokens(cluster.clientKey))
+	}
 
 	toks = append(toks, &hclwrite.Token{Type: hclsyntax.TokenCBrace, Bytes: []byte{'}'}})
 	return toks

@@ -1,0 +1,94 @@
+name: azure_base
+type: azure_base
+provider: azure
+version: 1.0.0
+resources:
+    - azurerm_container_registry.acr
+    - azurerm_key_vault.pltf
+    - azurerm_key_vault_key.acr
+    - azurerm_log_analytics_workspace.watcher
+    - azurerm_monitor_diagnostic_setting.infra_logging
+    - azurerm_nat_gateway.pltf
+    - azurerm_nat_gateway_public_ip_association.pltf
+    - azurerm_nat_gateway_public_ip_prefix_association.pltf
+    - azurerm_network_security_group.pltf
+    - azurerm_network_security_rule.allowoutbound
+    - azurerm_network_security_rule.internal
+    - azurerm_network_watcher_flow_log.vpc_flow_log
+    - azurerm_public_ip.pltf
+    - azurerm_public_ip_prefix.pltf
+    - azurerm_role_assignment.acr_encryption
+    - azurerm_storage_account.infra_logging
+    - azurerm_subnet.pltf
+    - azurerm_subnet_nat_gateway_association.pltf
+    - azurerm_subnet_network_security_group_association.pltf
+    - azurerm_user_assigned_identity.acr_uai
+    - azurerm_virtual_network.pltf
+    - random_id.acr_suffix
+    - random_id.key_suffix
+    - random_id.logging_suffix
+data:
+    - data.azurerm_network_watcher.default
+    - data.azurerm_resource_group.pltf
+    - data.azurerm_subscription.current
+inputs:
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: []
+      name: key_vault_ip_rules
+      required: false
+      type: list(string)
+    - default: "2035-01-01T00:00:00Z"
+      name: key_vault_key_expiration_date
+      required: false
+      type: string
+    - default: 90
+      name: key_vault_soft_delete_retention_days
+      required: false
+      type: number
+    - default: []
+      name: key_vault_subnet_ids
+      required: false
+      type: list(string)
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - name: location
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 10.0.0.0/16
+      description: Cidr block for private subnet. Don't need to worry about AZs in Azure
+      name: private_ipv4_cidr_block
+      required: false
+      type: string
+    - default: 10.0.0.0/17
+      description: Cidr block for private subnet. Don't need to worry about AZs in Azure
+      name: subnet_ipv4_cidr_block
+      required: false
+      type: string
+outputs:
+    - name: acr_id
+      type: string
+    - name: acr_login_url
+      type: string
+    - name: acr_name
+      type: string
+    - name: log_analytics_workspace_id
+      type: string
+    - name: private_subnet_id
+      type: string
+    - name: private_subnet_name
+      type: string
+    - name: public_nat_ips
+      type: string
+    - name: vpc_id
+      type: string
+    - name: vpc_name
+      type: string

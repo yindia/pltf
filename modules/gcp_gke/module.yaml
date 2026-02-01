@@ -2,6 +2,7 @@ name: gcp_gke
 type: gcp_gke
 provider: gcp
 version: 1.0.0
+cluster: true
 resources:
     - google_container_cluster.primary
     - google_container_node_pool.default
@@ -76,3 +77,5 @@ outputs:
       type: string
     - name: k8s_endpoint
       type: string
+    - name: plt_cluster_type
+      type: bool

@@ -173,8 +173,8 @@ func ValidateProviderSupport(envCfg *config.EnvironmentConfig, svcCfg *config.Se
 	if svcCfg != nil {
 		requiresK8s = requiresK8s || svcCfg.Providers.Kubernetes || svcCfg.Providers.Helm || svcCfg.Providers.Kustomize
 	}
-	if requiresK8s && provider != "aws" && provider != "gcp" && provider != "google" {
-		return fmt.Errorf("kubernetes/helm/kustomize providers are only supported for aws and gcp right now; support for azure is coming soon")
+	if requiresK8s && provider != "aws" && provider != "gcp" && provider != "google" && provider != "azure" && provider != "azurerm" {
+		return fmt.Errorf("kubernetes/helm/kustomize providers are only supported for aws, gcp, and azure right now")
 	}
 	return nil
 }
