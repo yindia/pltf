@@ -682,7 +682,7 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault">azurerm_key_vault.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault">azurerm_key_vault.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -698,19 +698,19 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway">azurerm_nat_gateway.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway">azurerm_nat_gateway.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway_public_ip_association">azurerm_nat_gateway_public_ip_association.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway_public_ip_association">azurerm_nat_gateway_public_ip_association.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway_public_ip_prefix_association">azurerm_nat_gateway_public_ip_prefix_association.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/nat_gateway_public_ip_prefix_association">azurerm_nat_gateway_public_ip_prefix_association.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group">azurerm_network_security_group.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/network_security_group">azurerm_network_security_group.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -726,11 +726,11 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip">azurerm_public_ip.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip">azurerm_public_ip.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip_prefix">azurerm_public_ip_prefix.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/public_ip_prefix">azurerm_public_ip_prefix.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -742,15 +742,15 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet">azurerm_subnet.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet">azurerm_subnet.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_nat_gateway_association">azurerm_subnet_nat_gateway_association.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_nat_gateway_association">azurerm_subnet_nat_gateway_association.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association">azurerm_subnet_network_security_group_association.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subnet_network_security_group_association">azurerm_subnet_network_security_group_association.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -758,7 +758,7 @@
 <td>resource</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network">azurerm_virtual_network.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/virtual_network">azurerm_virtual_network.pltf</a></td>
 <td>resource</td>
 </tr>
 <tr>
@@ -778,7 +778,7 @@
 <td>data source</td>
 </tr>
 <tr>
-<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group">azurerm_resource_group.opta</a></td>
+<td><a href="https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/resource_group">azurerm_resource_group.pltf</a></td>
 <td>data source</td>
 </tr>
 <tr>
@@ -805,6 +805,34 @@
 <td><code>string</code></td>
 <td>n/a</td>
 <td style="text-align: center;">yes</td>
+</tr>
+<tr>
+<td><a name="input_key_vault_ip_rules"></a> <a href="#input_key_vault_ip_rules">key_vault_ip_rules</a></td>
+<td>n/a</td>
+<td><code>list(string)</code></td>
+<td><code>[]</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_key_vault_key_expiration_date"></a> <a href="#input_key_vault_key_expiration_date">key_vault_key_expiration_date</a></td>
+<td>n/a</td>
+<td><code>string</code></td>
+<td><code>"2035-01-01T00:00:00Z"</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_key_vault_soft_delete_retention_days"></a> <a href="#input_key_vault_soft_delete_retention_days">key_vault_soft_delete_retention_days</a></td>
+<td>n/a</td>
+<td><code>number</code></td>
+<td><code>90</code></td>
+<td style="text-align: center;">no</td>
+</tr>
+<tr>
+<td><a name="input_key_vault_subnet_ids"></a> <a href="#input_key_vault_subnet_ids">key_vault_subnet_ids</a></td>
+<td>n/a</td>
+<td><code>list(string)</code></td>
+<td><code>[]</code></td>
+<td style="text-align: center;">no</td>
 </tr>
 <tr>
 <td><a name="input_layer_name"></a> <a href="#input_layer_name">layer_name</a></td>
@@ -862,6 +890,10 @@
 </tr>
 <tr>
 <td><a name="output_acr_name"></a> <a href="#output_acr_name">acr_name</a></td>
+<td>n/a</td>
+</tr>
+<tr>
+<td><a name="output_log_analytics_workspace_id"></a> <a href="#output_log_analytics_workspace_id">log_analytics_workspace_id</a></td>
 <td>n/a</td>
 </tr>
 <tr>
