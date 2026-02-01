@@ -44,7 +44,6 @@ Embedded stacks can be referenced by name (no path or git URL required):
 ```yaml
 metadata:
   stacks:
-    - example-aws-stack
     - example-eks-stack
 ```
 
@@ -57,7 +56,6 @@ metadata:
 
 ## Embedded stacks
 These stacks ship with the CLI and can be referenced by name:
-- `example-aws-stack`
 - `example-eks-stack`
 
 ## Merge behavior

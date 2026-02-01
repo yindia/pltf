@@ -1299,11 +1299,17 @@ func (g *Generator) getMergedVars() map[string]interface{} {
 	merged["account_id"] = g.envEntry.Account
 	merged["region"] = g.envEntry.Region
 	merged["environment"] = g.envKey
+	merged["env_name"] = g.envKey
 	if g.globalLabels == nil {
 		merged["global_tags"] = map[string]string{}
 	} else {
 		merged["global_tags"] = g.globalLabels
 	}
+	layerName := g.envName
+	if g.isService {
+		layerName = g.svcCfg.Metadata.Name
+	}
+	merged["layer_name"] = layerName
 
 	// Env vars
 	for k, v := range g.envEntry.Variables {

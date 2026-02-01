@@ -47,19 +47,20 @@ modules:
   - id: postgres
     type: aws_postgres
     inputs:
-      database_name: "${{var.db_name}}"
+      database_name: "${var.db_name}"
   - id: s3
     type: aws_s3
     inputs:
       bucket_name: "pltf-app-${layer_name}-${env_name}"
     links:
-      readWrite: adminpltfrole
-      readWrite: userpltfrole
+      readWrite:
+        - adminpltfrole
+        - userpltfrole
   - id: topic
     type: aws_sns
     inputs:
       sqs_subscribers:
-      - "${{module.notifcationsQueue.queue_arn}}"
+        - "${module.notifcationsQueue.queue_arn}"
     links:
       read: adminpltfrole
   - id: notifcationsQueue
@@ -78,7 +79,7 @@ modules:
     type: aws_iam_role
     inputs:
       extra_iam_policies:
-      - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
       allowed_k8s_services: 
         - namespace: "*"
           service_name: "*"
@@ -86,7 +87,7 @@ modules:
     type: aws_iam_role
     inputs:
       extra_iam_policies:
-      - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
       allowed_k8s_services: 
         - namespace: "*"
           service_name: "*"

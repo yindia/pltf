@@ -8,24 +8,20 @@ Minimal shape:
 apiVersion: platform.io/v1
 kind: Stack
 metadata:
-  name: eks-observability
-  labels:
-    team: platform
-providers:
-  kubernetes: true
-  helm: true
+  name: example-eks-stack
 variables:
-  cluster_name: ""
-  base_domain: ""
+  cluster_name: "pltf-data-${env_name}"
 modules:
+  - id: base
+    type: aws_base
   - id: eks
     type: aws_eks
     inputs:
-      cluster_name: var.cluster_name
-  - id: sec
-    type: aws_security_baseline
-  - id: obs
-    type: aws_observability
+      cluster_name: "pltf-app-${env_name}"
+      kms_account_key_arn: module.base.kms_account_key_arn
+      k8s_version: 1.33
+      enable_metrics: false
+      max_nodes: 15
 ```
 Notes:
 - Stack specs bundle reusable module templates. Reference them from environments or services with `metadata.stacks`.
@@ -38,48 +34,93 @@ Minimal shape:
 ```yaml
 apiVersion: platform.io/v1
 kind: Environment
+gitProvider: github
 metadata:
   name: example-aws
-  org: example-org
+  org: pltf
   provider: aws
   labels:
     team: platform
+    cost_center: shared
   stacks:
-    - ./stacks/eks-observability.yaml
-backend:
-  type: s3
-  bucket: example-tfstate
-  region: us-east-1
-modules:
-  - id: base
-    type: aws_base
-  - id: dns
-    type: aws_dns
-    inputs:
-      domain: var.base_domain
-variables:
-  cluster_name: example-cluster
-  base_domain: example.com
-secrets:
-  db_password: {}
+    - example-eks-stack
+# images:
+#   - name: platform-tools
+#     context: .
+#     dockerfile: Dockerfile
+#     platforms:
+#       - linux/amd64
+#       - linux/arm64
+#     tags:
+#       - ghcr.io/example/${layer_name}:${env_name}
+#     buildArgs:
+#       ENV: ${env_name}
 environments:
   dev:
-    account: "111111111111"
-    region: us-east-1
+    account: "556169302489"
+    region: ap-northeast-1
+  stage:
+    account: "556169302489"
+    region: ap-northeast-1
   prod:
-    account: "222222222222"
-    region: us-west-2
-images:
-  - name: platform-tools
-    context: ./images/tools
-    dockerfile: Dockerfile
-    tags:
-      - ghcr.io/example/platform-tools:${env_name}
-    buildArgs:
-      ENV: ${env_name}
-    platforms:
-      - linux/amd64
-      - linux/arm64
+    account: "556169302489"
+    region: ap-northeast-1
+variables:
+  replica_counts: '{"dev":1,"prod":3}'
+  environment_settings: '{"region":"us-west-2","zones":["us-west-2a","us-west-2b"]}'
+modules:
+  - id: nodegroup1
+    source: ../modules/aws_nodegroup
+    inputs:
+      max_nodes: 15
+      node_disk_size: 20
+  - id: postgres
+    source: https://github.com/yindia/pltf.git//modules/aws_postgres?ref=main
+    inputs:
+      database_name: "${layer_name}-${env_name}"
+  - id: s3
+    type: aws_s3
+    inputs:
+      bucket_name: "pltf-app-${env_name}"
+    links:
+      readWrite:
+        - adminpltfrole
+        - userpltfrole
+  - id: topic
+    type: aws_sns
+    inputs:
+      sqs_subscribers:
+        - "${module.notifcationsQueue.queue_arn}"
+    links:
+      read: adminpltfrole
+  - id: notifcationsQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: schedulesQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: adminpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services:
+        - namespace: "*"
+          service_name: "*"
+  - id: userpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services:
+        - namespace: "*"
+          service_name: "*"
 ```
 Notes:
 - `environments` describe cloud/account/region entries; variables and secrets are defined at the top level and applied to each env (per-env overrides are not supported).
