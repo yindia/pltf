@@ -37,67 +37,122 @@ flowchart TB
 
 Stacks capture reusable infrastructure modules (networking, observability, etc.) and publish outputs for services. Each stack can list required providers so environments treat every module consistently.
 
+Example (from `stacks/example-eks-stack.yaml`):
 ```yaml
 apiVersion: platform.io/v1
 kind: Stack
 metadata:
-  name: enterprise-cluster
+  name: example-eks-stack
+variables:
+  cluster_name: "pltf-data-${env_name}"
 modules:
-  - id: network
-    type: aws_network
-    inputs:
-      cidr_block: 10.0.0.0/16
+  - id: base
+    type: aws_base
   - id: eks
     type: aws_eks
     inputs:
-      cluster_name: var.cluster_name
-      subnet_ids: module.network.private_subnet_ids
-outputs:
-  - name: cluster_name
-    value: module.eks.cluster_name
+      cluster_name: "pltf-app-${env_name}"
+      kms_account_key_arn: module.base.kms_account_key_arn
+      k8s_version: 1.33
+      enable_metrics: false
+      max_nodes: 15
 ```
 
 ### Environment spec
 
 An environment wires stacks, backends, provider secrets, variables, and images into a workspace. Each environment can define multiple variants (`dev`, `prod`, …) and services refer to the environment by file path.
 
+Example (from `example/e2e.yaml`):
 ```yaml
 apiVersion: platform.io/v1
 kind: Environment
+gitProvider: github
 metadata:
-  name: enterprise-aws
+  name: example-aws
+  org: pltf
   provider: aws
-stacks:
-  - ./stack-cluster.yaml
-backend:
-  type: s3
-  bucket: acme-tfstate
-  region: us-west-2
+  labels:
+    team: platform
+    cost_center: shared
+  stacks:
+    - example-eks-stack
+# images:
+#   - name: platform-tools
+#     context: .
+#     dockerfile: Dockerfile
+#     platforms:
+#       - linux/amd64
+#       - linux/arm64
+#     tags:
+#       - ghcr.io/example/${layer_name}:${env_name}
+#     buildArgs:
+#       ENV: ${env_name}
 environments:
   dev:
-    region: us-west-2
-    variables:
-      log_bucket: dev-logs
+    account: "556169302489"
+    region: ap-northeast-1
+  stage:
+    account: "556169302489"
+    region: ap-northeast-1
   prod:
-    region: us-east-1
-    variables:
-      log_bucket: prod-logs
+    account: "556169302489"
+    region: ap-northeast-1
 variables:
-  cluster_name: enterprise-cluster
-  base_domain: example.com
-images:
-  - name: platform-tools
-    context: .
-    platforms:
-      - linux/amd64
-      - linux/arm64
-    tags:
-      - ghcr.io/acme/platform-tools:${env_name}
+  replica_counts: '{"dev":1,"prod":3}'
+  environment_settings: '{"region":"us-west-2","zones":["us-west-2a","us-west-2b"]}'
 modules:
-  - id: dns
-    type: aws_dns
+  - id: nodegroup1
+    source: ../modules/aws_nodegroup
     inputs:
-      domain: var.base_domain
+      max_nodes: 15
+      node_disk_size: 20
+  - id: postgres
+    source: https://github.com/yindia/pltf.git//modules/aws_postgres?ref=main
+    inputs:
+      database_name: "${layer_name}-${env_name}"
+  - id: s3
+    type: aws_s3
+    inputs:
+      bucket_name: "pltf-app-${env_name}"
+    links:
+      readWrite:
+        - adminpltfrole
+        - userpltfrole
+  - id: topic
+    type: aws_sns
+    inputs:
+      sqs_subscribers:
+        - "${module.notifcationsQueue.queue_arn}"
+    links:
+      read: adminpltfrole
+  - id: notifcationsQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: schedulesQueue
+    type: aws_sqs
+    inputs:
+      fifo: false
+    links:
+      readWrite: adminpltfrole
+  - id: adminpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services:
+        - namespace: "*"
+          service_name: "*"
+  - id: userpltfrole
+    type: aws_iam_role
+    inputs:
+      extra_iam_policies:
+        - "arn:aws:iam::aws:policy/CloudWatchEventsFullAccess"
+      allowed_k8s_services:
+        - namespace: "*"
+          service_name: "*"
 ```
 
 Secrets (AWS, GCP, Vault, etc.) attach to the environment and are injected via standard credential files. Environments describe the shared infrastructure that every service reuses.
@@ -112,11 +167,8 @@ kind: Service
 metadata:
   name: billing
   ref: ./env.yaml
-envRef:
-  dev: {}
-  prod:
-    variables:
-      replica_count: 3
+  envRef:
+    dev: {}
 modules:
   - id: billing-api
     type: helm_chart
@@ -133,7 +185,7 @@ images:
       - ghcr.io/acme/billing:${env_name}
 ```
 
-Services live wherever their referenced environment variants exist, and each `envRef` entry can override variables and secrets.
+Services live wherever their referenced environment variants exist; variables and secrets are defined at the top level.
 
 ### Custom modules
 
@@ -159,7 +211,7 @@ pltf caches module clones per repo/commit so repeated plans avoid git overhead, 
 - `pltf module list/get/init` inspect or bootstrap modules from both the embedded catalog and your Git sources.
 - `pltf config` summarizes envs, services, secrets, and modules for a repo.
 
-Commands render workspaces under `.pltf/<spec>/<env>/workspace`, ensuring `plan` and `apply` operate on the same graph.
+Commands render workspaces under `.pltf/<environment_name>/workspace` or `.pltf/<environment_name>/<service_name>/workspace`, ensuring `plan` and `apply` operate on the same graph.
 
 ## Image & Terraform caching
 

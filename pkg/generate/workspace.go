@@ -175,8 +175,14 @@ func buildWorkspaceVars(envCfg *config.EnvironmentConfig, svcCfg *config.Service
 		"account_id":  entry.Account,
 		"region":      entry.Region,
 		"environment": envKey,
+		"env_name":    envKey,
 		"global_tags": labels,
 	}
+	layerName := envCfg.Metadata.Name
+	if svcCfg != nil {
+		layerName = svcCfg.Metadata.Name
+	}
+	out["layer_name"] = layerName
 	for k, v := range entry.Variables {
 		out[k] = parseVarValue(v)
 	}

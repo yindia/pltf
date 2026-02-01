@@ -1,4 +1,4 @@
-resource "aws_s3_bucket_object" "user_files" {
+resource "aws_s3_object" "user_files" {
   for_each     = local.files_to_upload
   bucket       = aws_s3_bucket.bucket.id
   key          = each.key
