@@ -1,0 +1,83 @@
+name: azure_aks
+type: azure_aks
+provider: azure
+version: 1.0.0
+resources:
+    - azurerm_kubernetes_cluster.main
+    - azurerm_role_assignment.azurerm_container_registry
+    - azurerm_role_assignment.azurerm_container_registry_agent_pool
+    - azurerm_role_assignment.k8s_assign_identities
+    - azurerm_role_assignment.pltf
+    - azurerm_user_assigned_identity.agent_pool
+    - azurerm_user_assigned_identity.pltf
+data:
+    - data.azurerm_client_config.current
+    - data.azurerm_nat_gateway.nat
+    - data.azurerm_resource_group.pltf
+    - data.azurerm_subnet.pltf
+    - data.azurerm_subscription.current
+inputs:
+    - default: []
+      name: admin_group_object_ids
+      required: false
+      type: list(string)
+    - name: cluster_name
+      required: true
+      type: string
+    - default: 10.0.128.10
+      name: dns_service_ip
+      required: false
+      type: string
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: 1.21.9
+      name: kubernetes_version
+      required: false
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - default: 5
+      name: max_nodes
+      required: false
+      type: number
+    - default: 1
+      name: min_nodes
+      required: false
+      type: number
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: 30
+      name: node_disk_size
+      required: false
+      type: number
+    - default: Standard_D2_v2
+      name: node_instance_type
+      required: false
+      type: string
+    - name: private_subnet_name
+      required: true
+      type: string
+    - default: 10.0.128.0/20
+      name: service_cidr
+      required: false
+      type: string
+    - name: vpc_name
+      required: true
+      type: string
+outputs:
+    - name: client_cert
+      type: string
+    - name: client_key
+      type: string
+    - name: k8s_ca_data
+      type: string
+    - name: k8s_cluster_name
+      type: string
+    - name: k8s_endpoint
+      type: string

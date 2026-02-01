@@ -1,0 +1,45 @@
+name: azure_redis
+type: azure_redis
+provider: azure
+version: 1.0.0
+capabilities:
+    provides:
+        - secret
+resources:
+    - azurerm_private_endpoint.pltf
+    - azurerm_redis_cache.pltf
+    - random_id.key_suffix
+data:
+    - data.azurerm_resource_group.main
+    - data.azurerm_subnet.pltf
+inputs:
+    - default: 2
+      name: capacity
+      required: false
+      type: number
+    - description: Env name
+      name: env_name
+      required: true
+      type: string
+    - default: C
+      name: family
+      required: false
+      type: string
+    - description: Layer name
+      name: layer_name
+      required: true
+      type: string
+    - description: Module name
+      name: module_name
+      required: true
+      type: string
+    - default: Standard
+      name: sku_name
+      required: false
+      type: string
+outputs:
+    - name: cache_auth_token
+      type: string
+      capability: secret
+    - name: cache_host
+      type: string
