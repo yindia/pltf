@@ -16,6 +16,7 @@ import (
 	"pltf/pkg/backend"
 	"pltf/pkg/clihelper"
 	"pltf/pkg/config"
+	"pltf/pkg/validate"
 )
 
 var (
@@ -340,21 +341,11 @@ func buildPreviewOutputs(mods []config.Module, embeddedRoot, customRoot string) 
 	if len(mods) == 0 {
 		return nil, nil
 	}
-	embeddedMetas, err := config.ScanModuleMetas(embeddedRoot)
-	if err != nil {
-		return nil, err
-	}
-	var customMetas map[string]*config.ModuleMetadata
-	if strings.TrimSpace(customRoot) != "" {
-		customMetas, err = config.ScanModuleMetas(customRoot)
-		if err != nil {
-			return nil, err
-		}
-	}
+	validator := validate.NewModuleValidator(embeddedRoot, customRoot)
 
 	results := make([]previewModuleOutputs, 0, len(mods))
 	for _, m := range mods {
-		meta, err := clihelper.SelectModuleMeta(m, embeddedMetas, customMetas, embeddedRoot)
+		meta, err := validator.ModuleMetaForModule(m)
 		if err != nil {
 			return nil, err
 		}
