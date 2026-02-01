@@ -23,7 +23,7 @@ parse_args() {
   BINDIR=${BINDIR:-./bin}
   while getopts "b:dh?x" arg; do
     case "$arg" in
-      b) BINDIR="$OPTARG" ;;
+      b) BINDIR="$PLTFRG" ;;
       d) log_set_priority 7 ;; # debug
       h | \?) usage "$0" ;;
       x) set -x ;;
