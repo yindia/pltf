@@ -445,7 +445,7 @@ func runTfWithAction(action, file, env, modules, out string, vars []string, lock
 		if planResult.summary != nil {
 			planSum = planResult.summary
 		}
-		if opts.DetailedExit && planResult.exitCode == 2 {
+		if planResult.exitCode == 2 {
 			runStatus = "changes"
 		}
 		if opts.Rover && planResult.summary != nil && planResult.summary.PlanJSON != "" {
@@ -584,7 +584,9 @@ func runTerraformPlan(runner *terraform.Runner, ctx stackContext, tfvarsArg stri
 	args = append(args, "-out="+planArg)
 	planArgs := append([]string(nil), appendArgs(args)...)
 	_, planExit, err := runner.Exec(planArgs)
-	if err != nil && !(opts.DetailedExit && planExit == 2) {
+	// Treat exit code 2 (changes present) as non-fatal even if -detailed-exitcode
+	// was injected via TF_CLI_ARGS_plan or similar.
+	if err != nil && planExit != 2 {
 		return res, fmt.Errorf("%s plan failed: %w", runner.EngineCmd(), err)
 	}
 	res.exitCode = planExit
