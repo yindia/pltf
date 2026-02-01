@@ -110,6 +110,8 @@ nav:
           - GKE Upgrade: references/gcp_gke_upgrade.md
       - Azure:
           - Overview: references/azure.md
+          - AKS Access: references/azure_aks_access.md
+          - AKS Upgrade: references/azure_aks_upgrade.md
   - Modules:
       - AWS:
         - aws_base: references/modules/aws_base.md
