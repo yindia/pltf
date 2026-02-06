@@ -21,6 +21,20 @@ Pltf gives you:
 - Bring-your-own modules
 - Out-of-the-box support for tfsec, tflint, infracost, and rover (https://github.com/yindia/rover)
 
+## Install
+
+Homebrew (macOS/Linux):
+```bash
+brew install yindia/homebrew-yindia/pltf
+```
+
+Install script (macOS/Linux/Windows via WSL or Git Bash):
+```bash
+curl -fsSL https://raw.githubusercontent.com/yindia/pltf/refs/heads/main/install.sh | sh
+```
+
+More options in `docs/installation.md`.
+
 ## How it works
 
 The idea is simple:
