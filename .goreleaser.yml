@@ -36,7 +36,7 @@ brews:
     directory: Formula
     repository:
       owner: "yindia"
-      name: "pltf"
+      name: "homebrew-yindia"
     test: |
       system "#{bin}/pltf", "--help"
     install: |
