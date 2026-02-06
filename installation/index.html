@@ -698,12 +698,11 @@
 <p>pltf is in active development. Pin a release when installing for production workflows.</p>
 </blockquote>
 <h2 id="homebrew-macoslinux">Homebrew (macOS/Linux)</h2>
-<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>tap<span class="w"> </span>yindia/pltf
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>brew<span class="w"> </span>install<span class="w"> </span>pltf
+<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>brew<span class="w"> </span>install<span class="w"> </span>yindia/homebrew-yindia/pltf
 </span></code></pre></div>
 If you had a different tap, <code>brew untap &lt;old&gt;</code> first.</p>
 <h2 id="install-script-macoslinuxwindows-via-wsl-or-git-bash">Install script (macOS/Linux/Windows via WSL or Git Bash)</h2>
-<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-sSL<span class="w"> </span>https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+<p><div class="language-bash highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/yindia/pltf/refs/heads/main/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
 </span></code></pre></div>
 Environment overrides:
 - <code>REPO_OWNER</code> / <code>REPO_NAME</code>: install from a fork

@@ -4,14 +4,13 @@
 
 ## Homebrew (macOS/Linux)
 ```bash
-brew tap yindia/pltf
-brew install pltf
+brew install yindia/homebrew-yindia/pltf
 ```
 If you had a different tap, `brew untap <old>` first.
 
 ## Install script (macOS/Linux/Windows via WSL or Git Bash)
 ```bash
-curl -sSL https://raw.githubusercontent.com/yindia/pltf/main/scripts/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/yindia/pltf/refs/heads/main/install.sh | sh
 ```
 Environment overrides:
 - `REPO_OWNER` / `REPO_NAME`: install from a fork
